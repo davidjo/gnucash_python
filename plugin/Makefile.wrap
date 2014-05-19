@@ -1,0 +1,53 @@
+# Set the C flags to include the GTK+ and Python libraries
+CFLAGS = `env PKG_CONFIG_PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/pkgconfig pkg-config --cflags gtk+-2.0 pygtk-2.0` -I/opt/local/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6 -I../../libqof/qof -I../../gnome-utils -I../../.. -I.
+LDFLAGS = `env PKG_CONFIG_PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/pkgconfig pkg-config --libs gtk+-2.0 pygtk-2.0` -L/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib -lpython2.6
+
+gncpluginpage.so: gncpluginpage-methods.o gncpluginpagemodule.o
+	#$(CC) $(LDFLAGS) -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+
+
+# The path to the GTK+ python types
+#DEFS=`pkg-config --variable=defsdir pygtk-2.0`
+DEFS=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygtk/2.0/defs
+
+
+# Generate the C wrapper from the defs and our override file
+gncpluginpage-methods.c: gncpluginpage.defs gncpluginpage.override
+	#./runcodegen.py --prefix gncpluginpage 
+	/opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pygobject-codegen-2.0 --prefix gncpluginpage \
+	--load-types gpointer-types.py \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gncpluginpage.override \
+	gncpluginpage.defs > $@
+
+gncpluginpage.defs: gncpluginpage-methods.defs gncpluginpage-new.defs
+	cat gncpluginpage-methods.defs gncpluginpage-new.defs >gncpluginpage.defs
+
+gncpluginpage-methods.defs:
+	/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/h2def.py gnc-plugin-page.h >gncpluginpage-methods.defs
+	#/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/defsgen.py -m gncpluginpage -l 
+	#patch -p0 -b <patch-fields.diff
+
+gncmainwindow-methods.c: gncmainwindow.defs gncmainwindow.override
+	#./runcodegen.py --prefix gncmainwindow 
+	env PYTHONPATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen /opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pygobject-codegen-2.0 --prefix gncmainwindow \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--register gncpluginpage.defs \
+	--override gncmainwindow.override \
+	--load-types gncmainwindow-types.py \
+	gncmainwindow.defs > $@
+
+gncmainwindow.defs:
+	/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/h2def.py gnc-main-window.h >gncmainwindow.defs
+	#/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/defsgen.py -m gncpluginpage -l 
+	#patch -p0 -b <patch-fields.diff
+
+# A rule to clean the generated files
+clean:
+	rm -f gncpluginpage.so gncpluginpage.o gncpluginpage-methods.c
+
+.PHONY: clean
