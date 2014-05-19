@@ -27,9 +27,10 @@ print >> sys.stderr, "Imported python OK 1"
 hmpth = os.path.join(os.environ['HOME'],'.gnucash','python')
 #if not os.path.exists(hmpth):
 #    hmpth = os.path.dirname(__file__)
-sys.path.insert(0,hmpth)
+if os.path.exists(hmpth):
+    sys.path.insert(0,hmpth)
 
-import gnc_plugin_example
+import gnc_plugin_python_example
 
 
 # what a dumbo - this whole mess was because the class init function
