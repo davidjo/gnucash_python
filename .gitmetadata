@@ -1,0 +1,4 @@
+{'st_mtime': '1399844125', 'st_nlink': '1', 'st_mode': '33188', 'st_size': '2645', 'st_gid': '1000', 'st_uid': '1000'}  ;  plugin/gnc-plugin-python-generic.h
+{'st_mtime': '1399923178', 'st_nlink': '1', 'st_mode': '33188', 'st_size': '3524', 'st_gid': '1000', 'st_uid': '1000'}  ;  plugin/gnc-plugin-python-generic.c
+{'st_mtime': '1399842730', 'st_nlink': '1', 'st_mode': '33188', 'st_size': '2782', 'st_gid': '1000', 'st_uid': '1000'}  ;  plugin/gncmod-python-generic.c
+{'st_mtime': '1399844031', 'st_nlink': '1', 'st_mode': '33188', 'st_size': '35929', 'st_gid': '1000', 'st_uid': '1000'}  ;  plugin/Makefile.generic
