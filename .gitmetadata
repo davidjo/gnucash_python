@@ -1,7 +1,7 @@
 {'st_mtime': '1400106380', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6002'}  ;  glib_ctypes.py
 {'st_mtime': '1400115091', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '52'}  ;  glib_gkeyfile.py
 {'st_mtime': '1400344883', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1107'}  ;  gnc_main_window.py
-{'st_mtime': '1399906432', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1897'}  ;  gnc_plugin_example.py
+{'st_mtime': '1400437029', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4748'}  ;  gnc_plugin_example.py
 {'st_mtime': '1400532286', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3587'}  ;  gnc_plugin_page.py
 {'st_mtime': '1400190320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1167'}  ;  gnc_plugin_page_report.py
 {'st_mtime': '1399766815', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12037'}  ;  gnucash_ctypes.py
