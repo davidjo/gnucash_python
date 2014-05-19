@@ -14,5 +14,9 @@
 {'st_mtime': '1400285714', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '388'}  ;  plugin/gncmainwindow.override
 {'st_mtime': '1399842730', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2782'}  ;  plugin/gncmod-python-generic.c
 {'st_mtime': '1400095077', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '645'}  ;  plugin/patch-fields.diff
+{'st_mtime': '1400287040', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '34298'}  ;  plugin/pygkeyfile.c
+{'st_mtime': '1400283984', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1109'}  ;  plugin/pygkeyfile.h
 {'st_mtime': '1400019144', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7045'}  ;  plugin/pythonpage.c
+{'st_mtime': '1400456210', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10632'}  ;  plugin/pythonplugin.c
+{'st_mtime': '1400286808', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2303'}  ;  plugin/setup.py
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c
