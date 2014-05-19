@@ -1,0 +1,23 @@
+%%
+headers
+#include <Python.h>
+
+#include "config.h"
+
+#include "pygobject.h"
+
+#include "glib.h"
+
+#include "gtk/gtk.h"
+
+%%
+modulename gncpluginpage
+%%
+import gobject.GObject as PyGObject_Type
+import gtk.UIManager as PyGtkUIManager_Type
+import gtk.Widget as PyGtkWidget_Type
+import pgkeyfile.GKeyfile as PyGKeyFile_Type
+import gobject.GPointer as PyGPointer_Type
+%%
+ignore-glob
+  *_get_type
