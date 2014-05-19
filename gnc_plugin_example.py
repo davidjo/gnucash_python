@@ -2,10 +2,11 @@ import sys
 import os
 import pdb
 try:
-    import _sw_app_utils
-    from gnucash import *
-    from _sw_core_utils import gnc_prefs_is_extra_enabled
-    import gtk
+    #import _sw_app_utils
+    #from gnucash import *
+    #from _sw_core_utils import gnc_prefs_is_extra_enabled
+    #import gtk
+    pass
 except Exception, errexc:
     print >> sys.stderr, "Failed to import!!"
     pdb.set_trace()
@@ -13,7 +14,7 @@ except Exception, errexc:
 
 from ctypes import *
 
-import gobject
+#import gobject
 
 
 from ctypes.util import find_library
@@ -61,38 +62,16 @@ GNCLoadedModule._fields_ = [
 
 GNCModulePointer = c_void_p
 
-libgnc_module.gnc_module_load.argtypes = [c_char_p, gint, gboolean]
+libgnc_module.gnc_module_load.argtypes = [c_char_p, gint]
 libgnc_module.gnc_module_load.restype = GNCModulePointer
 
-libgnc_module.gnc_module_load("gnucash/plugins/example",0)
+# we have a problem - if we get some form of error message while doing this
+# we crash because the g_log function seems to point to a python error function
+# which crashes for some reason
+# however doing this early (possibly before importing gtk etc) seems to solve the problem
 
+retvl = libgnc_module.gnc_module_load("gnucash/plugins/python_generic",0)
 
-
-# well first attempt failed - lets try creating the gnc_plugin type
-
-gncplugintype = gobject.type_from_name('GncPlugin')
-
-# amazing this just worked!!
-# we now have the GncPlugin as a type in python
-# the problem is there seems to be no python access to the extra functions
-# of the gnc-plugin class
+print >> sys.stderr, "loaded module from python!!",retvl
 
 pdb.set_trace()
-
-# lets try and create subclass
-
-tmpplugin = gobject.new(gobject.type_from_name('GncPlugin'))
-
-class GncPluginExampleClass(type(tmpplugin)):
-    pass
-
-gobject.type_register(GncPluginExampleClass)
-
-tmpexampl = gobject.new(GncPluginExampleClass)
-
-
-# we need the module functions
-# unfortunately I think we cannot do this in pure python
-# the gnucash module system seems to rely on specific symbol names
-# being available
-# - and do not know how to create such symbols in python
