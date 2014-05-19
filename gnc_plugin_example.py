@@ -13,11 +13,17 @@ except Exception, errexc:
 
 from ctypes import *
 
-from gobject import GObject
+import gobject
 
-# try creating a plugin
+
+from ctypes.util import find_library
+
+
+# we need access to the module load function
 
 gchar = c_char
+gint = c_int
+gboolean = gint
 gcharp = POINTER(gchar)
 GQuark = c_uint32
 gsize = c_uint32
@@ -25,108 +31,68 @@ GType = gsize
 
 GCallback = c_void_p
 
-# pigs there is no good way to do this
-# to use the GncPlugin functions in python via ctypes
-# we need to know the exact lengths of the GObject structures
 
+libgnc_modulenm = find_library("libgnc-module")
+if libgnc_modulenm is None:
+    raise RuntimeError("Can't find a libgnc-module library to use.")
 
-class GtkActionEntry(Structure):
-    pass
-GtkActionEntry._fields_ = [
-                           ('name', gcharp),
-                           ('stock_id', gcharp),
-                           ('label', gcharp),
-                           ('accelerator', gcharp),
-                           ('tooltip', gcharp),
-                           ('callback', GCallback),
-                          ]
+libgnc_module = cdll.LoadLibrary(libgnc_modulenm)
 
-class GtkToggleActionEntry(Structure):
+# looks as though the main return for gnc_module_load is the GNCLoadedModule structure
+
+class GModule(Structure):
     pass
 
-class GtkMainWindow(Structure):
+class GNCModuleInfo(Structure):
     pass
 
+init_func_class = CFUNCTYPE(c_int,c_int)
 
-class GncPlugin(Structure):
+class GNCLoadedModule(Structure):
     pass
-GncPlugin._fields_ = [
-                       ('gobject', GObject),
-                     ]
+GNCLoadedModule._fields_ = [
+                            ('gmodule', POINTER(GModule)),
+                            ('filename', gcharp),
+                            ('load_count', c_int),
+                            ('info', POINTER(GNCModuleInfo)),
+                            ('init_func', init_func_class),
+                           ]
 
 
-plugincb = CFUNCTYPE(None,POINTER(GncPlugin),POINTER(GncMainWindow),GQuark)
+GNCModulePointer = c_void_p
 
-class GncPluginClass(Structure):
-    pass
-GncPluginClass._fields_ = [
-                           ('gobject', GncPlugin),
-                           ('plugin_name', gcharp),
-                           ('actions_name', gcharp),
-                           ('actions', POINTER(GtkActionEntry)),
-                           ('n_actions', guint),
-                           ('toggle_actions', POINTER(GTkToggleActionEntry)),
-                           ('n_toogle_actions', guint),
-                           ('important_actions', POINTER(gcharp)),
-                           ('ui_filename', gcharp),
-                           # should this be pointer or not??
-                           # punt for the moment
-                           ('add_to_window', c_void_p), # this is plugincb type
-                           ('remove_to_window', c_void_p), # this is plugincb type
-                          ]
+libgnc_module.gnc_module_load.argtypes = [c_char_p, gint, gboolean]
+libgnc_module.gnc_module_load.restype = GNCModulePointer
 
-class GncPluginExample(Structure):
-    pass
-GncPluginExample._fields_ = [
-                             ('gnc_plugin', GncPlugin),
-                            ]
-
-class GncPluginExampleClass(Structure):
-    pass
-GncPluginExampleClass._fields_ = [
-                                  ('gnc_plugin', GncPluginClass),
-                                 ]
-
-gnc_plugin_callback = CFUNCTYPE(None,POINTER(GtkAction),POINTER(GncMainWindowActionData))
-
-gnc_plugin_example_cmd_test_cb = gnc_plugin_callback(gnc_plugin_example_cmd_test)
-
-gnc_plugin_actions = [ \
-      [ "exampleAction", None, "example description...", None, "example tooltip", gnc_plugin_example_cmd_test_cb ],
-                     ]
-
-gnc_plugin_n_actions = len(gnc_plugin_actions)
+libgnc_module.gnc_module_load("gnucash/plugins/example",0)
 
 
-def gnc_plugin_example_get_type():
-    return "gnc-plugin-example"
 
-def gnc_plugin_example_new():
-    return GncPluginExample()
+# well first attempt failed - lets try creating the gnc_plugin type
 
-def gnc_plugin_example_class_init(gncpluginclass):
-    object_class = gncpluginclass
-    plugin_class = gncpluginclass
+gncplugintype = gobject.type_from_name('GncPlugin')
 
-    object_class.finalize = gnc_plugin_example_finalize
+# amazing this just worked!!
+# we now have the GncPlugin as a type in python
+# the problem is there seems to be no python access to the extra functions
+# of the gnc-plugin class
 
-    plugin_class.plugin_name = "gnc-plugin-example"
+pdb.set_trace()
 
-    plugin_class.actions_name = "gnc-plugin-example-actions"
-    plugin_class.actions = gnc_plugin_actions
-    plugin_class.n_actions = gnc_plugin_n_actions
-    plugin_class.ui_filename = "gnc-plugin-example-ui.xml"
-    
+# lets try and create subclass
 
-def gnc_plugin_example_create_plugin():
+tmpplugin = gobject.new(gobject.type_from_name('GncPlugin'))
+
+class GncPluginExampleClass(type(tmpplugin)):
     pass
 
-def gnc_plugin_example_init(plugin):
-    pass
+gobject.type_register(GncPluginExampleClass)
 
-def gnc_plugin_example_finalize(gobject):
-    pass
+tmpexampl = gobject.new(GncPluginExampleClass)
 
-def gnc_plugin_example_cmd_test(action, data):
-    pass
 
+# we need the module functions
+# unfortunately I think we cannot do this in pure python
+# the gnucash module system seems to rely on specific symbol names
+# being available
+# - and do not know how to create such symbols in python
