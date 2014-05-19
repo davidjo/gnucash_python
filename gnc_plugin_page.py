@@ -16,8 +16,6 @@ except Exception, errexc:
 
 print >> sys.stderr, "trying plugin page"
 
-pdb.set_trace()
-
 from ctypes import *
 
 import gobject
@@ -40,49 +38,105 @@ GCallback = c_void_p
 
 # attempt access to the gnc-plugin-page plugin
 
-
-gncpluginpagetype = gobject.type_from_name('GncPluginPage')
-
-
 # amazing this just worked!!
 # we now have the GncPlugin as a type in python
 # the problem is there seems to be no python access to the extra functions
 # of the gnc-plugin class
 
+# so GncPluginPage has no SCM stuff
+# but the question is still how to use such types in python
+# so far I think we can get the type but all functions associated with it
+# are not in the type object and also dont know how to get to the private data
+# in python
+
+# it appears the basic GObject address is given by the hash of the python object
+
+# looks as though the only way to use subclassed GObject entities
+# is to create a python class which calls the functions via eg ctypes
+# or swig or an extension module
 
 
-libgnc_gnomeutilnm = find_library("libgncmod-gnome-utils")
-if libgnc_gnomeutilnm is None:
+gncpluginpagetype = gobject.type_from_name('GncPluginPage')
+
+gncpluginpagereporttype = gobject.type_from_name('GncPluginPageReport')
+
+
+# this lists the properties
+print >> sys.stderr, gobject.list_properties(gncpluginpagetype)
+
+# this lists the signal names
+print >> sys.stderr, gobject.signal_list_names(gncpluginpagetype)
+
+
+# can we create a new page
+#pdb.set_trace()
+
+#newpage = gobject.new(gncpluginpagetype)
+
+
+import gncpluginpage
+
+from pygkeyfile import GKeyFile
+
+
+#pdb.set_trace()
+
+
+#libgnc_gnomeutilnm = find_library("libgncmod-gnome-utils")
+#if libgnc_gnomeutilnm is None:
+#    pdb.set_trace()
+#    raise RuntimeError("Can't find a libgncmod-gnome-utils library to use.")
+
+libgnc_gnomeutilnm = "/opt/local/lib/gnucash/libgncmod-gnome-utils.dylib"
+if not os.path.exists(libgnc_gnomeutilnm):
     pdb.set_trace()
     raise RuntimeError("Can't find a libgncmod-gnome-utils library to use.")
 
-libgnc_gnomeutils = cdll.LoadLibrary(libgnc_gnomeutilnm)
+libgnc_gnomeutils = CDLL(libgnc_gnomeutilnm)
 
-pdb.set_trace()
 
-# looks as though the main return for gnc_module_load is the GNCLoadedModule structure
-
-class GModule(Structure):
+class GncMainWindowOpaque(Structure):
     pass
 
-class GNCModuleInfo(Structure):
+class GncPluginPageOpaque(Structure):
     pass
 
-init_func_class = CFUNCTYPE(c_int,c_int)
 
-class GNCLoadedModule(Structure):
-    pass
-GNCLoadedModule._fields_ = [
-                            ('gmodule', POINTER(GModule)),
-                            ('filename', gcharp),
-                            ('load_count', c_int),
-                            ('info', POINTER(GNCModuleInfo)),
-                            ('init_func', init_func_class),
-                           ]
+libgnc_gnomeutils.gnc_main_window_open_page.argtypes = [ c_void_p, c_void_p ]
+libgnc_gnomeutils.gnc_main_window_open_page.restype = None
 
 
-GNCModulePointer = c_void_p
+libgnc_apputilnm = "/opt/local/lib/gnucash/libgncmod-app-utils.dylib"
+if not os.path.exists(libgnc_apputilnm):
+    pdb.set_trace()
+    raise RuntimeError("Can't find a libgncmod-app-utils library to use.")
 
-#libgnc_module.gnc_module_load.argtypes = [c_char_p, gint, gboolean]
-#libgnc_module.gnc_module_load.restype = GNCModulePointer
+libgnc_apputils = CDLL(libgnc_apputilnm)
+
+#libgnc_apputils.gnc_register_gui_component("window-report", None, close_handler, self)
+libgnc_apputils.gnc_register_gui_component.argtypes = [ c_char_p, c_void_p, c_void_p, c_void_p ]
+libgnc_apputils.gnc_register_gui_component.restype = c_int
+
+libgnc_apputils.gnc_get_current_session.argtypes = []
+libgnc_apputils.gnc_get_current_session.restype = c_void_p
+
+libgnc_apputils.gnc_unregister_gui_component.argtypes = [ c_int ]
+libgnc_apputils.gnc_unregister_gui_component.restype = None
+
+
+#pdb.set_trace()
+
+# OK attempt to create a Python class for gnc_plugin_page
+# we will use a helper module to do the 
+#import pythonpage
+
+
+#tmpplugin = gobject.new(gobject.type_from_name('GncPlugin'))
+
+#class GncPluginExampleClass(type(tmpplugin)):
+#    pass
+
+#gobject.type_register(GncPluginExampleClass)
+
+#tmpexampl = gobject.new(GncPluginExampleClass)
 
