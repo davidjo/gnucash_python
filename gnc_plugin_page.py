@@ -55,6 +55,8 @@ GCallback = c_void_p
 # is to create a python class which calls the functions via eg ctypes
 # or swig or an extension module
 
+# NOTA BENE - a GncPluginPage is NOT a subclass of GncPlugin!!
+
 
 gncpluginpagetype = gobject.type_from_name('GncPluginPage')
 

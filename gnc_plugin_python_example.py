@@ -7,9 +7,15 @@ import ctypes
 
 #pdb.set_trace()
 
+print >> sys.stderr, "importing gnc_main_window"
+
 import gnc_main_window
 
+print >> sys.stderr, "importing gnc_plugin_page_report"
+
 import gnc_plugin_page_report
+
+print >> sys.stderr, "importing gnc_plugin_page_python_report"
 
 import gnc_plugin_page_python_report
 
@@ -31,8 +37,7 @@ import pythonplugin
 print >> sys.stderr, "after pythonplugin"
 
 
-import gnc_plugin_page_report
-
+#pdb.set_trace()
 
 
 class MyPlugin(object):

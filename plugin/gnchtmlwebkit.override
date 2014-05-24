@@ -1,0 +1,241 @@
+%%
+headers
+
+#include "config.h"
+
+#include <stdio.h>
+
+#include "pygobject.h"
+
+#include "glib.h"
+
+#include "gtk/gtk.h"
+
+#include "webkit/webkit.h"
+
+#include "gnc-html.h"
+#include "gnc-html-extras.h"
+
+#include "gnc-html-webkit.h"
+#include "gnc-html-webkit-p.h"
+
+#define GNC_HTML_WEBKIT_GET_PRIVATE(o) (GNC_HTML_WEBKIT(o)->priv)
+
+%%
+modulename gnchtmlwebkit
+%%
+import gobject.GObject as PyGObject_Type
+import gtk.Widget as PyGtkWidget_Type
+import gtk.Window as PyGtkWindow_Type
+import gnchtml.Html as PyGncHtml_Type
+%%
+ignore-glob
+  *_get_type
+
+%%
+override gnc_html_webkit_show_url kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_show_url(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "type", "location", "label", "new_window_hint", NULL };
+    PyObject *py_type;
+    char *location, *label;
+    int new_window_hint;
+    URLType type;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"sssi:Gnc.HtmlWebkit.show_url", kwlist, &py_type, &location, &label, &new_window_hint))
+        return NULL;
+    type = (URLType)PyString_AsString(py_type);
+
+    // we now call the gnc-html class pointer
+    //gnc_html_webkit_show_url(GNC_HTML_WEBKIT(self->obj), type, location, label, new_window_hint);
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    gnc_html_show_url( GNC_HTML(gself), type, location, label, new_window_hint );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_webkit_show_data kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_show_data(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "data", "datalen", NULL };
+    char *data;
+    int datalen;
+    GncHtmlWebkitPrivate *priv;
+
+    fprintf(stderr,"webkit show data called 1\n");
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"si:Gnc.HtmlWebkit.show_data", kwlist, &data, &datalen))
+        return NULL;
+
+    fprintf(stderr,"webkit show data called 2\n");
+
+    // we now call the gnc-html class pointer
+    //gnc_html_webkit_show_data(GNC_HTML_WEBKIT(self->obj), data, datalen);
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    fprintf(stderr,"html self is %llx\n",(void *)GNC_HTML(gself));
+    fprintf(stderr,"html self is %d\n",GNC_IS_HTML(gself));
+    fprintf(stderr,"html self class is %llx\n",(void *)GNC_HTML_GET_CLASS(gself));
+    fprintf(stderr,"html self show_data is %llx\n",(void *)(GNC_HTML_GET_CLASS(gself)->show_data));
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    // great - inspection of code show this only displays stuff if priv->html_string is set
+    // note that the dispose function frees this
+
+    priv = GNC_HTML_WEBKIT_GET_PRIVATE(gself);
+    priv->html_string = g_strdup(data);
+
+    gnc_html_show_data( GNC_HTML(gself), data, datalen );
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_webkit_reload kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_reload(PyGObject *self)
+{
+
+    // we now call the gnc-html class pointer
+    //gnc_html_webkit_reload(GNC_HTML_WEBKIT(self->obj));
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    gnc_html_reload( GNC_HTML(gself));
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_webkit_copy_to_clipboard kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_copy_to_clipboard(PyGObject *self)
+{
+
+    // we now call the gnc-html class pointer
+    //gnc_html_webkit_copy_to_clipboard(GNC_HTML_WEBKIT(self->obj));
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    gnc_html_copy_to_clipboard( GNC_HTML(gself));
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_webkit_export_to_file kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_export_to_file(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "filepath", NULL };
+    char *filepath;
+    int ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"s:Gnc.HtmlWebkit.export_to_file", kwlist, &filepath))
+        return NULL;
+
+    // we now call the gnc-html class pointer
+    //ret = gnc_html_webkit_export_to_file(GNC_HTML_WEBKIT(self->obj), filepath);
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    ret = gnc_html_export_to_file( GNC_HTML(gself), filepath);
+
+    return PyBool_FromLong(ret);
+
+}
+
+%%
+override gnc_html_webkit_print kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_print(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "jobname", "export_pdf", NULL };
+    char *jobname;
+    int export_pdf;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"si:Gnc.HtmlWebkit.print", kwlist, &jobname, &export_pdf))
+        return NULL;
+
+    // we now call the gnc-html class pointer
+    //gnc_html_webkit_print(GNC_HTML_WEBKIT(self->obj), jobname, export_pdf);
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    gnc_html_print( GNC_HTML(gself), jobname, export_pdf);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_webkit_cancel kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_cancel(PyGObject *self)
+{
+
+    // we now call the gnc-html class pointer
+    //gnc_html_webkit_cancel(GNC_HTML_WEBKIT(self->obj));
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    gnc_html_cancel( GNC_HTML(gself));
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_webkit_set_parent kwargs
+
+static PyObject *
+_wrap_gnc_html_webkit_set_parent(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "parent", NULL };
+    PyGObject *parent;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:Gnc.HtmlWebkit.set_parent", kwlist, &PyGtkWindow_Type, &parent))
+        return NULL;
+
+    // we now call the gnc-html class pointer
+    //gnc_html_webkit_set_parent(GNC_HTML_WEBKIT(self->obj), GTK_WINDOW(parent->obj));
+
+    GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
+
+    // this appears to be the way we call should call it rather than
+    // direct pointer call
+    gnc_html_set_parent( GNC_HTML(gself), GTK_WINDOW(parent->obj));
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+

@@ -18,8 +18,6 @@ print >> sys.stderr, "Imported python OK 1"
 
 #pdb.set_trace()
 
-# try creating a plugin
-
 # hmm - we apparently need to add the current path to search path
 
 #sys.path.insert(0,os.path.dirname(__file__))
@@ -30,17 +28,11 @@ hmpth = os.path.join(os.environ['HOME'],'.gnucash','python')
 if os.path.exists(hmpth):
     sys.path.insert(0,hmpth)
 
-import gnc_plugin_python_example
+try:
+    import local_init
+except ImportError:
+    pass
 
-
-# what a dumbo - this whole mess was because the class init function
-#  extracted python objects and this was generating python errors
-# which were not being detected
-
-import gnc_plugin_page
-
-
-#pdb.set_trace()
 
 
 from ctypes import *
@@ -48,13 +40,28 @@ from ctypes import *
 from ctypes.util import find_library
 
 
-libglibnm = find_library("libglib-2.0")
-if libglibnm is None:
-    raise RuntimeError("Can't find a libglib library to use.")
+# stupid but only way Ive figured to find where the gnucash library directory is
 
-libglib = cdll.LoadLibrary(libglibnm)
+# use this to gain access to a quit function
+
+libgnccorenm = find_library("libgnc-core-utils")
+if libgnccorenm is None:
+    raise RuntimeError("Can't find a libgnc-core-utils library to use.")
+
+print libgnccorenm
+
+libpth = os.path.dirname(libgnccorenm)
+
+libgnomeutils = CDLL(os.path.join(libpth,"gnucash","libgncmod-gnome-utils.dylib"))
+
+libgnomeutils.gnc_shutdown.argtypes = [ c_int ]
+libgnomeutils.gnc_shutdown.restype = None
+
 
 #pdb.set_trace()
+
+# the reason it could not import pycons is because Id lost this!!
+sys.path.append(os.path.dirname(__file__))
 
 #noisy = gnc_prefs_is_extra_enabled()
 noisy = True
@@ -141,8 +148,11 @@ if False:
     window.set_border_width(0)
     # Hm. gtk.main_quit will kill gnucash without closing the file
     # properly. That's kinda bad.
-    window.connect('destroy-event', gtk.main_quit)
-    window.connect('delete-event', gtk.main_quit)
+    #window.connect('destroy-event', gtk.main_quit)
+    #window.connect('delete-event', gtk.main_quit)
+    # this will call gtk.main_quit eventually
+    window.connect('destroy-event', libgnomeutils.gnc_shutdown)
+    window.connect('delete-event', libgnomeutils.gnc_shutdown)
     window.add (console)
     window.show_all()
     console.grab_focus()

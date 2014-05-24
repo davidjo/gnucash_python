@@ -1,0 +1,320 @@
+%%
+headers
+#include <Python.h>
+
+#include "config.h"
+
+#include "pygobject.h"
+
+#include "gtk/gtk.h"
+
+#include "gnc-html.h"
+#include "gnc-html-extras.h"
+
+%%
+modulename gnchtml
+%%
+import gobject.GObject as PyGObject_Type
+import gtk.Widget as PyGtkWidget_Type
+import gtk.Window as PyGtkWindow_Type
+import gtk.Bin as PyGtkBin_Type
+%%
+ignore-glob
+  *_get_type
+
+/* I have not figured out how to handle these yet */
+/* they are not associated with an object but something called class_id */
+/* best Ive come up with is to create a second hash list storing the python callable objects per class_id */
+/* other option is we handle these using ctypes which is able to handle such arbitrary callbacks - where
+   first arguement is not the self object */
+
+ignore
+gnc_html_register_object_handler
+gnc_html_register_stream_handler
+gnc_html_register_url_handler
+gnc_html_set_urltype_cb
+
+/* this is defined in gnc-html.h but not in gnc-html.c!! */
+
+ignore
+gnc_html_get_embedded_param
+
+%%
+override gnc_html_parse_url kwargs
+
+static PyObject *
+_wrap_gnc_html_parse_url(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "url", "url_location", "url_label", NULL };
+    char *url;
+    PyObject *py_url_location, *py_url_label;
+    gchar  **url_location, **url_label;
+    URLType ret;
+    int  indx_url_location, indx_url_label;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"sOO:Gnc.Html.parse_url", kwlist, &url, &py_url_location, &py_url_label))
+        return NULL;
+    if (!PyList_Check(py_url_location)) {
+        PyErr_Print();
+        return NULL;
+    }
+    url_location = (gchar **) g_malloc(sizeof(gchar*)*PyList_Size(py_url_location));
+    for (indx_url_location=0; indx_url_location<PyList_Size(py_url_location); indx_url_location++)
+        {
+        PyObject *pstr = PyList_GetItem(py_url_location,indx_url_location);
+        if (!PyString_Check(pstr)) {
+            PyErr_Print();
+            return NULL;
+        }
+        gchar *gstr = PyString_AsString(pstr);
+        *url_location++ = gstr;
+        }
+    if (!PyList_Check(py_url_label)) {
+        PyErr_Print();
+        return NULL;
+    }
+    url_label = (gchar **) g_malloc(sizeof(gchar*)*PyList_Size(py_url_label));
+    for (indx_url_label=0; indx_url_label<PyList_Size(py_url_label); indx_url_label++)
+        {
+        PyObject *pstr = PyList_GetItem(py_url_label,indx_url_label);
+        if (!PyString_Check(pstr)) {
+            PyErr_Print();
+            return NULL;
+        }
+        gchar *gstr = PyString_AsString(pstr);
+        *url_label++ = gstr;
+        }
+
+    ret = gnc_html_parse_url(GNC_HTML(self->obj), url, url_location, url_label);
+
+    g_free(url_location);
+    g_free(url_label);
+
+    if (ret)
+        return PyString_FromString(ret);
+    else {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+}
+
+%%
+override gnc_html_set_flyover_cb kwargs
+
+void GncHTMLFlyover_python_callback (GncHtml* html, const gchar *url, gpointer data)
+{
+/* Im assuming the html pointer here is going to be the same as pointer we setup */
+/* pretty much think it must be - hmm - maybe not */
+    GQuark quark;
+    PyObject *pyobj;
+    PyGILState_STATE gstate;
+    PyObject *py_ret;
+
+    // this works beautifully!!
+    // we get the python object from the GObject
+    quark = g_quark_from_string("PyGObject::wrapper");
+    pyobj = g_object_get_qdata((GObject *)html, quark);
+
+    fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
+
+    PyGILState_Ensure();
+
+    PyObject *py_url = PyString_FromString(url);
+    PyObject *py_data = pyg_pointer_new(G_TYPE_POINTER,data);
+
+    py_ret = PyObject_CallFunctionObjArgs(pyobj,py_url,py_data,NULL);
+    if (PyErr_Occurred())
+        {
+        fprintf(stderr,"Python Error in GncHTMLFlyover callback\n");
+        PyErr_Print();
+        Py_DECREF(py_url);
+        Py_DECREF(py_data);
+        Py_DECREF(py_ret);
+        PyGILState_Release(gstate);
+        }
+
+    Py_DECREF(py_url);
+    Py_DECREF(py_data);
+    Py_DECREF(py_ret);
+
+    PyGILState_Release(gstate);
+}
+
+
+static PyObject *
+_wrap_gnc_html_set_flyover_cb(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "newwin_cb", "data", NULL };
+    PyObject *py_newwin_cb, *py_data;
+    GncHTMLFlyoverCB newwin_cb;
+    gpointer data;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"OO:Gnc.Html.set_flyover_cb", kwlist, &py_newwin_cb, &py_data))
+        return NULL;
+    if (!PyCallable_Check(py_newwin_cb)) {
+        fprintf(stderr,"Python object is not callable in set_flyover_cb\n");
+        PyErr_Print();
+        return NULL;
+    }
+
+    data = (gpointer)(((PyGPointer *)(py_data))->pointer);
+
+    gnc_html_set_flyover_cb(GNC_HTML(self->obj), GncHTMLFlyover_python_callback, data);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_set_load_cb kwargs
+
+void GncHTMLLoad_python_callback (GncHtml* html, URLType type,
+                               const gchar* location, const gchar* label,
+                               gpointer data)
+{
+/* Im assuming the html pointer here is going to be the same as pointer we setup */
+/* pretty much think it must be - hmm - maybe not */
+    GQuark quark;
+    PyObject *pyobj;
+    PyGILState_STATE gstate;
+    PyObject *py_ret;
+
+    // this works beautifully!!
+    // we get the python object from the GObject
+    quark = g_quark_from_string("PyGObject::wrapper");
+    pyobj = g_object_get_qdata((GObject *)html, quark);
+
+    fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
+
+    PyGILState_Ensure();
+
+    PyObject *py_urltype = PyString_FromString(type);
+    PyObject *py_location = PyString_FromString(location);
+    PyObject *py_label = PyString_FromString(label);
+    PyObject *py_data = pyg_pointer_new(G_TYPE_POINTER,data);
+
+    py_ret = PyObject_CallFunctionObjArgs(pyobj,py_urltype,py_location,py_label,py_data,NULL);
+    if (PyErr_Occurred())
+        {
+        fprintf(stderr,"Python Error in GncHTMLLoad callback\n");
+        PyErr_Print();
+        Py_DECREF(py_urltype);
+        Py_DECREF(py_location);
+        Py_DECREF(py_label);
+        Py_DECREF(py_data);
+        Py_DECREF(py_ret);
+        PyGILState_Release(gstate);
+        }
+
+    Py_DECREF(py_urltype);
+    Py_DECREF(py_location);
+    Py_DECREF(py_label);
+    Py_DECREF(py_data);
+    Py_DECREF(py_ret);
+
+    PyGILState_Release(gstate);
+}
+
+
+static PyObject *
+_wrap_gnc_html_set_load_cb(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "load_cb", "data", NULL };
+    PyObject *py_load_cb, *py_data;
+    GncHTMLLoadCB load_cb;
+    gpointer data;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"OO:Gnc.Html.set_load_cb", kwlist, &py_load_cb, &py_data))
+        return NULL;
+    if (!PyCallable_Check(py_load_cb)) {
+        fprintf(stderr,"Python object is not callable in set_load_cb\n");
+        PyErr_Print();
+        return NULL;
+    }
+
+    data = (gpointer)(((PyGPointer *)(py_data))->pointer);
+
+    gnc_html_set_load_cb(GNC_HTML(self->obj), GncHTMLLoad_python_callback, data);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_html_set_button_cb kwargs
+
+int GncHTMLButton_python_callback (GncHtml* html, GdkEventButton *event, gpointer data)
+{
+/* Im assuming the html pointer here is going to be the same as pointer we setup */
+/* pretty much think it must be - hmm - maybe not */
+    GQuark quark;
+    PyObject *pyobj;
+    PyGILState_STATE gstate;
+    PyObject *py_ret;
+
+    // this works beautifully!!
+
+    // we get the python object from the GObject
+    quark = g_quark_from_string("PyGObject::wrapper");
+    pyobj = g_object_get_qdata((GObject *)html, quark);
+
+    fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
+
+    PyGILState_Ensure();
+
+    PyObject *py_event = pygobject_new((GObject *)event);
+    PyObject *py_data = pyg_pointer_new(G_TYPE_POINTER,data);
+
+    py_ret = PyObject_CallFunctionObjArgs(pyobj,py_event,py_data,NULL);
+    if (PyErr_Occurred())
+        {
+        fprintf(stderr,"Python Error in GncHTMLButton callback\n");
+        PyErr_Print();
+        Py_DECREF(py_event);
+        Py_DECREF(py_ret);
+        PyGILState_Release(gstate);
+        }
+
+    if (!PyInt_Check(py_ret)) {
+        fprintf(stderr,"Python Error in GncHTMLButton callback - return is not integer\n");
+        Py_DECREF(py_event);
+        Py_DECREF(py_ret);
+        PyGILState_Release(gstate);
+        return -1;
+    }
+    int ret = PyInt_AsLong(py_ret);
+
+    Py_DECREF(py_event);
+    Py_DECREF(py_data);
+    Py_DECREF(py_ret);
+
+    PyGILState_Release(gstate);
+
+    return ret;
+}
+
+
+static PyObject *
+_wrap_gnc_html_set_button_cb(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "button_cb", "data", NULL };
+    PyObject *py_button_cb, *py_data;
+    GncHTMLButtonCB button_cb;
+    gpointer data;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"OO:Gnc.Html.set_button_cb", kwlist, &py_button_cb, &py_data))
+        return NULL;
+    if (!PyCallable_Check(py_button_cb)) {
+        fprintf(stderr,"Python object is not callable in set_button_cb\n");
+        PyErr_Print();
+        return NULL;
+    }
+
+    data = (gpointer)(((PyGPointer *)(py_data))->pointer);
+
+    gnc_html_set_button_cb(GNC_HTML(self->obj), GncHTMLButton_python_callback, data);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+

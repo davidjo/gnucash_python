@@ -26,6 +26,8 @@
 
 #include <Python.h>
 
+#include <glib.h>
+
 //extern PyTypeObject PyGKeyFile_Type;
 
 typedef struct {
@@ -33,4 +35,5 @@ typedef struct {
         GKeyFile        *key_file;
 } PyGKeyFile;
 
+extern PyObject *pygkeyfile_new(GKeyFile *keyfile);
 

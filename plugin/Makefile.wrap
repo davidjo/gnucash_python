@@ -1,5 +1,5 @@
 # Set the C flags to include the GTK+ and Python libraries
-CFLAGS = `env PKG_CONFIG_PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/pkgconfig pkg-config --cflags gtk+-2.0 pygtk-2.0` -I/opt/local/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6 -I../../libqof/qof -I../../gnome-utils -I../../.. -I.
+CFLAGS = `env PKG_CONFIG_PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/pkgconfig pkg-config --cflags gtk+-2.0 pygtk-2.0 webkit-1.0` -I/opt/local/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6 -I../../libqof/qof -I../../gnome-utils -I../../html -I../../.. -I.
 LDFLAGS = `env PKG_CONFIG_PATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/pkgconfig pkg-config --libs gtk+-2.0 pygtk-2.0` -L/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib -lpython2.6
 
 gncpluginpage.so: gncpluginpage-methods.o gncpluginpagemodule.o
@@ -31,6 +31,9 @@ gncpluginpage-methods.defs:
 	#/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/defsgen.py -m gncpluginpage -l 
 	#patch -p0 -b <patch-fields.diff
 
+pygkeyfile_new.o: pygkeyfile_new.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
 gncmainwindow-methods.c: gncmainwindow.defs gncmainwindow.override
 	#./runcodegen.py --prefix gncmainwindow 
 	env PYTHONPATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen /opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pygobject-codegen-2.0 --prefix gncmainwindow \
@@ -44,6 +47,51 @@ gncmainwindow-methods.c: gncmainwindow.defs gncmainwindow.override
 gncmainwindow.defs:
 	/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/h2def.py gnc-main-window.h >gncmainwindow.defs
 	#/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/defsgen.py -m gncpluginpage -l 
+	#patch -p0 -b <patch-fields.diff
+
+gnchtmlwebkit.so: gnchtmlwebkit-methods.o gnchtmlwebkitmodule.o
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../html/.libs/libgncmod-html.dylib -shared $^ -o $@
+
+gnchtmlwebkit-methods.c: gnchtmlwebkit.defs gnchtmlwebkit.override
+	#./runcodegen.py --prefix gnchtmlwebkit 
+	env PYTHONPATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen /opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pygobject-codegen-2.0 --prefix gnchtmlwebkit \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gnchtmlwebkit.override \
+	--load-types gnchtmlwebkit-types.py \
+	gnchtmlwebkit.defs > $@
+
+gnchtmlwebkit.defs: gnchtmlwebkit-methods.defs gnchtmlwebkit-new.defs
+	cat gnchtmlwebkit-methods.defs gnchtmlwebkit-new.defs >gnchtmlwebkit.defs
+
+gnchtmlwebkit-methods.defs:
+	/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/h2def.py gnc-html-webkit.h >gnchtmlwebkit-methods.defs
+	#/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/defsgen.py -m gnchtmlwebkit -l 
+	#patch -p0 -b <patch-fields.diff
+
+
+gnchtml.so: gnchtml-methods.o gnchtmlmodule.o
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../html/.libs/libgncmod-html.dylib -shared $^ -o $@
+
+gnchtml-methods.c: gnchtml.defs gnchtml.override
+	#./runcodegen.py --prefix gnchtml 
+	env PYTHONPATH=/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen /opt/local/Library/Frameworks/Python.framework/Versions/2.6/bin/pygobject-codegen-2.0 --prefix gnchtml \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gnchtml.override \
+	--load-types gnchtml-types.py \
+	gnchtml.defs > $@
+
+gnchtml.defs: gnchtml-methods.defs gnchtml-new.defs
+	cat gnchtml-methods.defs gnchtml-new.defs >gnchtml.defs
+
+gnchtml-methods.defs:
+	/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/h2def.py gnc-html.h >gnchtml-methods.defs
+	#/opt/local/Library/Frameworks/Python.framework/Versions/2.6/share/pygobject/2.0/codegen/defsgen.py -m gnchtml -l 
 	#patch -p0 -b <patch-fields.diff
 
 # A rule to clean the generated files

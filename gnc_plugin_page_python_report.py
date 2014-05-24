@@ -4,6 +4,8 @@
 
 import sys
 
+import os
+
 import pdb
 
 import traceback
@@ -13,11 +15,30 @@ import gtk
 
 import gobject
 
+
+#pdb.set_trace()
+
+
+# great - after all this importing webkit locks gnucash up
+# and just importing WebView doesnt help either
+#print >> sys.stderr, "Before webview import"
+#import webkit
+#from webkit import WebView
+# OK have pinned this down to the gobject.threads_init()
+# this is called in the __init__.py for webkit - and this locks up in Python callback from menu
+# the following does not include __init__.py and does not lock up
+sys.path.insert(0,"/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages/webkit")
+webkit = __import__("webkit")
+#print >> sys.stderr, "After webview import"
+
+# try accessing through gnucash type
+#import gnchtmlwebkit
+
 import ctypes
 
 try:
     import _sw_app_utils
-    #from gnucash import *
+    from gnucash import *
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
     #import gtk
     pass
@@ -34,8 +55,6 @@ import gnc_plugin_page
 import gnc_main_window
 
 from pygkeyfile import GKeyFile
-
-
 
 
 
@@ -79,6 +98,11 @@ print >> sys.stderr, gobject.signal_list_names(gncpluginpagetype)
 tmppluginpage = gobject.new(gobject.type_from_name('GncPluginPage'))
 
 
+# define a function equivalent to N_ for internationalization
+def N_(msg):
+    return msg
+
+
 def close_handler (arg):
     print "close handler called"
     pass
@@ -88,35 +112,110 @@ def close_handler (arg):
 # add a Report object for details of each report
 # not sure what to inherit from
 
+# hmm there seems to be a similar report class in scheme
+# which stores details of the report
+
+# for the moment lets use combo class
+# still need to figure about report templates
+# although for python different instances might be how to do it
+# - the class is the template and each instance a specific report
+
+# so report is going to be the base class and the different types
+# become subclasses??
+
+
+class Params_Data(object):
+    def __init__ (self):
+        self.win = None
+        self.db = None
+        self.options = None
+        self.cur_report = None
+
+class OptionsDB(object):
+    def __init__ (self,options):
+        pass
+
 
 class Report(object):
 
     def __init__ (self):
         self.report_name = "python-report"
 
+        self.report_editor_widget = None
+        self.report_type = None
+
+    def get_editor (self):
+        return self.report_editor_widget
+
+    def get_type (self):
+        return self.report_type
+
+
+    def default_params_editor (self, report, options):
+
+       # somewhere a widget is stored for report editors
+       editor = self.get_editor()
+       if editor:
+           editor.present()
+       else:
+
+           default_params_data = Params_Data()
+
+           default_params_data.options = options
+           default_params_data.cur_report = report
+           default_params_data.db = OptionDB(self.default_params_data.options)
+
+           rpttyp = self.get_report_type()
+           tmplt = rpttyp.get_template()
+           title = tmplt.get_template_name()
+
+           default_params_data.win = DialogOption.OptionsDialog_New(title)
+
+           default_params_data.win.build_contents(default_params_data.db)
+           default_params_data.db.clean()
+
+           default_params_data.win.set_apply_cb(default_params_data.win.apply_cb,default_params_data)
+           default_params_data.win.set_help_cb(default_params_data.win.help_cb,default_params_data)
+           default_params_data.win.set_close_cb(default_params_data.win.close_cb,default_params_data)
+
+           default_params_data.win.widget()
+
 
 # hmm - the actual graphics drawer is somehow in html
 # - the Report class seems to be something else
 # not sure whether should still do this
 # for now using separate class to implement drawing
-# maybe we use a Widget here??
-class ReportView(object):
+class HtmlView(object):
 
     def __init__ (self):
-        # in html this create a new scrolled window in gnc_html_init
-        #priv->container = gtk_scrolled_window_new( NULL, NULL );
-        #gtk_scrolled_window_set_policy( GTK_SCROLLED_WINDOW(priv->container),
-        #                                GTK_POLICY_AUTOMATIC,
-        #                                GTK_POLICY_AUTOMATIC );
-        # - lets do this here
-        #self.widget = gtk.ScrolledWindow(hadjustment=None, vadjustment=None)
+
+        # create raw widget here - no use of gnucash html stuff at all
         self.widget = gtk.ScrolledWindow()
         self.widget.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
 
+        # this is pywebkit access - fails - locks up the whole gnucash GUI
+        self.webview = webkit.WebView()
+        self.widget.add(self.webview)
+
+        # use gnucash access to webkit
+        #self.html = gnchtmlwebkit.HtmlWebkit()
+        # note this creates the basic window widget internally
+        # we get the widget via html.get_widget()
+        #self.widget = self.html.get_widget()
+
+
     def show_url (self):
         # try drawing something here
-        button = gtk.Button(label="My Button")
-        self.widget.add(button)
+        #button = gtk.Button(label="My Button")
+        #self.widget.add(button)
+
+        summary = "<html><body>You scored <b>192</b> points.</body></html>";
+
+        #pdb.set_trace()
+
+        self.webview.load_string(summary,"text/html", "UTF-8", "gnucash:report")
+
+        #self.html.show_data(summary,len(summary))
 
 
 # have a hash table for reports - this ensures the
@@ -130,8 +229,15 @@ python_pages = {}
 
 # now create a new plugin for python reports
 
+STOCK_PDF_EXPORT = "gnc-pdf-export"
 
 class GncPluginPagePythonReport(type(tmppluginpage)):
+
+
+    # ah - this is something I think Ive missed - we can name the GType here
+    __gtype_name__ = 'GncPluginPagePythonReport'
+
+    # OK Im now thinking gobject warning messages were happening previously but just did not get the message
 
     __gproperties__ = {
                        'report-id' : (gobject.TYPE_INT,              # type
@@ -143,11 +249,87 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
                                       gobject.PARAM_READWRITE),      # flags
                       }
 
+
+
     def __init__ (self, report_id):
+
+        #pdb.set_trace()
 
         # do we need to init the parent class - GncPluginPage
         # do this or use gobject.GObject.__init__(self)
         gncpluginpage.PluginPage.__init__(self)
+
+        #pdb.set_trace()
+
+        self.report_actions = [ \
+           ("PythonFilePrintAction", gtk.STOCK_PRINT, N_("_Print Report..."), "<control>p",
+            N_("Print the current report"),
+            self.print_cb,
+           ),
+           ("PythonFilePrintPDFAction", STOCK_PDF_EXPORT, N_("Export as P_DF..."), None,
+            N_("Export the current report as a PDF document"),
+            self.exportpdf_cb,
+           ),
+           ("PythonEditCutAction", gtk.STOCK_CUT, N_("Cu_t"), None,
+            N_("Cut the current selection and copy it to clipboard"),
+            None
+           ),
+           ("PythonEditCopyAction", gtk.STOCK_COPY, N_("_Copy"), None,
+            N_("Copy the current selection to clipboard"),
+            self.copy_cb,
+           ),
+           ("PythonEditPasteAction", gtk.STOCK_PASTE, N_("_Paste"), None,
+            N_("Paste the clipboard content at the cursor position"),
+            None
+           ),
+           ("PythonViewRefreshAction", gtk.STOCK_REFRESH, N_("_Refresh"), "<control>r",
+            N_("Refresh this window"),
+            self.reload_cb,
+           ),
+           ("PythonReportSaveAction", gtk.STOCK_SAVE, N_("Save _Report Configuration"), "<control><alt>s",
+            N_("Update the current report's saved configuration. "
+            "The report will be saved in the file ~/.gnucash/saved-reports-2.4. "),
+            self.save_cb,
+           ),
+           ("PythonReportSaveAsAction", gtk.STOCK_SAVE_AS, N_("Save Report Configuration As..."), "<control><alt><shift>s",
+            N_("Add the current report's configuration to the `Saved Report Configurations' menu. "
+            "The report will be saved in the file ~/.gnucash/saved-reports-2.4. "),
+            self.save_as_cb,
+           ),
+           ("PythonReportExportAction", gtk.STOCK_CONVERT, N_("Export _Report"), None,
+            N_("Export HTML-formatted report to file"),
+            self.export_cb,
+           ),
+           ("PythonReportOptionsAction", gtk.STOCK_PROPERTIES, N_("_Report Options"), None,
+            N_("Edit report options"),
+            self.options_cb,
+           ),
+           ("PythonReportBackAction", gtk.STOCK_GO_BACK, N_("Back"), None,
+            N_("Move back one step in the history"),
+            self.back_cb,
+           ),
+           ("PythonReportForwAction", gtk.STOCK_GO_FORWARD, N_("Forward"), None,
+            N_("Move forward one step in the history"),
+            self.forw_cb,
+           ),
+           ("PythonReportReloadAction", gtk.STOCK_REFRESH, N_("Reload"), None,
+            N_("Reload the current page"),
+            self.reload_cb,
+           ),
+           ("PythonReportStopAction", gtk.STOCK_STOP, N_("Stop"), None,
+            N_("Cancel outstanding HTML requests"),
+            self.stop_cb,
+           ),
+           ]
+
+        # note these action names must exist in above list!!
+        self.toolbar_labels = [ \
+           ("PythonFilePrintAction",      N_("Print")),
+           ("PythonReportExportAction",   N_("Export")),
+           ("PythonReportOptionsAction",  N_("Options")),
+           ]
+
+        self.initially_insensitive_actions = []
 
         cmtstr = """
     DEBUG( "report id = %d", reportId );
@@ -252,11 +434,17 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         #gnc_plugin_page_report_setup(self)
         self.report_setup()
 
+        ui_desc_path = os.path.join(os.environ['HOME'],'.gnucash','ui',"gnc-plugin-page-python-report-ui.xml")
+
+        if not os.path.exists(ui_desc_path):
+            print >> sys.stderr, "path does not exist", ui_desc_path
+            pdb.set_trace()
+
         # need to set parent variables - are these properties?? yes!!
         # in the guile version 
         self.set_property("page-name", self.initial_report.report_name)
         self.set_property("page-uri", "default:")
-        self.set_property("ui-description", "gnc-plugin-page-python-report-ui.xml")
+        self.set_property("ui-description", ui_desc_path)
         self.set_property("use-new-window", False)
 
         # not sure what type to convert this to yet
@@ -268,22 +456,19 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         #pdb.set_trace()
         #self.add_book(ctypes.addressof(curbook_ptr.contents))
         self.add_book(curbook.__long__())
-        #pdb.set_trace()
 
-        cmtstr1 = """
-    /* Create menu and toolbar information */
-    action_group =
-        gnc_plugin_page_create_action_group(parent,
-                                            "GncPluginPageReportActions");
-    gtk_action_group_add_actions( action_group,
-                                  report_actions,
-                                  num_report_actions,
-                                  plugin_page );
-    gnc_plugin_update_actions(action_group,
-                              initially_insensitive_actions,
-                              "sensitive", FALSE);
-    gnc_plugin_init_short_names (action_group, toolbar_labels);
-        """
+        # Create menu and toolbar information
+
+        # do we need to keep this around??
+        self.action_group = self.create_action_group("GncPluginPageReportActions")
+
+        self.action_group.add_actions(self.report_actions,user_data=self)
+
+        gncpluginpage.update_actions(self.action_group, self.initially_insensitive_actions, "sensitive", False)
+
+        gncpluginpage.init_short_names (self.action_group, self.toolbar_labels)
+
+        print "actions added"
 
 
     # note we define do_.... functions but call them as set_... or get__...
@@ -331,7 +516,7 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
            # whats the equivalent here?
            # will use variables with approx name in C until figure this further
 
-           self.html = ReportView()
+           self.html = HtmlView()
 
            self.container.add(self.html.widget)
 
@@ -360,6 +545,8 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
            #gnc_html_show_url(priv->html, type, url_location, url_label, 0);
            #g_free(url_location);
            #gnc_window_set_progressbar_window( NULL );
+
+           #pdb.set_trace()
 
            self.html.show_url()
 
@@ -395,7 +582,7 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
            traceback.print_exc()
            pdb.set_trace()
 
-    def save_page (self, arg1):
+    def save_page (self, keyfile, group):
         print >> sys.stderr, "save_page"
         pdb.set_trace()
 
@@ -443,6 +630,38 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         if not self.need_reload:
             return
 
+    # args are (GtkAction *action, GncPluginPageReport *rep
+
+    def forw_cb (self, action, rep):
+        print "forw_cb called"
+    def back_cb (self, action, rep):
+        print "back_cb called"
+    def reload_cb (self, action, rep):
+        print "reload_cb called"
+    def stop_cb (self, action, rep):
+        print "stop_cb called"
+    def save_cb (self, action, rep):
+        print "save_cb called"
+    def save_as_cb (self, action, rep):
+        print "save_as_cb called"
+    def export_cb (self, action, rep):
+        print "export_cb called"
+    def options_cb (self, action, rep):
+        print "options_cb called"
+        result = gnc_report_window_default_params_editor
+        if result == None:
+            #gnc_warning_dialog(GTK_WIDGET(gnc_ui_get_toplevel()), "%s",
+            #                   _("There are no options for this report."));
+            pass
+        else:
+            #gnc_plugin_page_report_add_edited_report(priv, priv->cur_report);
+            pass
+    def print_cb (self, action, rep):
+        print "print_cb called"
+    def exportpdf_cb (self, action, rep):
+        print "exportpdf_cb called"
+    def copy_cb (self, action, rep):
+        print "copy_cb called"
 
 
     # try as module method

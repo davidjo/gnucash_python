@@ -15,6 +15,7 @@ headers
 #include "gtk/gtk.h"
 
 #include "qof.h"
+#include "gnc-plugin.h"
 #include "gnc-plugin-page.h"
 
 #include "pygkeyfile.h"
@@ -25,6 +26,7 @@ modulename gncpluginpage
 import gobject.GObject as PyGObject_Type
 import gtk.UIManager as PyGtkUIManager_Type
 import gtk.Widget as PyGtkWidget_Type
+import gtk.ActionGroup as PyGtkActionGroup_Type
 import pygkeyfile.GKeyFile as PyGKeyFile_Type
 %%
 ignore-glob
@@ -420,14 +422,14 @@ gnc_plugin_page_report_generic_create_widget(GncPluginPage *plugin_page)
 
     fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
 
+    PyGILState_Ensure();
+
     if (PyObject_HasAttrString(pyobj,"create_widget"))
         fprintf(stderr,"pyobj has attr\n");
     else
         fprintf(stderr,"pyobj does not have attr\n");
 
-    PyGILState_Ensure();
-
-    PyRet = PyObject_CallMethod(pyobj,"create_widget",NULL);
+    PyRet = PyObject_CallMethodObjArgs(pyobj,PyString_FromString("create_widget"),NULL);
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in create_widget\n");
@@ -467,7 +469,7 @@ gnc_plugin_page_report_generic_destroy_widget(GncPluginPage *plugin_page)
     pyobj = g_object_get_qdata((GObject *)plugin_page, quark);
 
     PyGILState_Ensure();
-    PyObject_CallMethod(pyobj,"destroy_widget",NULL);
+    PyObject_CallMethodObjArgs(pyobj,PyString_FromString("destroy_widget"),NULL);
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in destroy_widget\n");
@@ -500,14 +502,27 @@ gnc_plugin_page_report_generic_save_page(GncPluginPage *page, GKeyFile *file, co
     quark = g_quark_from_string("PyGObject::wrapper");
     pyobj = g_object_get_qdata((GObject *)page, quark);
 
-    PyGILState_Ensure();
-    PyObject_CallMethod(pyobj,"save_page",NULL);
-    if (PyErr_Occurred())
+    if (pyobj == NULL)
         {
-        fprintf(stderr,"Python Error in save_page\n");
-        PyErr_Print();
+        fprintf(stderr,"Error in save_page - no Python wrapper found\n");
         }
-    PyGILState_Release(gstate);
+    else
+        {
+        PyGILState_Ensure();
+
+        PyObject *pygkeyfile = (PyObject *)PyObject_New(PyGKeyFile,&PyGKeyFile_Type);
+        ((PyGKeyFile *)pygkeyfile)->key_file = file;
+
+        PyObject *pygroup = PyString_FromString(group);
+
+        PyObject_CallMethodObjArgs(pyobj,PyString_FromString("save_page"),pygkeyfile,pygroup,NULL);
+        if (PyErr_Occurred())
+            {
+            fprintf(stderr,"Python Error in save_page\n");
+            PyErr_Print();
+            }
+        PyGILState_Release(gstate);
+        }
 }
 
     /** Create a new page based on the information saved during a
@@ -553,7 +568,7 @@ gnc_plugin_page_report_generic_recreate_page(GtkWidget *window, GKeyFile *file, 
     //PyObject *modobj = PyDict_GetItemString(moddict,"gncpluginpage");
     PyObject *modobj = NULL;
 
-    PyRet = PyObject_CallMethod(modobj,"gnc_plugin_page_recreate_page",NULL);
+    PyRet = PyObject_CallMethodObjArgs(modobj,PyString_FromString("gnc_plugin_page_recreate_page"),NULL);
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in gnc_plugin_page_recreate_page\n");
@@ -595,12 +610,16 @@ gnc_plugin_page_report_generic_window_changed(GncPluginPage *plugin_page, GtkWid
     pyobj = g_object_get_qdata((GObject *)plugin_page, quark);
 
     PyGILState_Ensure();
-    PyObject_CallMethod(pyobj,"window_changed",NULL);
+
+    PyObject *pywindow = pygobject_new((GObject*)window);
+
+    PyObject_CallMethodObjArgs(pyobj,PyString_FromString("window_changed"),pywindow,NULL);
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in window_changed\n");
         PyErr_Print();
         }
+
     PyGILState_Release(gstate);
 }
 
@@ -623,12 +642,16 @@ gnc_plugin_page_report_generic_page_name_changed(GncPluginPage *plugin_page, con
     pyobj = g_object_get_qdata((GObject *)plugin_page, quark);
 
     PyGILState_Ensure();
-    PyObject_CallMethod(pyobj,"page_name_changed",NULL);
+
+    PyObject *pyname = PyString_FromString(name);
+
+    PyObject_CallMethodObjArgs(pyobj,PyString_FromString("page_name_changed"),pyname,NULL);
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in save_page\n");
         PyErr_Print();
         }
+
     PyGILState_Release(gstate);
 }
 
@@ -653,12 +676,16 @@ gnc_plugin_page_report_generic_page_update_edit_menu_actions(GncPluginPage *plug
     pyobj = g_object_get_qdata((GObject *)plugin_page, quark);
 
     PyGILState_Ensure();
-    PyObject_CallMethod(pyobj,"update_edit_menu_actions",NULL);
+
+    PyObject *pybool = PyBool_FromLong(hide);
+
+    PyObject_CallMethodObjArgs(pyobj,PyString_FromString("update_edit_menu_actions"),pybool,NULL);
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in update_edit_menu_actions\n");
         PyErr_Print();
         }
+
     PyGILState_Release(gstate);
 }
 
@@ -685,7 +712,7 @@ gnc_plugin_page_report_generic_page_finish_pending(GncPluginPage *plugin_page)
     pyobj = g_object_get_qdata((GObject *)plugin_page, quark);
 
     PyGILState_Ensure();
-    PyRet = PyObject_CallMethod(pyobj,"finish_pending",NULL);
+    PyRet = PyObject_CallMethodObjArgs(pyobj,PyString_FromString("finish_pending"),NULL);
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in finish_pending\n");
@@ -699,4 +726,135 @@ gnc_plugin_page_report_generic_page_finish_pending(GncPluginPage *plugin_page)
         return 0;
 }
 
+%%
+override gnc_plugin_init_short_names kwargs
+
+static PyObject *
+_wrap_gnc_plugin_init_short_names(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "action_group", "toolbar_labels", NULL };
+    PyObject *action_group_obj;
+    GtkActionGroup *action_group;
+    PyObject *toolbar_labels_obj;
+    action_toolbar_labels *toolbar_labels;
+    int indx_toolbar_labels;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO:GncPluginPage.init_short_names",
+                                     kwlist, &action_group_obj, &toolbar_labels_obj)) {
+        return NULL;
+    }
+
+    if (pygobject_check(action_group_obj, &PyGtkActionGroup_Type)) {
+        action_group = GTK_ACTION_GROUP(pygobject_get(action_group_obj));
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "action_group must be a GtkActionGroup");
+        return NULL;
+    }
+
+    if (!PyList_Check(toolbar_labels_obj)) {
+        PyErr_SetString(PyExc_TypeError, "toolbar_labels argument is not a list");
+        return NULL;
+    }
+    int nitms = PyList_Size(toolbar_labels_obj);
+    toolbar_labels = (action_toolbar_labels *) g_malloc(sizeof(action_toolbar_labels)*(nitms+1));
+    for (indx_toolbar_labels=0; indx_toolbar_labels<nitms; indx_toolbar_labels++)
+        {
+        PyObject *ptupl = PyList_GetItem(toolbar_labels_obj,indx_toolbar_labels);
+        if (!PyTuple_Check(ptupl)) {
+            PyErr_SetString(PyExc_TypeError, "toolbar_labels list item is not a tuple");
+            return NULL;
+        }
+        PyObject *pitm1 = PyTuple_GetItem(ptupl,0);
+        if (!PyString_Check(pitm1)) {
+            PyErr_SetString(PyExc_TypeError, "toolbar_labels list item action_name is not a string");
+            return NULL;
+        }
+        PyObject *pitm2 = PyTuple_GetItem(ptupl,1);
+        if (!PyString_Check(pitm2)) {
+            PyErr_SetString(PyExc_TypeError, "toolbar_labels list item label is not a string");
+            return NULL;
+        }
+        toolbar_labels[indx_toolbar_labels].action_name = PyString_AsString(pitm1);
+        toolbar_labels[indx_toolbar_labels].label = PyString_AsString(pitm2);
+        }
+    toolbar_labels[nitms].action_name = NULL;
+    toolbar_labels[nitms].label = NULL;
+
+    // hmm - this does not check if the action names in toolbar_labels
+    // actually exists in the action_group
+    gnc_plugin_init_short_names (action_group, toolbar_labels);
+
+    // Im assuming gnc_plugin_init_short_names takes a copy of the names
+    g_free(toolbar_labels);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_plugin_update_actions kwargs
+
+static PyObject *
+_wrap_gnc_plugin_update_actions(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "action_group", "action_names", "property_name", "value", NULL };
+    PyObject *action_group_obj;
+    GtkActionGroup *action_group;
+    PyObject *action_names_obj;
+    const gchar **action_names = NULL;
+    gchar *property_name = NULL;
+    PyObject *py_value;
+    int value;
+    int indx_action_names;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OOsi:GncPluginPage.update_actions",
+                                     kwlist, &action_group_obj, &action_names_obj, &property_name, &value)) {
+        return NULL;
+    }
+
+    if (pygobject_check(action_group_obj, &PyGtkActionGroup_Type)) {
+        action_group = GTK_ACTION_GROUP(pygobject_get(action_group_obj));
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "action_group must be a GtkActionGroup");
+        return NULL;
+    }
+
+    if (!PyList_Check(action_names_obj)) {
+        PyErr_SetString(PyExc_TypeError, "action_names argument is not a list");
+        return NULL;
+    }
+    int nitms = PyList_Size(action_names_obj);
+    action_names = (const gchar **) g_malloc(sizeof(gchar*)*(nitms+1));
+    for (indx_action_names=0; indx_action_names<nitms; indx_action_names++)
+        {
+        PyObject *pstr = PyList_GetItem(action_names_obj,indx_action_names);
+        if (!PyString_Check(pstr)) {
+            PyErr_SetString(PyExc_TypeError, "action_names list item is not a string");
+            return NULL;
+        }
+        action_names[indx_action_names] = PyString_AsString(pstr);
+        }
+    action_names[nitms] = NULL;
+
+    //if (!PyString_Check(property_name_obj)) {
+    //    PyErr_SetString(PyExc_TypeError, "property_name is not a string");
+    //    return NULL;
+    //}
+    //property_name = PyString_AsString(property_name_obj);
+
+    //if (PyInt_Check(py_value)) {
+    //    value = PyInt_AsLong(py_value);
+    //}
+
+    // hmm - this does not check if the action names actually exists in the action_group
+    gnc_plugin_update_actions (action_group, action_names, property_name, value);
+
+    // Im assuming gnc_plugin_init_short_names takes a copy of the names
+    g_free(action_names);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
 

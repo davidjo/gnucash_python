@@ -27,13 +27,29 @@
 #include <Python.h>
 #include <structmember.h>
 
-#include <glib.h>
-
 #include "pyglib.h"
 
 //#include "pyglib-private.h"
 
 #include "pygkeyfile.h"
+
+extern PyTypeObject PyGKeyFile_Type;
+
+// we need a new function to wrap existing GKeyFile objects
+// - which are not GObjects!!
+// one issue is how can know if have wrapped same GKeyFile multiple times
+// note we do not need to add this to python module as this function is only
+// called from C
+// note need to watch if calling function has already worried about GIL
+PyObject *pygkeyfile_new(GKeyFile *keyfile)
+{
+    PyGILState_STATE gstate;
+    PyGILState_Ensure();
+    PyGKeyFile *newgkeyfile = (PyGKeyFile *)PyObject_New(PyGKeyFile,&PyGKeyFile_Type);
+    newgkeyfile->key_file = keyfile;
+    PyGILState_Release(gstate);
+    return (PyObject *)newgkeyfile;
+}
 
 static int
 pyg_key_file_init(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
