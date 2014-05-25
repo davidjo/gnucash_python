@@ -125,6 +125,9 @@ libgnc_apputils.gnc_get_current_session.restype = c_void_p
 libgnc_apputils.gnc_unregister_gui_component.argtypes = [ c_int ]
 libgnc_apputils.gnc_unregister_gui_component.restype = None
 
+libgnc_apputils.gnc_unregister_gui_component_by_data.argtypes = [ c_char_p, c_void_p ]
+libgnc_apputils.gnc_unregister_gui_component_by_data.restype = None
+
 
 #pdb.set_trace()
 

@@ -1,4 +1,3 @@
-
 # finally we need to create a new class
 # to run reports in python
 
@@ -56,6 +55,8 @@ import gnc_main_window
 
 from pygkeyfile import GKeyFile
 
+
+import dialog_options
 
 
 libglibnm = ctypes.util.find_library("libglib-2.0")
@@ -124,61 +125,331 @@ def close_handler (arg):
 # become subclasses??
 
 
-class Params_Data(object):
+class ParamsData(object):
     def __init__ (self):
         self.win = None
         self.db = None
         self.options = None
         self.cur_report = None
 
+    def apply_cb (self):
+        print "paramsdata apply_cb called"
+        self.db.commit()
+        self.cur_report.dirty = True
+    def help_cb (self):
+        print "paramsdata help_cb called"
+        parent = self.win.dialog
+        dialog = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,
+                gtk.MESSAGE_INFO,gtk.BUTTONS_OK,N_("Set the report options you want using this dialog."))
+        dialog.connect("response", self.dialog_destroy)
+        dialog.show()
+    def close_cb (self):
+        print "paramsdata close_cb called"
+        self.cur_report.report_editor_widget = None
+        self.win.dialog_destroy()
+        self.db.destroy()
+    def dialog_destroy (self, widget, response):
+        widget.destroy()
+
 class OptionsDB(object):
-    def __init__ (self,options):
+    def __init__ (self,options=None):
+        self.options_hash = {}
+        self.changed_hash = {}
+        self.callback_hash = {}
+        self.section_hash = {}
+    def lookup_name (self, section, option_name):
         pass
+    def option_changed (self, section, option_name):
+        pass
+    def clear_changes (self):
+        pass
+    def register_option (self, new_option):
+        name = new_option.name
+        section = new_option.section
+        self.section_hash[section] = new_option
+        new_option.callback = self.option_changed
+
+class Stylesheet(object):
+    def __init__ (self):
+        pass
+    @classmethod
+    def get_html_style_sheets(cls):
+        return []
+
+# for the moment try making some classes based on the scheme/C
+# these probably will be changed
+
+# python implementation of the scheme options
+# we have a class for each type??
+# trying this first
+
+
+# bugger these options are more complicated
+# looks like they are stored in some form of hash table
+# which also stores the optons-changed callback
+
+# oh great there is a further underlying class for options in scheme
+
+class OptionBase(object):
+
+    def __init__ (self):
+
+         # ;; The category of this option
+         self.section = None
+         self.name = None
+         # ;; The sort-tag determines the relative ordering of options in
+         # ;; this category. It is used by the gui for display.
+         self.sort_tag = None
+         self.type = None
+         self.documentation_string = None 
+         self.getter = None
+         # ;; The setter is responsible for ensuring that the value is valid.
+         self.setter = None
+         self.default_getter = None
+         # ;; Restore form generator should generate an ascii representation
+         # ;; of a function taking one argument. The argument will be an
+         # ;; option. The function should restore the option to the original
+         # ;; value.
+         self.generate_restore_form = None
+         # ;; the scm->kvp and kvp->scm functions should save and load
+         # ;; the option to a kvp.  The arguments to these function will be
+         # ;; a kvp-frame and a base key-path list for this option.
+         self.scm_to_kvp = None
+         self.kvp_to_scm = None
+         # ;; Validation func should accept a value and return (#t value)
+         # ;; on success, and (#f "failure-message") on failure. If #t,
+         # ;; the supplied value will be used by the gui to set the option.
+         self.value_validator = None
+         # ;;; free-form storage depending on type.
+         self.option_data = None
+         # ;; If this is a "multiple choice" type of option,
+         # ;; this should be a vector of the following five functions:
+         # ;;
+         # ;; Function 1: taking no arguments, giving the number of choices
+         # ;;
+         # ;; Function 2: taking one argument, a non-negative integer, that
+         # ;; returns the scheme value (usually a symbol) matching the
+         # ;; nth choice
+         # ;;
+         # ;; Function 3: taking one argument, a non-negative integer,
+         # ;; that returns the string matching the nth choice
+         # ;;
+         # ;; Function 4: takes one argument and returns the description
+         # ;; containing the nth choice
+         # ;;
+         # ;; Function 5: giving a possible value and returning the index
+         # ;; if an option doesn't use these,  this should just be a #f
+         self.option_data_fns = None
+         # ;; This function should return a list of all the strings
+         # ;; in the option other than the section, name, (define
+         # ;; (list-lookup list item) and documentation-string that
+         # ;; might be displayed to the user (and thus should be
+         # ;; translated).
+         self.strings_getter = None
+         # weird this seems to be missing in scheme definition documentation
+         # but does exist in code
+         self.callback = None
+         # ;; This function will be called when the GUI representation
+         # ;; of the option is changed.  This will normally occur before
+         # ;; the setter is called, because setters are only called when
+         # ;; the user selects "OK" or "Apply".  Therefore, this
+         # ;; callback shouldn't be used to make changes to the actual
+         # ;; options database.
+         self.widget_changed_proc = None
+
+         # value storage for the moment
+         self.option_value = None
+
+    # havent seen where this is defined - probably in scheme somewhere
+    def get_value (self):
+        # I think gnucash is storing these in the Kvp database - hence
+        # those functions
+        # punting for the moment
+        # this ought to be calling the setter/getter functions
+        if self.option_value == None:
+            return self.default_value
+        return self.option_value
+
+    # havent seen where this is defined - probably in scheme somewhere
+    def set_value (self, value):
+        # I think gnucash is storing these in the Kvp database - hence
+        # those functions
+        # punting for the moment
+        # this ought to be calling the setter/getter functions
+        # and the validator functions
+        self.option_value = value
+        
+
+# these only fill partial values of above
+# going with a subclass
+
+class StringOption(OptionBase):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None):
+        super(StringOption,self).__init__()
+        self.section = section
+        self.name = optname
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+        self.default_value = default_value
+
+class MultiChoiceOption(OptionBase):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None):
+        super(MultiChoiceOption,self).__init__()
+        self.section = section
+        self.optname = optname
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+        self.default_value = default_value
+
+
+
+class ReportTemplate(object):
+    def __init__ (self):
+        # these are the scheme template data items
+
+        # the following items are defined on report creation
+        # seems to me in python these become arguments to the Report class instantiation
+        # and we define the functions as a subclass 
+        self.version = None
+        self.name = "Welcome to GnuCash"
+        self.report_guid = None
+        self.menu_tip = None
+        self.menu_path = None
+
+        # in scheme this contains a function which is defined in the actual report .scm file
+        self.options_generator = None
+
+        # in scheme this contains a function which is defined in the actual report .scm file
+        self.renderer = None
+
+
+        self.parent_type = None
+
+        self.options_cleanup_cb = None
+        self.options_changed_cb = None
+
+        self.in_menu = None
+        self.menu_name = None
+        self.export_types = None
+        self.export_thunk = None
+
+    def get_template_name (self):
+        return self.name
+
+    def new_options (self):
+        # OK finally figured what this does in scheme
+        # gnc:report-template-new-options gets the generator from self.options_generator
+        # in ReportTemplate
+        # we define these 2 options
+        # it then calls gnc:new-options if the generator is not defined
+        # gnc:new-options creates the hash table(s) databases
+        namer = StringOption("General","Report name", "0a", N_("Enter a descriptive name for this report."), self.name)
+        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Enter a descriptive name for this report."), Stylesheet.get_html_style_sheets())
+        # think Ive got this - the report creates the options_generator function
+        # which defines the reports options
+        if self.options_generator:
+            options = self.options_generator()
+        else:
+            options = OptionsDB()
+        # I think these are added in addition
+        options.register_option(namer)
+        options.register_option(stylesheet)
+
+        return options
 
 
 class Report(object):
 
-    def __init__ (self):
-        self.report_name = "python-report"
+    def __init__ (self, report_name, report_type=None):
+
+        #pdb.set_trace()
+
+        self.report_name = report_name
+
+        # somehow this is where the template is stored - possibly through hash id in scheme
+        if report_type != None:
+            self.report_type = report_type
+        else:
+            self.report_type = ReportTemplate()
 
         self.report_editor_widget = None
-        self.report_type = None
+        self.id = None
+
+        self.options = self.report_type.new_options()
+
+        self.needs_save = False
+        self.dirty = False
+        self.ctext = None
+        self.custom_template = None
 
     def get_editor (self):
         return self.report_editor_widget
 
-    def get_type (self):
+    def get_report_type (self):
         return self.report_type
 
+    def start_editor (self):
 
-    def default_params_editor (self, report, options):
+        if self.report_editor_widget:
+           print type(self.report_editor_widget)
+           self.report_editor_widget.present()
+        else:
+           self.report_editor_widget = self.default_params_editor(self.options)
 
-       # somewhere a widget is stored for report editors
+    # yet I think in python we need to invert the arguments here report first, options next
+    # not clear why the report editor isnt just part of the Report object
+    # - yes Im thinking this makes much more sense -  in which case the report argument becomes self
+
+    def default_params_editor (self, options):
+
        editor = self.get_editor()
        if editor:
            editor.present()
+           # why return NULL here - doesnt make sense
+           # maybe we never get here in real code
+           # this whole test does not make sense
+           # returning this makes the process cyclic
+           # return None
+           return editor
        else:
 
-           default_params_data = Params_Data()
+           # is this just used for the callbacks??
+           # think so
+           default_params_data = ParamsData()
 
-           default_params_data.options = options
-           default_params_data.cur_report = report
-           default_params_data.db = OptionDB(self.default_params_data.options)
+           # so this is really stupid - in scheme self.options are the options in scheme
+           # and GNCOptionDB is a duplicate of those options in C
+           default_params_data.options = self.options
+           default_params_data.cur_report = self
+           default_params_data.db = dialog_options.GNCOptionDB(default_params_data.options)
 
            rpttyp = self.get_report_type()
-           tmplt = rpttyp.get_template()
-           title = tmplt.get_template_name()
+           # this is C code
+           #tmplt = rpttyp.get_template()
+           #title = tmplt.get_template_name()
+           # only need this
+           title = rpttyp.get_template_name()
 
-           default_params_data.win = DialogOption.OptionsDialog_New(title)
+           default_params_data.win = dialog_options.DialogOption.OptionsDialog_New(title)
 
            default_params_data.win.build_contents(default_params_data.db)
            default_params_data.db.clean()
 
-           default_params_data.win.set_apply_cb(default_params_data.win.apply_cb,default_params_data)
-           default_params_data.win.set_help_cb(default_params_data.win.help_cb,default_params_data)
-           default_params_data.win.set_close_cb(default_params_data.win.close_cb,default_params_data)
+           # OK changing this to work in python
+           # we make these functions part of ParamsData then only need to pass the function!!
+           #default_params_data.win.set_apply_cb(default_params_data.apply_cb,default_params_data)
+           #default_params_data.win.set_help_cb(default_params_data.help_cb,default_params_data)
+           #default_params_data.win.set_close_cb(default_params_data.close_cb,default_params_data)
+           # oh maybe its even easier in python - we just directly set the attribute name!!
+           default_params_data.win.apply_cb = default_params_data.apply_cb
+           default_params_data.win.help_cb = default_params_data.help_cb
+           default_params_data.win.close_cb = default_params_data.close_cb
 
-           default_params_data.win.widget()
+           # could use
+           #return default_params_data.win.dialog
+           return default_params_data.win.widget()
 
 
 # hmm - the actual graphics drawer is somehow in html
@@ -410,7 +681,7 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
 
         # need to add report-id as a property??
 
-        print "junk"
+        print "junk2"
 
 
     def constructor(self, report_Id):
@@ -430,7 +701,7 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         # this sets the property in gnc_plugin_page_report
         self.set_property("report-id",report_id)
 
-        # do some setup - for gnc_plugin_page_report lots of guile stuff
+        # do some setup - for gnc_plugin_page_report lots of scheme stuff
         #gnc_plugin_page_report_setup(self)
         self.report_setup()
 
@@ -441,7 +712,7 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
             pdb.set_trace()
 
         # need to set parent variables - are these properties?? yes!!
-        # in the guile version 
+        # in the scheme version 
         self.set_property("page-name", self.initial_report.report_name)
         self.set_property("page-uri", "default:")
         self.set_property("ui-description", ui_desc_path)
@@ -488,9 +759,11 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
 
     def report_setup(self):
 
+        #pdb.set_trace()
+
         self.cur_report = None
         self.initial_report = None
-        self.edited_reports = []
+	self.edited_reports = []
         self.name_change_cb_id = None
 
         report_id = self.get_property('report-id')
@@ -498,7 +771,12 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         # need to do something like this
         #if report_id in self.report_dict:
 
-        self.initial_report = Report()
+        self.initial_report = Report("Python Report")
+
+        # for the moment lets do this
+        #self.cur_report = self.initial_report
+        # or should it be
+        self.cur_report = Report("Python Report")
 
 
     def create_widget (self):
@@ -630,7 +908,8 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         if not self.need_reload:
             return
 
-    # args are (GtkAction *action, GncPluginPageReport *rep
+    # args are GtkAction *action, GncPluginPageReport *rep
+    # our case rep is currently this class ie GncPluginPagePythonReport
 
     def forw_cb (self, action, rep):
         print "forw_cb called"
@@ -648,13 +927,20 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         print "export_cb called"
     def options_cb (self, action, rep):
         print "options_cb called"
-        result = gnc_report_window_default_params_editor
+        # not sure what class partitioning should be here yet
+        # we have instance of this class for each report
+        # ah - but we need separate instance for each variation of this report with
+        # different options
+        result = self.cur_report.start_editor()
         if result == None:
             #gnc_warning_dialog(GTK_WIDGET(gnc_ui_get_toplevel()), "%s",
             #                   _("There are no options for this report."));
-            pass
+            #parent = gnc_gui_get_toplevel()
+            parent = None
+            gtk.MessageDialog(parent,gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                    gtk.MESSAGE_WARNING,gtk.BUTTONS_CLOSE,N_("There are no options for this report."))
         else:
-            #gnc_plugin_page_report_add_edited_report(priv, priv->cur_report);
+            self.add_edited_report(self.cur_report)
             pass
     def print_cb (self, action, rep):
         print "print_cb called"
@@ -662,6 +948,10 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
         print "exportpdf_cb called"
     def copy_cb (self, action, rep):
         print "copy_cb called"
+
+
+    def add_edited_report (self, cur_report):
+        self.edited_reports.append(cur_report)
 
 
     # try as module method
@@ -710,6 +1000,7 @@ def OpenReport (report_id, window):
         print "junk1"
 
     except Exception, errexc:
+        traceback.print_exc()
         print >> sys.stderr, "OpenReport error:",str(errexc)
         pdb.set_trace()
 

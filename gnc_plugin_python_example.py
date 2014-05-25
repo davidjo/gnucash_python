@@ -118,7 +118,7 @@ class MyPlugin(object):
                 #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(42,window)
                 gnc_plugin_page_python_report.OpenReport(42,window)
             except Exception, errexc:
-                print >> sys.stderr, "error in callback",str(errexc)
+                print >> sys.stderr, "error in plugin_action callback",str(errexc)
             print  "junk"
 
 # gdb call back for report
