@@ -52,7 +52,8 @@ static void gnc_plugin_python_generic_cmd_callback (GtkAction *action, GncMainWi
 #define PLUGIN_ACTIONS_NAME "gnc-plugin-python-generic-actions"
 #define PLUGIN_UI_FILENAME  "/Users/djosg/.gnucash/ui/gnc-plugin-python-generic-ui.xml"
 
-static GtkActionEntry gnc_plugin_actions[100];
+#define MAX_PLUGIN_ACTIONS 100
+static GtkActionEntry gnc_plugin_actions[MAX_PLUGIN_ACTIONS];
 static guint gnc_plugin_n_actions = 0;
 
 // static GtkActionEntry gnc_plugin_actions [] = {
@@ -69,21 +70,62 @@ struct _plugin_functions *get_plugin_callbacks(void)
     return &(global_plugin_functions);
 }
 
+void
+gnc_plugin_python_generic_add_to_window (GncPlugin *plugin,
+                                         GncMainWindow *window,
+                                         GQuark type)
+{
+    if (PyObject_HasAttrString(pPluginObject,"add_to_window"))
+        {
+        PyObject *py_window = pygobject_new((GObject *)window);
+        PyObject *py_quark = PyInt_FromLong(type);
+        PyObject_CallMethodObjArgs(pPluginObject,PyString_FromString("add_to_window"),py_window,py_quark,NULL);
+        }
+}
+
+void
+gnc_plugin_python_generic_remove_from_window (GncPlugin *plugin,
+                                              GncMainWindow *window,
+                                              GQuark type)
+{
+    if (PyObject_HasAttrString(pPluginObject,"remove_from_window"))
+        {
+        PyObject *py_window = pygobject_new((GObject*)window);
+        PyObject *py_quark = PyInt_FromLong(type);
+        PyObject_CallMethodObjArgs(pPluginObject,PyString_FromString("remove_from_window"),py_window,py_quark,NULL);
+        }
+}
+
+
 void python_plugin_class_init(GObjectClass *object_class, GncPluginClass *plugin_class)
 {
     PyObject *pDictRet;
 
     object_class->finalize = python_plugin_finalize;
 
+    // these callbacks will also allow updates to main window GUI
+    if (PyObject_HasAttrString(pPluginObject,"add_to_window"))
+        {
+        plugin_class->add_to_window = gnc_plugin_python_generic_add_to_window;
+        }
+
+    if (PyObject_HasAttrString(pPluginObject,"remove_from_window"))
+        {
+        plugin_class->remove_from_window = gnc_plugin_python_generic_remove_from_window;
+        }
+
+
     if (global_plugin_functions.python_callback_class_init != NULL)
         {
         // probably should pass the GncPluginpythongeneric  here
         pDictRet = PyObject_CallMethod(pPluginObject,"plugin_class_init",NULL);
 
-        if (PyDict_Check(pDictRet))
+        // return a null dict to do no updates
+        if (PyDict_Check(pDictRet) && PyDict_Size(pDictRet) > 0)
             {
             int itm;
             char *pstr1,*pstr2,*pstr3,*pstr4,*pstr5;
+
             PyObject *pActionsName = PyDict_GetItemString(pDictRet,"actions_name");
             char *pactionsname = PyString_AsString(pActionsName);
 
@@ -91,57 +133,65 @@ void python_plugin_class_init(GObjectClass *object_class, GncPluginClass *plugin
 
             gnc_plugin_n_actions = PyList_Size(pActionList);
 
-            // NOTE the test for Py_None if string object is None
-            // actually maybe should make ""  the NULL string??
-
-            for (itm = 0; itm < gnc_plugin_n_actions; itm++)
+            // until we do proper mallocing
+            if (gnc_plugin_n_actions > MAX_PLUGIN_ACTIONS)
                 {
-                GtkActionEntry *tmpgtkact = &gnc_plugin_actions[itm];
-                PyObject *ptupl = PyList_GetItem(pActionList,itm);
-                PyObject *pitm1 = PyTuple_GetItem(ptupl,0);
-                if (pitm1 != Py_None)
-                    pstr1 = PyString_AsString(pitm1);
-                else
-                    pstr1 = NULL;
-                PyObject *pitm2 = PyTuple_GetItem(ptupl,1);
-                if (pitm2 != Py_None)
-                    pstr2 = PyString_AsString(pitm2);
-                else
-                    pstr2 = NULL;
-                PyObject *pitm3 = PyTuple_GetItem(ptupl,2);
-                if (pitm3 != Py_None)
-                    pstr3 = PyString_AsString(pitm3);
-                else
-                    pstr3 = NULL;
-                PyObject *pitm4 = PyTuple_GetItem(ptupl,3);
-                if (pitm4 != Py_None)
-                    pstr4 = PyString_AsString(pitm4);
-                else
-                    pstr4 = NULL;
-                PyObject *pitm5 = PyTuple_GetItem(ptupl,4);
-                if (pitm5 != Py_None)
-                    pstr5 = PyString_AsString(pitm5);
-                else
-                    pstr5 = NULL;
-                //PyObject *pitm6 = PyTuple_GetItem(ptupl,5);
-                //void *pstr6 = PyString_AsString(pitm6);
-                tmpgtkact->name = (gchar *)pstr1;
-                tmpgtkact->stock_id = (gchar *)pstr2;
-                tmpgtkact->label = N_(pstr3);
-                tmpgtkact->accelerator = (gchar *)pstr4;
-                tmpgtkact->tooltip = N_(pstr5);
-                tmpgtkact->callback = G_CALLBACK(gnc_plugin_python_generic_cmd_callback);
+                fprintf(stderr,"Error in python_plugin_class_init - too many actions!!\n");
                 }
+            else
+                {
+                // NOTE the test for Py_None if string object is None
+                // actually maybe should make ""  the NULL string??
 
-            PyObject *pUiFilename = PyDict_GetItemString(pDictRet,"ui_filename");
-            char *puifilename = PyString_AsString(pUiFilename);
+                for (itm = 0; itm < gnc_plugin_n_actions; itm++)
+                    {
+                    GtkActionEntry *tmpgtkact = &gnc_plugin_actions[itm];
+                    PyObject *ptupl = PyList_GetItem(pActionList,itm);
+                    PyObject *pitm1 = PyTuple_GetItem(ptupl,0);
+                    if (pitm1 != Py_None)
+                        pstr1 = PyString_AsString(pitm1);
+                    else
+                        pstr1 = NULL;
+                    PyObject *pitm2 = PyTuple_GetItem(ptupl,1);
+                    if (pitm2 != Py_None)
+                        pstr2 = PyString_AsString(pitm2);
+                    else
+                        pstr2 = NULL;
+                    PyObject *pitm3 = PyTuple_GetItem(ptupl,2);
+                    if (pitm3 != Py_None)
+                        pstr3 = PyString_AsString(pitm3);
+                    else
+                        pstr3 = NULL;
+                    PyObject *pitm4 = PyTuple_GetItem(ptupl,3);
+                    if (pitm4 != Py_None)
+                        pstr4 = PyString_AsString(pitm4);
+                    else
+                        pstr4 = NULL;
+                    PyObject *pitm5 = PyTuple_GetItem(ptupl,4);
+                    if (pitm5 != Py_None)
+                        pstr5 = PyString_AsString(pitm5);
+                    else
+                        pstr5 = NULL;
+                    //PyObject *pitm6 = PyTuple_GetItem(ptupl,5);
+                    //void *pstr6 = PyString_AsString(pitm6);
+                    tmpgtkact->name = (gchar *)pstr1;
+                    tmpgtkact->stock_id = (gchar *)pstr2;
+                    tmpgtkact->label = N_(pstr3);
+                    tmpgtkact->accelerator = (gchar *)pstr4;
+                    tmpgtkact->tooltip = N_(pstr5);
+                    tmpgtkact->callback = G_CALLBACK(gnc_plugin_python_generic_cmd_callback);
+                    }
 
-            /* widget addition/removal */
-            plugin_class->actions_name       = pactionsname;
-            plugin_class->actions            = gnc_plugin_actions;
-            plugin_class->n_actions          = gnc_plugin_n_actions;
-            plugin_class->ui_filename        = puifilename;
+                PyObject *pUiFilename = PyDict_GetItemString(pDictRet,"ui_filename");
+                char *puifilename = PyString_AsString(pUiFilename);
 
+                /* widget addition/removal */
+                plugin_class->actions_name       = pactionsname;
+                plugin_class->actions            = gnc_plugin_actions;
+                plugin_class->n_actions          = gnc_plugin_n_actions;
+                plugin_class->ui_filename        = puifilename;
+
+                }
             }
         }
 
@@ -157,8 +207,12 @@ void python_plugin_class_init(GObjectClass *object_class, GncPluginClass *plugin
 
 void python_plugin_init(GncPluginpythongeneric *plugin)
 {
+    // not sure if really need GIL here - hasnt caused problems
+    // maybe because before main usage of gtk threads
+    PyGILState_STATE gstate;
     if (global_plugin_functions.python_callback_init != NULL)
         {
+        PyGILState_Ensure();
         // probably should pass the GncPluginpythongeneric  here
         PyObject_CallMethod(pPluginObject,"plugin_init",NULL);
         if (PyErr_Occurred())
@@ -166,6 +220,7 @@ void python_plugin_init(GncPluginpythongeneric *plugin)
             fprintf(stderr,"Python Error in python_plugin_init\n");
             PyErr_Print();
             }
+        PyGILState_Release(gstate);
         }
 }
 
