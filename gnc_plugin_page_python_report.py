@@ -317,20 +317,6 @@ class StringOption(OptionBase):
         self.documentation_string = tool_tip # AKA documentation_string
         self.default_value = default_value
 
-    def set_widget (self, page_box, name, documentation):
-        colon_name = name + ":"
-        label = gkt.Label(colon_name)
-        label.set_alignment(1.0, 0.5)
-
-        enclosing = gtk.HBox(homogeneous=False, spacing=0)
-        value = gtk.Entry()
-
-        option.widget = value
-        option.set_ui_value(False)
-
-        value.connect("changed",option.changed_widget_cb)
-
-
 class MultiChoiceOption(OptionBase):
 
     def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None):
