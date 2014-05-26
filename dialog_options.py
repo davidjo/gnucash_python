@@ -6,6 +6,10 @@ import os
 
 import sys
 
+import bisect
+
+from operator import attrgetter
+
 import gobject
 
 import gtk
@@ -38,6 +42,9 @@ class GNCOption(object):
         self.widget = widget
         self.odb = odb
 
+        # we may defined a widget_changed_proc
+        #self.widget_changed_proc = None
+
     def get_ui_value (self):
         # OK this is really stupid - we have multiple redirection here
         # we call a function in the GNCOptionDB class
@@ -48,25 +55,28 @@ class GNCOption(object):
 
     def set_ui_value (self, use_default):
         # this is weird - wheres the value 
+        # not needed - this sets the ui widget value to the option value!!
         #if self.odb.get_ui_value == None:
         #    return
         #self.odb.set_ui_value(self,use_default)
         # for the moment punt just call the internal function directly
         self.set_ui_value_internal(use_default)
 
-    def ui_get_option (self, option_name):
+    def ui_get_option (self, option_type_name):
+        # this should really ui_get_option_type
         global optionTable
-        if option_name in optionTable:
-            return optionTable[option_name]
+        if option_type_name in optionTable:
+            return optionTable[option_type_name]
         else:
-            #PERR("Option lookup for type '%s' failed!", option_name);
+            #PERR("Option lookup for type '%s' failed!", option_type_name);
             pdb.set_trace()
             return None
 
     def set_ui_value_internal (self, use_default):
 
-        # ah - now see what this is doing - we are copying the value
-        # from scheme into the optionTable hash version
+        # this uses the option type (string, boolean)
+        # to set the scheme value into the widget for the option
+        pdb.set_trace()
 
         widget = self.widget
         if widget == None:
@@ -93,8 +103,8 @@ class GNCOption(object):
         widget = self.widget
         if widget == None:
             return None
-        type = self.guile_option.type
-        option_def = self.ui_get_option(type)
+        option_type = self.guile_option.type
+        option_def = self.ui_get_option(option_type)
         if option_def:
             result = option_def.get_value(self,widget)
         else:
@@ -110,33 +120,58 @@ class GNCOption(object):
             return None
         widget.set_sensitive(selectable)
 
+    def call_widget_changed_proc (self):
+        if hasattr(self,"widget_changed_proc"):
+            value = self.get_ui_value()
+            if value != None:
+                self.widget_changed_proc(value)
+
+    def changed_widget_cb (self, *args):
+        print "changed_widget_cb", args
+        #option.set_changed(True)
+        #option.call_widget_changed_proc()
+        #widget.changed_internal(True)
+
     def set_ui_widget (self, page_box):
+
+        packed = False
+
+        guile_option = self.guile_option
 
         #ENTER("option %p(%s), box %p",
         #      option, gnc_option_name(option), page_box);
-        if self.type == None:
+        if guile_option.type == None:
             #LEAVE("bad type");
             return
 
-        raw_name = self.name
+        raw_name = guile_option.name
         if raw_name != None and raw_name != "":
             name = N_(raw_name)
         else:
             name = None
 
-        raw_documention = self.documentation
+        raw_documentation = guile_option.documentation_string
         if raw_documentation != None and raw_documentation != "":
             documentation = N_(raw_documentation)
         else:
             documentation = None
 
-        option_def = self.guile_option.ui_get_option(type)
+        # we store the option type (string, boolean etc) in optionTable
+        # and we lookup the function to use by option type
+        option_def = self.ui_get_option(guile_option.type)
 
         value = None
         enclosing = None
         packed = None
+
+        # so in python I think we just set the function by the various option classes
+        # the scheme solution defines functions by type - with python would have
+        # functions by option instance - but cannot figure if would ever want to be able
+        # to change function definitions in middle of report globally by type
+        # interesting - we do need to add a first argument for this indirect call
+        # is it because we used the class definition of the function??
         if option_def and option_def.set_widget != None:
-            (value, enclosing, packed) = option_def.set_widget(page_box, name, documentation)
+            (value, enclosing, packed) = option_def.set_widget(self,page_box, name, documentation)
         else:
             #PERR("Unknown option type. Ignoring option \"%s\".\n", name);
             pdb.set_trace()
@@ -146,7 +181,7 @@ class GNCOption(object):
             eventbox = gtk.EventBox()
 
             eventbox.add(enclosing)
-            pagebox.pack_start(eventbox, expand=False, fill=False, padding=0)
+            page_box.pack_start(eventbox, expand=False, fill=False, padding=0)
 
             eventbox.set_tooltip_text(documentation)
 
@@ -161,11 +196,35 @@ class GNCOption(object):
         pass
     def get_ui_value_boolean (self, widget):
         pass
-    def set_ui_widget_string (self, page_box, name, documentation, enclosing, packed):
-        # we need to return enclosing and packed
-        pass
+
+    def set_ui_widget_string (self, page_box, name, documentation):
+
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=0)
+        value = gtk.Entry()
+
+        self.widget = value
+        self.set_ui_value(False)
+
+        value.connect("changed",self.changed_widget_cb)
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+        enclosing.show_all()
+
+        # need to figure what goes on with padding - is it pass through??
+        return (value, enclosing, None)
+
     def set_ui_value_string (self, use_default, widget, value):
-        pass
+        if isinstance(value,str):
+            # we get conversion to utf8 here - ignoring for the moment
+            widget.set_text(value)
+            return False
+        else:
+            return True
     def get_ui_value_string (self, widget):
         pass
     def set_ui_widget_text (self, page_box,  name, documentation, enclosing, packed):
@@ -223,6 +282,7 @@ class GNCOption(object):
 
 # not sure where to define this yet
 # either as global for this module or as class variable in GNCOption??
+# the following is confusing as option_name actually really should be option_type_name
 optionTable = {}
 
 class GNCOptionDef(object):
@@ -259,6 +319,7 @@ for optobj in options:
     optionTable[optobj.option_name] = optobj
 
 
+last_db_handle = 0
 option_dbs = {}
 
 
@@ -270,9 +331,13 @@ class GNCSection(object):
 
 class GNCOptionDB(object):
     def __init__ (self, guile_options):
+        global option_dbs
+        global last_db_handle
         # copy of guile options
         self.guile_options = guile_options
         self.option_sections = []
+        self.option_sections_names = []
+        self.option_sections_dict = {}
         self.options_dirty = False
         self.handle = None
         # we have to rename these in python
@@ -283,33 +348,48 @@ class GNCOptionDB(object):
         self.set_ui_value_cb = None
         self.set_selectable_cb = None
 
+        #
+        while True:
+            self.handle = last_db_handle
+            if not self.handle in option_dbs:
+                break
+            last_db_handle += 1
+
+        option_dbs[self.handle] = self
+
         # this is in gnc_option_db_init
         self.send_options()
 
     def send_options (self):
         # this should copy options from guile_options into the GNCOptionDB
-        #pdb.set_trace()
-        #for option in self.guile_options:
-        #    self.register_option_db(option)
-        pass
+        for option in self.guile_options.options_for_each():
+            self.register_option_db(option)
+
+        # in python changing so we now sort after inserting
+        # option_sections is simply a list of names which we lookup in the dict
+        self.option_sections_names = sorted(self.option_sections_dict.keys())
+        self.option_sections = [ self.option_sections_dict[x] for x in self.option_sections_names ]
+        for section in self.option_sections:
+            secopts = self.option_sections_dict[section.section_name].options
+            secopts.sort(key=attrgetter('guile_option.sort_tag'))
+        print "junk"
 
     def register_option_db (self, guile_option):
-        odb = option_dbs[handle]
+        odb = option_dbs[self.handle]
+        odb.options_dirty = True
         option = GNCOption(guile_option,False,None,odb)
-        section_name = guile_option.section()
-        section = GNCSection(section_name)
+        section_name = guile_option.section
         # hmm there is a list of sections (sorted) which is searched for the section name
         # doing it the C/scheme way is complicated - it stores the section structure
         # and searches by name
-        try:
-            old = self.option_sections.index(section_name)
-            section = old
-        except ValueError:
-            self.option_sections.append(section_name)
-            self.option_sections = sorted(self.option_sections)
+        # going to have a name list and sections list
+        # probably should use a sorted dict
+        # of course this fails if called outside send_options
+        if section_name in self.option_sections_dict:
+            self.option_sections_dict[section_name].options.append(option)
+        else:
+            self.option_sections_dict[section_name] = GNCSection(section_name)
 
-        section.options.append(option)
-        self.option = sorted(self.options)
 
     def set_ui_callbacks (self, get_ui_value, set_ui_value, set_selectable):
         self.get_ui_value_cb = get_ui_value
@@ -381,7 +461,10 @@ class GNCBuilder(gtk.Builder):
         return result
 
 
+PAGE_INDEX = 0
 PAGE_NAME = 1
+
+MAX_TAB_COUNT = 4
 
 class DialogOption(object):
 
@@ -393,7 +476,7 @@ class DialogOption(object):
 
         # these are defined in gnc_option_win
 
-        # these are all gkt.Widget type
+        # these are all gtk.Widget type
         self.dialog = None
         self.notebook = None
         self.page_list_view = None
@@ -545,6 +628,11 @@ class DialogOption(object):
     #    self.close_cb_data = data
 
 
+    def reset_cb (self, *args):
+        print "reset cb", args
+        # args are clicked widget then dialog_option
+
+
     def add_option (self, option_box, option):
         option.set_ui_widget(option_box)
 
@@ -587,9 +675,48 @@ class DialogOption(object):
         options_box.set_border_width(0)
         page_content_box.pack_start(options_box, expand=True, fill=True, padding=0)
 
-        for option in section.options():
+        for option in section.options:
             self.add_option(options_box, option)
 
+        buttonbox = gtk.HButtonBox()
+        buttonbox.set_layout(gtk.BUTTONBOX_EDGE)
+        buttonbox.set_border_width(5)
+        page_content_box.pack_end(buttonbox, expand=False, fill=False, padding=0)
+
+        reset_button = gtk.Button(label=N_("Reset defaults"))
+        reset_button.set_tooltip_text(N_("Reset all values to their defaults."))
+
+        reset_button.connect("clicked",self.reset_cb, self)
+        reset_button.set_data("section", section)
+        buttonbox.pack_end(reset_button, expand=False, fill=False, padding=0)
+        page_content_box.show_all()
+        self.notebook.append_page(page_content_box, page_label)
+
+        page_count = self.notebook.page_num(page_content_box)
+
+        if self.page_list_view:
+
+            view = self.page_list_view
+            list = view.get_model()
+
+            #PINFO("Page name is %s and page_count is %d", name, page_count);
+            list.append((page_count, N_(name)))
+
+            if page_count > MAX_TAB_COUNT:
+               self.page_list.show()
+               self.notebook.set_show_tabs(False)
+               self.notebook.set_show_border(False)
+            else:
+               self.page_list.hide()
+
+            if advanced:
+
+               notebook_page = self.notebook.get_nth_page(page_count)
+
+               self.notebook_page.set_data("listitem", None)
+               self.notebook_page.set_data("advanced", advanced)
+
+        return page_count
 
 
     def build_contents (self, odb):
@@ -623,7 +750,7 @@ class DialogOption(object):
 
         for section in self.option_db.option_sections:
             for option in section.options:
-                if option.widget_changed_proc:
+                if hasattr(option,"widget_changed_proc"):
                     option.widget_changed_proc(section)
 
         self.notebook.popup_enable()

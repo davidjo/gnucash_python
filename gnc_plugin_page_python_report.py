@@ -152,22 +152,35 @@ class ParamsData(object):
         widget.destroy()
 
 class OptionsDB(object):
+    # note this is a scheme database in normal gnucash
     def __init__ (self,options=None):
-        self.options_hash = {}
+        self.option_hash = {}
         self.changed_hash = {}
         self.callback_hash = {}
-        self.section_hash = {}
     def lookup_name (self, section, option_name):
-        pass
+        section_hash = self.option_hash[section]
+        option = self.section_hash[option_name]
+        # apparently options can be renamed in scheme
     def option_changed (self, section, option_name):
         pass
     def clear_changes (self):
         pass
+    def register_callback (self, section, name, callback):
+        pass
     def register_option (self, new_option):
         name = new_option.name
-        section = new_option.section
-        self.section_hash[section] = new_option
+	section = new_option.section
+        if section in self.option_hash:
+            self.option_hash[section][name] = new_option
+        else:
+            self.option_hash[section]= {}
+            self.option_hash[section][name] = new_option
         new_option.callback = self.option_changed
+    def options_for_each (self):
+        for section_hash in self.option_hash:
+            option_hash = self.option_hash[section_hash]
+            for name in option_hash:
+                yield option_hash[name]
 
 class Stylesheet(object):
     def __init__ (self):
@@ -260,6 +273,16 @@ class OptionBase(object):
          # value storage for the moment
          self.option_value = None
 
+         # make the getters/setters default to the functions defined in base?
+         # not seen where actually define the getters/setters
+         self.getter = self.get_value
+         self.default_getter = self.get_default_value
+         self.setter = self.set_value
+
+    # havent seen where this is defined - probably in scheme somewhere
+    def get_default_value (self):
+        return self.default_value
+
     # havent seen where this is defined - probably in scheme somewhere
     def get_value (self):
         # I think gnucash is storing these in the Kvp database - hence
@@ -289,16 +312,32 @@ class StringOption(OptionBase):
         super(StringOption,self).__init__()
         self.section = section
         self.name = optname
+        self.type = 'string'
         self.sort_tag = sort_tag
         self.documentation_string = tool_tip # AKA documentation_string
         self.default_value = default_value
+
+    def set_widget (self, page_box, name, documentation):
+        colon_name = name + ":"
+        label = gkt.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=0)
+        value = gtk.Entry()
+
+        option.widget = value
+        option.set_ui_value(False)
+
+        value.connect("changed",option.changed_widget_cb)
+
 
 class MultiChoiceOption(OptionBase):
 
     def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None):
         super(MultiChoiceOption,self).__init__()
         self.section = section
-        self.optname = optname
+        self.name = optname
+        self.type = 'multichoice'
         self.sort_tag = sort_tag
         self.documentation_string = tool_tip # AKA documentation_string
         self.default_value = default_value
@@ -346,7 +385,7 @@ class ReportTemplate(object):
         # it then calls gnc:new-options if the generator is not defined
         # gnc:new-options creates the hash table(s) databases
         namer = StringOption("General","Report name", "0a", N_("Enter a descriptive name for this report."), self.name)
-        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Enter a descriptive name for this report."), Stylesheet.get_html_style_sheets())
+        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), Stylesheet.get_html_style_sheets())
         # think Ive got this - the report creates the options_generator function
         # which defines the reports options
         if self.options_generator:
