@@ -444,8 +444,9 @@ class Report(object):
            # think so
            default_params_data = ParamsData()
 
-           # so this is really stupid - in scheme self.options are the options in scheme
-           # and GNCOptionDB is a duplicate of those options in C
+           # in scheme self.options are the options in scheme which is where the option value is stored
+           # GNCOptionDB essentially wraps those options in code for interacting with those options
+           # using gtk
            default_params_data.options = self.options
            default_params_data.cur_report = self
            default_params_data.db = dialog_options.GNCOptionDB(default_params_data.options)
@@ -454,7 +455,7 @@ class Report(object):
            # this is C code
            #tmplt = rpttyp.get_template()
            #title = tmplt.get_template_name()
-           # only need this
+           # so for in python only need this
            title = rpttyp.get_template_name()
 
            default_params_data.win = dialog_options.DialogOption.OptionsDialog_New(title)
@@ -887,7 +888,7 @@ class GncPluginPagePythonReport(type(tmppluginpage)):
 
     def save_page (self, keyfile, group):
         print >> sys.stderr, "save_page"
-        pdb.set_trace()
+        #pdb.set_trace()
 
     @classmethod
     # this ought to be a class method but still not sorted this

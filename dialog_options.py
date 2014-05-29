@@ -22,6 +22,10 @@ import ctypes
 
 import pdb
 
+from gnucash_log import PERR
+
+log_module = "gnc.gui.python"
+
 
 # junky internationalization function
 def N_(msg):
@@ -36,19 +40,24 @@ def N_(msg):
 
 class GNCOption(object):
 
+    # ah - the primary purpose of this class is to provide the functionality
+    # to interact with an options value through the gtk GUI
+
     def __init__ (self, guile_option, changed=False, widget=None, odb=None):
         self.guile_option = guile_option
         self.changed = changed
         self.widget = widget
         self.odb = odb
 
-        # we may defined a widget_changed_proc
+        # we may define a widget_changed_proc
         #self.widget_changed_proc = None
 
     def get_ui_value (self):
         # OK this is really stupid - we have multiple redirection here
         # we call a function in the GNCOptionDB class
         # which by default is set to the internal function in this class
+        # note that this is for getting the option value from the GUI
+        # and storing it in the basic option
         #return self.odb.get_ui_value(self)
         # for the moment punt just call the internal function directly
         return self.get_ui_value_internal()
@@ -63,20 +72,26 @@ class GNCOption(object):
         self.set_ui_value_internal(use_default)
 
     def ui_get_option (self, option_type_name):
-        # this should really ui_get_option_type
+        # this should really be ui_get_option_type
         global optionTable
         if option_type_name in optionTable:
             return optionTable[option_type_name]
         else:
-            #PERR("Option lookup for type '%s' failed!", option_type_name);
+            PERR(log_module,"Option lookup for type '%s' failed!"%option_type_name)
             pdb.set_trace()
+            return None
+
+    def value_validator (self):
+        if hasattr(self.guile_option, 'value_validator'):
+            return self.guile_option.value_validator
+        else:
             return None
 
     def set_ui_value_internal (self, use_default):
 
         # this uses the option type (string, boolean)
         # to set the scheme value into the widget for the option
-        pdb.set_trace()
+        #pdb.set_trace()
 
         widget = self.widget
         if widget == None:
@@ -90,11 +105,11 @@ class GNCOption(object):
         if option_def:
             bad_value = option_def.set_value(self,use_default,widget,value)
             if bad_value:
-                #PERR("bad value\n");
+                PERR(log_module,"bad value")
                 pdb.set_trace()
                 pass
         else:
-            #PERR("Unknown type. Ignoring.\n");
+            PERR(log_module,"Unknown type. Ignoring.")
             pdb.set_trace()
             pass
 
@@ -108,7 +123,7 @@ class GNCOption(object):
         if option_def:
             result = option_def.get_value(self,widget)
         else:
-            #PERR("Unknown type for refresh. Ignoring.\n");
+            PERR(log_module,"Unknown type for refresh. Ignoring.")
             pdb.set_trace()
             result = None
         return result
@@ -120,17 +135,75 @@ class GNCOption(object):
             return None
         widget.set_sensitive(selectable)
 
+    def changed_internal (self, widget, sensitive):
+        # this needs to start in this class
+
+        #pdb.set_trace()
+
+        #oldwidget = widget.get_ancestor(gtk.Dialog)
+        while widget and not isinstance(widget, gtk.Dialog):
+            widget = widget.parent
+        if widget == None:
+            return
+
+        widget.set_response_sensitive(gtk.RESPONSE_OK, sensitive)
+        widget.set_response_sensitive(gtk.RESPONSE_APPLY, sensitive)
+
+
     def call_widget_changed_proc (self):
         if hasattr(self,"widget_changed_proc"):
             value = self.get_ui_value()
             if value != None:
                 self.widget_changed_proc(value)
 
-    def changed_widget_cb (self, *args):
-        print "changed_widget_cb", args
-        #option.set_changed(True)
-        #option.call_widget_changed_proc()
-        #widget.changed_internal(True)
+    def changed_widget_cb (self, entry):
+        print "changed_widget_cb"
+        self.changed = True
+        #self.call_widget_changed_proc()
+        # ah - the widget is the dialog box the option is in
+        self.changed_internal(entry,True)
+
+    def commit (self):
+        print "commit called"
+        pdb.set_trace()
+        value = self.get_ui_value()
+        if value == None:
+            return
+        validator = self.value_validator()
+        if validator != None:
+            result = validator(value)
+        else:
+            # punt for the moment
+            result = [True, value, None]
+
+        # from scheme looks like we get a list
+        if result == None or not isinstance(result,list):
+            PERR("bad validation result")
+            return
+        ok = result[0]
+        if not isinstance(ok,bool):
+            PERR("bad validation result")
+            return
+        if ok:
+            value = result[1]
+            self.guile_option.setter(value)
+            self.set_ui_value(False)
+        else:
+            oops = result[2]
+            if not isinstance(oops,str):
+                PERR("bad validation result")
+                return
+            #utf8 conversion here
+            name = self.name
+            section = self.section
+            if True:
+                dialog = gtk.MessageDialog(None,gtk.DIALOG_DESTROY_WITH_PARENT,
+                        gtk.MESSAGE_ERROR,gtk.BUTTONS_OK,N_("There is a problem with option %s:%s.\n%s")%(section,name,oops))
+                dialog.run()
+                dialog.destroy()
+            else:
+                print "There is a problem with option %s:%s.\n%s"%(section,name,oops)
+
 
     def set_ui_widget (self, page_box):
 
@@ -173,7 +246,7 @@ class GNCOption(object):
         if option_def and option_def.set_widget != None:
             (value, enclosing, packed) = option_def.set_widget(self,page_box, name, documentation)
         else:
-            #PERR("Unknown option type. Ignoring option \"%s\".\n", name);
+            PERR(log_module,"Unknown option type. Ignoring option \"%s\"."%name)
             pdb.set_trace()
 
         if not packed and enclosing != None:
@@ -226,7 +299,9 @@ class GNCOption(object):
         else:
             return True
     def get_ui_value_string (self, widget):
-        pass
+        newstr = widget.get_text()
+        # need to check utf-8'ness here
+        return newstr
     def set_ui_widget_text (self, page_box,  name, documentation, enclosing, packed):
         pass
     def set_ui_value_text (self, use_default, widget, value):
@@ -431,6 +506,25 @@ class GNCOptionDB(object):
     def clean (self):
         self.options_dirty = False
 
+    def commit (self):
+        changed_something = False
+        for section in self.option_sections:
+            for option in section.options:
+                if option.changed:
+                    option.commit()
+                    changed_something = True
+                    option.changed = False
+        if changed_something:
+            self.change_callbacks()
+
+    def change_callbacks (self):
+        #proc = gnc:options-run-callbacks
+        #if proc == None:
+        #    PERR("not a procedure")
+        #    return
+        #proc(self.guile_options)
+        pass
+
     def destroy (self):
         # in python just make sure we remove holding values
         for section in self.option_sections:
@@ -455,7 +549,7 @@ class GNCBuilder(gtk.Builder):
         result = self.add_objects_from_file(fname, buildobjs)
         if result == 0:
             # dont see immediate way we get errors
-            #PWARN ("Couldn't load builder file: %s", error->message);
+            #PWARN(log_module,"Couldn't load builder file: %s"%"IO ERROR")
             print "Couldn't load builder file: "
             pass
         return result
@@ -642,9 +736,11 @@ class DialogOption(object):
 
     def changed_internal (self, widget, sensitive):
 
+        #pdb.set_trace()
+
         #oldwidget = widget.get_ancestor(gtk.Dialog)
         while widget and not isinstance(widget, gtk.Dialog):
-            widget = widget.parent()
+            widget = widget.parent
         if widget == None:
             return
 

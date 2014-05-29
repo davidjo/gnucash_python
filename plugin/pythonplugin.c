@@ -209,10 +209,12 @@ void python_plugin_init(GncPluginpythongeneric *plugin)
 {
     // not sure if really need GIL here - hasnt caused problems
     // maybe because before main usage of gtk threads
-    PyGILState_STATE gstate;
+    // the evidence is this and all prior functions are called before the gtk main loop
+    // is started (in gnc_ui_start_event_loop)
+    //PyGILState_STATE gstate;
     if (global_plugin_functions.python_callback_init != NULL)
         {
-        PyGILState_Ensure();
+        //PyGILState_Ensure();
         // probably should pass the GncPluginpythongeneric  here
         PyObject_CallMethod(pPluginObject,"plugin_init",NULL);
         if (PyErr_Occurred())
@@ -220,7 +222,7 @@ void python_plugin_init(GncPluginpythongeneric *plugin)
             fprintf(stderr,"Python Error in python_plugin_init\n");
             PyErr_Print();
             }
-        PyGILState_Release(gstate);
+        //PyGILState_Release(gstate);
         }
 }
 
