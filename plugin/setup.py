@@ -33,6 +33,8 @@ include_list_pgobject = [ \
 #setup(name="pythonplugin",version="1.0",ext_modules=[Extension("pythonplugin",["pythonplugin.c"],include_dirs=include_list+include_list_pgobject+include_list_gnucash,libraries=['glib-2.0','gobject-2.0','ffi'])])
 setup(name="pythonplugin",version="1.0",ext_modules=[Extension("pythonplugin",["pythonplugin.c"],include_dirs=include_list+include_list_pgobject+include_list_gnucash)])
 
+setup(name="pythoncallback",version="1.0",ext_modules=[Extension("pythoncallback",["pythoncallback.c"],include_dirs=include_list+include_list_pgobject)])
+
 #distutils.sysconfig._config_vars['SO'] = ".dylib"
 
 setup(name="pygkeyfile",version="1.0",ext_modules=[Extension("pygkeyfile",["pygkeyfile.c"],include_dirs=include_list+include_list_pgobject+['.'],library_dirs=['/opt/local/lib'],libraries=['glib-2.0','gobject-2.0','ffi','/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/pyglib-2.0-python2.6'])])

@@ -38,8 +38,9 @@
 {'st_mtime': '1400095077', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '645'}  ;  plugin/patch-fields.diff
 {'st_mtime': '1400857003', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '34942'}  ;  plugin/pygkeyfile.c
 {'st_mtime': '1400861347', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1180'}  ;  plugin/pygkeyfile.h
+{'st_mtime': '1401477865', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11508'}  ;  plugin/pythoncallback.c
 {'st_mtime': '1400019144', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7045'}  ;  plugin/pythonpage.c
 {'st_mtime': '1401258836', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '13009'}  ;  plugin/pythonplugin.c
-{'st_mtime': '1400858821', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2415'}  ;  plugin/setup.py
+{'st_mtime': '1401474838', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2570'}  ;  plugin/setup.py
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c
 {'st_mtime': '1400985604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4563'}  ;  python_example_plugin.py
