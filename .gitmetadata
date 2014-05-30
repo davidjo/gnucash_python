@@ -2,7 +2,7 @@
 {'st_mtime': '1400106380', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6002'}  ;  glib_ctypes.py
 {'st_mtime': '1400115091', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '52'}  ;  glib_gkeyfile.py
 {'st_mtime': '1401131887', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1541'}  ;  glib_glog.py
-{'st_mtime': '1400344883', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1107'}  ;  gnc_main_window.py
+{'st_mtime': '1401412087', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3175'}  ;  gnc_main_window.py
 {'st_mtime': '1401059716', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3807'}  ;  gnc_plugin_page.py
 {'st_mtime': '1401256702', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '36414'}  ;  gnc_plugin_page_python_report.py
 {'st_mtime': '1400190320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1167'}  ;  gnc_plugin_page_report.py
@@ -10,7 +10,7 @@
 {'st_mtime': '1399766815', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12037'}  ;  gnucash_ctypes.py
 {'st_mtime': '1401132135', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1078'}  ;  gnucash_log.py
 {'st_mtime': '1400629334', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4377'}  ;  init.py
-{'st_mtime': '1400789103', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '127'}  ;  local_init.py
+{'st_mtime': '1401476345', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '229'}  ;  local_init.py
 {'st_mtime': '1399935708', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1539'}  ;  old_gnc_python_report.py
 {'st_mtime': '1399844031', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '35929'}  ;  plugin/Makefile.generic
 {'st_mtime': '1401407335', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6101'}  ;  plugin/Makefile.wrap
@@ -44,3 +44,4 @@
 {'st_mtime': '1401474838', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2570'}  ;  plugin/setup.py
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c
 {'st_mtime': '1400985604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4563'}  ;  python_example_plugin.py
+{'st_mtime': '1401478361', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5137'}  ;  python_only_plugin.py
