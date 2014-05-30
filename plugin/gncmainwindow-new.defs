@@ -1,0 +1,7 @@
+
+
+(define-function gnc_gui_init
+  (c-name "gnc_gui_init")
+  (return-type "GncMainWindow*")
+)
+

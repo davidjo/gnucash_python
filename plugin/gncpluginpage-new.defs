@@ -20,6 +20,12 @@
   (return-type "none")
 )
 
+(define-method set_callback
+  (of-object "GncPluginPage")
+  (c-name "gnc_plugin_page_set_callback")
+  (return-type "none")
+)
+
 ;; this function is defined in gnc-plugin.h but gnc-plugin-page is NOT a subclass
 ;; of gnc-plugin
 ;; also this function does not use the gnc-plugin class/instance structs in any way

@@ -262,6 +262,7 @@ _wrap_gnc_plugin_page_set_class_init_data(PyGObject *self, PyObject *args, PyObj
 {
     static char *kwlist[] = { "plugin_name", "tab_icon", NULL };
     PyObject *plugin_name_obj = NULL;
+    PyObject *tab_icon_obj = NULL;
 
     GncPluginPage *page = (GncPluginPage *)self->obj;
     GncPluginPageClass *klass = GNC_PLUGIN_PAGE_GET_CLASS(page);
@@ -269,7 +270,7 @@ _wrap_gnc_plugin_page_set_class_init_data(PyGObject *self, PyObject *args, PyObj
     // hmm - for me looks like do NOT use GIL state in functions called from python!!
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O:GncPluginPage.set_class_init_data",
-                                     kwlist, &plugin_name_obj)) {
+                                     kwlist, &plugin_name_obj, &tab_icon_obj)) {
         return NULL;
     }
 
@@ -312,7 +313,7 @@ _wrap_gnc_plugin_page_set_callbacks(PyGObject *self, PyObject *args, PyObject *k
     GncPluginPage *page = (GncPluginPage *)self->obj;
     GncPluginPageClass *gnc_plugin_page_class = GNC_PLUGIN_PAGE_GET_CLASS(page);
 
-    // do NOT use GIL state in functions called from python!!
+    // hmm - for me looks like do NOT use GIL state in functions called from python!!
 
     //if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O:GncPluginPage.set_callbacks",
     //                                 kwlist, &callb_obj)) {
@@ -724,6 +725,49 @@ gnc_plugin_page_report_generic_page_finish_pending(GncPluginPage *plugin_page)
         return 1;
     else
         return 0;
+}
+
+%%
+override gnc_plugin_page_set_callback kwargs
+
+// new attempt at setting callbacks
+// all available callbacks defined as keywords
+// but value of keyword is immaterial as only self object is used ie only presence of keyword is significant
+// essentially this allows for some callbacks to be not used
+// not sure if this helps
+
+static PyObject *
+_wrap_gnc_plugin_page_set_callback(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "create_widget", NULL };
+    PyObject *create_widget_obj = NULL;
+
+    GncPluginPage *page = (GncPluginPage *)self->obj;
+    GncPluginPageClass *gnc_plugin_page_class = GNC_PLUGIN_PAGE_GET_CLASS(page);
+
+    // hmm - for me looks like do NOT use GIL state in functions called from python!!
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O:GncPluginPage.set_callback",
+                                     kwlist, &create_widget_obj)) {
+        return NULL;
+    }
+
+    fprintf(stderr,"callback plugin class is %llx\n",(unsigned long long) gnc_plugin_page_class);
+
+    //klass->tab_icon    = NULL;
+    //klass->plugin_name = NULL;
+
+    if (create_widget_obj != NULL) {
+        if (!PyObject_HasAttrString((PyObject*)self,"create_widget")) {
+            fprintf(stderr,"no create_widget callback!!\n");
+            PyErr_SetString(PyExc_KeyError, "no create_widget callback");
+            return NULL;
+        }
+        gnc_plugin_page_class->create_widget   = gnc_plugin_page_report_generic_create_widget;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 %%

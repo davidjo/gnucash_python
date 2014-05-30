@@ -9,7 +9,7 @@ import reversewrapper
 
 class GtkActionEntry(ArgType):
 
-    before = ('    %(name)s = &((GtkActionEntry*)(py_%(name)s))->entry;\n')
+    before = ('    %(name)s = (GtkActionEntry*)py_%(name)s;\n')
 
     def write_param(self, ptype, pname, pdflt, pnull, info):
         info.varlist.add('PyObject', '*py_' + pname)
@@ -32,7 +32,7 @@ matcher.register('GtkActionEntry*', GtkActionEntry())
 
 class GtkToggleActionEntry(ArgType):
 
-    before = ('    %(name)s = &((GtkToggleActionEntry*)(py_%(name)s))->entry;\n')
+    before = ('    %(name)s = (GtkToggleActionEntry*)py_%(name)s;\n')
 
     def write_param(self, ptype, pname, pdflt, pnull, info):
         info.varlist.add('PyObject', '*py_' + pname)
@@ -51,7 +51,7 @@ class GtkToggleActionEntry(ArgType):
                               '        return Py_None;\n'
                               '    }');
 
-matcher.register('GtkToggleActionEntry*', GtkActionEntry())
+matcher.register('GtkToggleActionEntry*', GtkToggleActionEntry())
 
 
 # oohh - this is sneaky - this is how we define a partial type
