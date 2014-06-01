@@ -5,6 +5,8 @@
 from report_options import OptionsDB
 from report_options import StringOption,MultiChoiceOption
 
+import dialog_options
+
 
 # define a function equivalent to N_ for internationalization
 def N_(msg):
