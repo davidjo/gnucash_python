@@ -76,8 +76,17 @@ wrap_add_actions(PyObject *self, PyObject *args, PyObject *kwds)
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in callback add_actions setup 1\n");
-        PyErr_Print();
+        //PyErr_Print();
+        //PyErr_SetString(PyExc_SystemError, "Python Error in callback add_actions setup 1");
+        return NULL;
         }
+
+    if (!PyList_Check(py_entries)) {
+        PyErr_SetString(PyExc_TypeError, "action list entry is not a list");
+        return NULL;
+    }
+
+    memset(&gnc_python_actions,sizeof(GtkActionEntry)*MAX_PYTHON_ACTIONS,0);
 
     // we have to re-write the actions to replace the callback
 
@@ -92,6 +101,10 @@ wrap_add_actions(PyObject *self, PyObject *args, PyObject *kwds)
         // actually maybe should make ""  the NULL string??
 
         PyObject *ptupl = PyList_GetItem(py_entries,itm);
+        if (!PyTuple_Check(ptupl)) {
+            PyErr_SetString(PyExc_TypeError, "action list entry is not a tuple");
+            return NULL;
+        }
         int tupl_size = PyTuple_Size(ptupl);
         if (tupl_size < 1 || tupl_size > 6) {
             return NULL;
@@ -133,7 +146,8 @@ wrap_add_actions(PyObject *self, PyObject *args, PyObject *kwds)
         if (PyErr_Occurred())
             {
             fprintf(stderr,"Python Error in callback add_actions setup 2\n");
-            PyErr_Print();
+            //PyErr_Print();
+            return NULL;
             }
 
         // add python callback to callbacks dict
@@ -141,15 +155,16 @@ wrap_add_actions(PyObject *self, PyObject *args, PyObject *kwds)
         if (PyErr_Occurred())
             {
             fprintf(stderr,"Python Error in callback add_actions setup 3\n");
-            PyErr_Print();
+            //PyErr_Print();
+            return NULL;
             }
 
         // and re-save action entry with generic C callback
         tmpgtkact->name = (gchar *)pstr1;
         tmpgtkact->stock_id = (gchar *)pstr2;
-        tmpgtkact->label = N_(pstr3);
+        tmpgtkact->label = (gchar *)pstr3;
         tmpgtkact->accelerator = (gchar *)pstr4;
-        tmpgtkact->tooltip = N_(pstr5);
+        tmpgtkact->tooltip = (gchar *)pstr5;
         if (pobj6 != Py_None)
             tmpgtkact->callback = G_CALLBACK(gnc_python_callback);
         else
@@ -162,7 +177,8 @@ wrap_add_actions(PyObject *self, PyObject *args, PyObject *kwds)
     if (PyErr_Occurred())
         {
         fprintf(stderr,"Python Error in callback add_actions setup\n");
-        PyErr_Print();
+        //PyErr_Print();
+        return NULL;
         }
 
     // need to type check this!!
