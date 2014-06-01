@@ -4,6 +4,7 @@
 {'st_mtime': '1401131887', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1541'}  ;  glib_glog.py
 {'st_mtime': '1401379705', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1984'}  ;  gnc_html.py
 {'st_mtime': '1401412087', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3175'}  ;  gnc_main_window.py
+{'st_mtime': '1401664220', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2863'}  ;  gnc_menu_extension.py
 {'st_mtime': '1401059716', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3807'}  ;  gnc_plugin_page.py
 {'st_mtime': '1401497306', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '20844'}  ;  gnc_plugin_page_python_report.py
 {'st_mtime': '1400190320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1167'}  ;  gnc_plugin_page_report.py
@@ -45,6 +46,6 @@
 {'st_mtime': '1401474838', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2570'}  ;  plugin/setup.py
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c
 {'st_mtime': '1400985604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4563'}  ;  python_example_plugin.py
-{'st_mtime': '1401478361', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5137'}  ;  python_only_plugin.py
+{'st_mtime': '1401664175', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8427'}  ;  python_only_plugin.py
 {'st_mtime': '1401605962', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7771'}  ;  report_objects.py
 {'st_mtime': '1401375325', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7245'}  ;  report_options.py

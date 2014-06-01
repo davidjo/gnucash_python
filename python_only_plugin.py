@@ -30,11 +30,46 @@ print >> sys.stderr, gobject.signal_list_names(gncmainwindowtype)
 
 print >> sys.stderr, dir(gncmainwindowtype)
 
+# can we access a function in a python module via ctypes?
+# - no because it needs to be a dylib not an so
+
+#libcallback = ctypes.CDLL("/Users/djosg/.gnucash/python/pythoncallback.so")
+
+
+#libcallback.gnc_python_callback.argtypes = [ ctypes.c_void_p, ctypes.c_void_p ]
+#libcallback.gnc_python_callback.restype = None
+
+#python_callbacktype = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_void_p)
+
+
 
 import gnc_main_window
 
 
 import gnc_plugin_page_python_report
+
+import gnc_menu_extension
+
+
+class GncMenuItem(object):
+    def __init__ (self,path=None,ae=None,action=None,type=None):
+        self.path = path
+        self.ae = ae
+        self.action = action
+        self.type = type
+
+class GncActionEntry(object):
+    def __init__ (self,name=None,stock_id=None,label=None,accelerator=None,tooltip=None,callback=None):
+        self.name = name
+        self.stock_id = stock_id
+        self.label = label
+        self.accelerator = accelerator
+        self.tooltip = tooltip
+        self.callback = callback
+
+    def as_tuple (self):
+        return (self.name,self.stock_id,self.label,self.accelerator,self.tooltip,self.callback)
+
 
 
 import pythoncallback
@@ -63,7 +98,6 @@ class MyPlugin(gobject.GObject):
       <placeholder name="OtherReports">
         <menu name="PythonReports" action="PythonReportsAction">
           <placeholder name="PythonReportsholder">
-            <menuitem name="Python Reports" action="pythonreportsAction"/>
           </placeholder>
         </menu>
      </placeholder>
@@ -103,46 +137,95 @@ class MyPlugin(gobject.GObject):
         actiongroup = gtk.ActionGroup('GncPythonMyPluginActions')
         self.actiongroup = actiongroup
 
-        # create callback objects
-        #self.reports_cb_obj = MyCallback(self.report_cb)
-        #self.reports_cb_obj.callback
-
+        # create callback object
         self.save_callbacks = MyCallbacks()
 
+        # now try and fix
+
+        # I dont quite understand this - using the gtk calls leads to a crash on a second
+        # click of the menu
+        # pythoncallback wraps the callbacks in GIL protection and things seem to work
+        # - but I thought GIL protection was being done for gobjects - and as far as I can
+        # see the callbacks are done through pyg_closure_marshal which does pyglib_gil_state_ensure etc
+        # however the problem only happens if the reports page is actually displayed
+        #newcb = python_callbacktype(self.reports_cb)
+        # well I give up have no real idea why pythoncallback method is needed but it seems to work
         #actiongroup.add_actions([ 
         pythoncallback.add_actions(self.save_callbacks, actiongroup, [ \
             ("PythonReportsAction", None, "Python Reports...", None, "python reports tooltip", None),
             ("PythonToolsAction", None, "Python Tools...", None, "python tools tooltip", None),
-            ("pythonreportsAction", None, "Python reports description...", None, "python reports tooltip", self.reports_cb),
             ("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
                  ], user_data=self.main_window)
+
+            #("pythonreportsAction", None, "Python reports description...", None, "python reports tooltip", self.reports_cb),
+            #("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
+            #     ], user_data=self.main_window)
 
         self.main_ui_merge.insert_action_group(actiongroup,0)
 
         self.merge_id = self.main_ui_merge.add_ui_from_string(ui_xml)
 
-        #self.main_window.manual_merge_actions("myplugin",actiongroup,self.merge_id)
-
         self.main_ui_merge.ensure_update()
 
         print "merge_id",self.merge_id
 
+        # load the report classes and create instances
+        self.load_python_reports()
+
     def plugin_init (self):
-        print >> sys.stderr, "plugin_init called"
+        print >> sys.stderr, "python only plugin_init called"
+
+    def load_python_reports (self):
+        # ok im wrong - we can instantiate here as long as do
+        # very little in the __init__ - in particular no GUI
+        from hello_world import HelloWorld 
+        self.python_reports = {}
+        self.python_reports['HelloWorld'] = HelloWorld()
+
+        menu_list = []
+        for rpt in self.python_reports:
+            menu_list.append(self.add_menuitems(self.python_reports[rpt]))
+
+        # now need to update menu
+        # we cannot use the gnc-menu-extensions and gnc-plugin-menu-additions
+        # as they are tied to scheme - because gnc-plugin-menu-additions gets its
+        # list from gnc-menu-extensions which is totally tied to scheme
+        self.menu_extensions = gnc_menu_extension.MyMenuAdditions(self.main_window)
+        self.menu_extensions.add_to_window(menu_list)
+
+    def add_menuitems (self, rpt):
+        # create the data needed for gtk.ActionGroup.add_actions
+        menuitm = GncMenuItem()
+        ae = GncActionEntry()
+        ae.name = rpt.report_guid
+        ae.label = rpt.menu_name
+        ae.tooltip = rpt.menu_tip
+        ae.stock_id = None
+        ae.accelerator = None
+        ae.callback = self.reports_cb
+        menuitm.ae = ae
+        menuitm.path = "ui/menubar/Reports/OtherReports/PythonReports/PythonReportsholder/"
+        menuitm.name = ae.label
+        menuitm.action = ae.name
+        menuitm.type = gtk.UI_MANAGER_MENUITEM
+        return menuitm
 
     # unfortunately looks as though this wont work because of GIL issues
     # - in the python C plugin we lock the callback and plugin_finalize
     # this is crashing when we try a second call
 
     def plugin_finalize (self):
-        print >> sys.stderr, "plugin_finalize called"
+        print >> sys.stderr, "python only plugin_finalize called"
 
     def reports_cb (self, actionobj, user_data=None):
         print >> sys.stderr, "reports_cb",actionobj,user_data
+        #pdb.set_trace()
+        window = user_data
 
         try:
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(42,window)
-            gnc_plugin_page_python_report.OpenReport(42,user_data)
+            gnc_plugin_page_python_report.OpenReport(42,window)
+            print "call back done"
         except Exception, errexc:
             print >> sys.stderr, "error in reports_cb callback",str(errexc)
         print  "junke"
