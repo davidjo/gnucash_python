@@ -24,8 +24,8 @@ from ctypes import *
 # this fixup is needed as the apparent return type for PyCObject_AsVoidPtr
 # is c_int!!
 
-pythonapi.PyCObject_AsVoidPtr.restype = c_void_p
 pythonapi.PyCObject_AsVoidPtr.argtypes = [ py_object ]
+pythonapi.PyCObject_AsVoidPtr.restype = c_void_p
 
 class _PyGObject_Functions(Structure):
     _fields_ = [
@@ -45,10 +45,10 @@ class _PyGObject_Functions(Structure):
     
 class PyGObjectCPAI(object):
     def __init__(self):
-        print "pygobject addr 1",gobject._PyGObject_API
+        #print "pygobject addr 1",gobject._PyGObject_API
         addr = pythonapi.PyCObject_AsVoidPtr(
             py_object(gobject._PyGObject_API))
-        print "pygobject addr %x"%addr
+        #print "pygobject addr %x"%addr
         self._api = _PyGObject_Functions.from_address(addr)
 
     def pygobject_new(self, addr):
@@ -100,32 +100,41 @@ libgnc_gnomeutils = CDLL(libgnc_gnomeutilnm)
 libgnc_gnomeutils.gnc_main_window_open_page.argtypes = [ c_void_p, c_void_p ]
 libgnc_gnomeutils.gnc_main_window_open_page.restype = None
 
-libgnc_gnomeutils.gnc_gui_init.argtypes = []
+libgnc_gnomeutils.gnc_main_window_close_page.argtypes = [ c_void_p ]
+libgnc_gnomeutils.gnc_main_window_close_page.restype = None
 
+
+# oh boy - by missing the restype this screws up using the return
+# - you get a different integer - ah - because the default return is a c_int
+# but a pointer on 64 bit machine is not a c_int - the address gets truncated
+# even though the resulting python type is an integer in both cases
+libgnc_gnomeutils.gnc_gui_init.argtypes = []
+libgnc_gnomeutils.gnc_gui_init.restype = c_void_p
 
 
 def gnc_gui_init ():
 
-    # well I cant get this to work
-    if False:
+    # OK - this does work if I use the right restype for gnc_gui_init!!
+    if True:
         main_window_ptr = libgnc_gnomeutils.gnc_gui_init()
-
-        #main_window_adrs = hash(main_window_ptr)
 
         print >> sys.stderr, "main_window_ptr %x"%main_window_ptr
 
         #pdb.set_trace()
 
         # call like this:
-        print "pass1"
         Cgobject = PyGObjectCPAI()
-        print "pass2"
         main_window = Cgobject.pygobject_new(main_window_ptr)
-        print "pass3"
 
         #pdb.set_trace()
 
-    main_window = gncmainwindow.gnc_gui_init()
+    else:
+
+        main_window = gncmainwindow.gnc_gui_init()
+
+        #pdb.set_trace()
+
+        print >> sys.stderr, "main_window_ptr %x"%hash(main_window)
 
     return main_window
 
