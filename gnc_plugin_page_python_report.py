@@ -42,8 +42,6 @@ import gnc_main_window
 from pygkeyfile import GKeyFile
 
 
-import dialog_options
-
 from report_objects import Report
 
 from gnc_html import HtmlView
@@ -95,7 +93,8 @@ def N_(msg):
 
 
 def close_handler (arg):
-    print "close handler called"
+    print >> sys.stderr, "close handler called"
+    pdb.set_trace()
     pass
 
 
@@ -386,7 +385,6 @@ class GncPluginPagePythonReport(PluginPage):
         # or should it be
         self.cur_report = Report("Python Report")
 
-
     def create_widget (self):
 
         # think we need to trap errors here before returning to C
@@ -415,6 +413,8 @@ class GncPluginPagePythonReport(PluginPage):
            close_callback_type = ctypes.CFUNCTYPE(None,ctypes.c_void_p)
 
            self.component_manager_id = gnc_plugin_page.libgnc_apputils.gnc_register_gui_component("window-report", None, close_callback_type(close_handler), hash(self))
+           # debugging - doesnt appear to have any effect
+           #self.component_manager_id = gnc_plugin_page.libgnc_apputils.gnc_register_gui_component("window-report", None, None, None)
 
            #session = _sw_app_utils.gnc_get_current_session()
            session = gnc_plugin_page.libgnc_apputils.gnc_get_current_session()
@@ -463,6 +463,17 @@ class GncPluginPagePythonReport(PluginPage):
 
 
     def destroy_widget (self):
+
+
+       # traceback for normal page - the close button calls destroy widget
+       #0  0x0000000103e0be87 in gnc_unregister_gui_component ()
+       #1  0x000000010003e434 in gnc_plugin_page_report_destroy_widget ()
+       #2  0x0000000100213cd7 in gnc_main_window_close_page ()
+       #3  0x0000000104f4ada6 in _g_closure_invoke_va ()
+       #4  0x0000000104f6143e in g_signal_emit_valist ()
+       #5  0x0000000104f625d4 in g_signal_emit ()
+       #6  0x0000000104318615 in gtk_real_button_released ()
+
         global python_pages
         print >> sys.stderr, "destroy_widget"
         try:
