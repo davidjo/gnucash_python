@@ -15,12 +15,16 @@ import gobject
 import gtk
 
 
+
 import _sw_app_utils
 import gnc_plugin_page
 import ctypes
 
 
+import traceback
+
 import pdb
+
 
 from gnucash_log import PERR
 
@@ -163,9 +167,14 @@ class GNCOption(object):
         # ah - the widget is the dialog box the option is in
         self.changed_internal(entry,True)
 
+    def multichoice_cb (self, entry):
+        print "multichoice_cb"
+        # this just maps GtkColorButton to widget and calls changed_widget_cb
+        self.changed_widget_cb(entry)
+
+
     def commit (self):
         print "commit called"
-        pdb.set_trace()
         value = self.get_ui_value()
         if value == None:
             return
@@ -244,7 +253,11 @@ class GNCOption(object):
         # interesting - we do need to add a first argument for this indirect call
         # is it because we used the class definition of the function??
         if option_def and option_def.set_widget != None:
-            (value, enclosing, packed) = option_def.set_widget(self,page_box, name, documentation)
+            try:
+                (value, enclosing, packed) = option_def.set_widget(self, page_box, name, documentation)
+            except Exception, errexc:
+                traceback.print_exc()
+                pdb.set_trace()
         else:
             PERR(log_module,"Unknown option type. Ignoring option \"%s\"."%name)
             pdb.set_trace()
@@ -277,6 +290,7 @@ class GNCOption(object):
         label.set_alignment(1.0, 0.5)
 
         enclosing = gtk.HBox(homogeneous=False, spacing=0)
+
         value = gtk.Entry()
 
         self.widget = value
@@ -302,54 +316,129 @@ class GNCOption(object):
         newstr = widget.get_text()
         # need to check utf-8'ness here
         return newstr
-    def set_ui_widget_text (self, page_box,  name, documentation, enclosing, packed):
+    def set_ui_widget_text (self, page_box,  name, documentation, enclosing=None, packed=None):
         pass
     def set_ui_value_text (self, use_default, widget, value):
         pass
     def get_ui_value_text (self, widget):
         pass
-    def set_ui_widget_currency (self, page_box,  name, documentation, enclosing, packed):
+    def set_ui_widget_currency (self, page_box,  name, documentation, enclosing=None, packed=None):
         pass
     def set_ui_value_currency (self, use_default, widget, value):
         pass
     def get_ui_value_currency (self, widget):
         pass
-    def set_ui_widget_commodity (self, page_box,  name, documentation, enclosing, packed):
+    def set_ui_widget_commodity (self, page_box,  name, documentation, enclosing=None, packed=None):
         pass
     def set_ui_value_commodity (self, use_default, widget, value):
         pass
     def get_ui_value_commodity (self, widget):
         pass
-    def set_ui_widget_multichoice (self, page_box,  name, documentation, enclosing, packed):
-        pass
+    def set_ui_widget_multichoice (self, page_box,  name, documentation, enclosing=None, packed=None):
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=5)
+
+        value = self.create_multichoice_widget()
+
+        self.widget = value
+        self.set_ui_value(False)
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+        enclosing.show_all()
+
+        # need to figure what goes on with padding - is it pass through??
+        return (value, enclosing, None)
     def set_ui_value_multichoice (self, use_default, widget, value):
-        pass
+        value = value - 1
+        if value > 0 and value < len(self.guile_option.ok_values):
+            widget.set_active(value)
+            return False
+        else:
+            return True
     def get_ui_value_multichoice (self, widget):
-        pass
-    def set_ui_widget_date (self, page_box,  name, documentation, enclosing, packed):
+        # big question is whether to base from 0 or 1
+        # raw indexes are base 0
+        newmulti = widget.get_active() + 1
+        # need to check utf-8'ness here
+        return newmulti
+    def set_ui_widget_date (self, page_box,  name, documentation, enclosing=None, packed=None):
         pass
     def set_ui_value_date (self, use_default, widget, value):
         pass
     def get_ui_value_date (self, widget):
         pass
-    def set_ui_widget_account_list (self, page_box,  name, documentation, enclosing, packed):
+    def set_ui_widget_account_list (self, page_box,  name, documentation, enclosing=None, packed=None):
         pass
     def set_ui_value_account_list (self, use_default, widget, value):
         pass
     def get_ui_value_account_list (self, widget):
         pass
-    def set_ui_widget_account_sel (self, page_box,  name, documentation, enclosing, packed):
+    def set_ui_widget_account_sel (self, page_box,  name, documentation, enclosing=None, packed=None):
         pass
     def set_ui_value_account_sel (self, use_default, widget, value):
         pass
     def get_ui_value_account_sel (self, widget):
         pass
-    def set_ui_widget_list (self, page_box,  name, documentation, enclosing, packed):
+    def set_ui_widget_list (self, page_box,  name, documentation, enclosing=None, packed=None):
         pass
     def set_ui_value_list (self, use_default, widget, value):
         pass
     def get_ui_value_list (self, widget):
         pass
+
+    def create_multichoice_widget (self):
+        num_values = len(self.guile_option.ok_values)
+
+        store = gtk.ListStore(gobject.TYPE_STRING,gobject.TYPE_STRING)
+        for indx,opt in enumerate(self.guile_option.ok_values):
+            #label = opt.name
+            #tip = opt.description
+            label = opt[0]
+            tip = opt[1]
+            store.append((label,tip))
+
+        widget = self.gnc_combott(store)
+        # not seeing where this is done in scheme/C
+        # note this is making the default value the index
+        widget.set_active(self.guile_option.default_value-1)
+        #widget.set_model(store)
+        widget.connect("changed",self.multichoice_cb)
+
+        return widget
+
+    def gnc_combott (self, model):
+        # thats a load of implementing - just go with plain combo box for the moment
+        # OK - it is important that the model is added BEFORE the add_attribute
+        combobox = gtk.ComboBox(model)
+        cell = gtk.CellRendererText()
+        combobox.pack_start(cell, True)
+        combobox.add_attribute(cell, 'text', 0)
+        return combobox
+
+
+    def create_radiobutton_widget (self):
+        num_values = len(self.guile_option.ok_values)
+
+        frame = gtk.Frame()
+        box = gtk.HBox(homogeneous=False, spacing=5)
+        frame.add(box)
+
+        widget = None
+        for indx,opt in enumerate(self.guile_option.ok_values):
+            label = opt.name
+            tip = opt.description
+
+            widget = gtk.RadioButton(group=widget,label=N_(label))
+            widget.set_data("gnc_radiobutton_index",indx)
+            widget.set_tooltip_text(N_(tip))
+            widget.connect("toggled",self.radiobutton_cb)
+            box.pack_start(expand=False,fill=False,padding=0)
+
+        return frame
 
 # for some reason this function is called in the gncmod module initialization function for gnome-utils
 # gnc_options_ui_initialize
@@ -603,7 +692,11 @@ class DialogOption(object):
                 close_cb = self.close_cb
                 self.close_cb = None
                 if self.apply_cb != None:
-                    self.apply_cb()
+                    try:
+                        self.apply_cb()
+                    except Exception, errexc:
+                        traceback.print_exc()
+                        pdb.set_trace()
                 self.close_cb = close_cb
             if response != gtk.RESPONSE_APPLY:
                 if self.close_cb != None:

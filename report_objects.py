@@ -2,6 +2,8 @@
 # add a Report object for details of each report
 # not sure what to inherit from
 
+import pdb
+
 from report_options import OptionsDB
 from report_options import StringOption,MultiChoiceOption
 
@@ -110,6 +112,7 @@ class ReportTemplate(object):
         # gnc:new-options creates the hash table(s) databases
         namer = StringOption("General","Report name", "0a", N_("Enter a descriptive name for this report."), self.name)
         stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), Stylesheet.get_html_style_sheets())
+        #pdb.set_trace()
         # think Ive got this - the report creates the options_generator function
         # which defines the reports options
         if self.options_generator:
@@ -122,30 +125,57 @@ class ReportTemplate(object):
 
         return options
 
+    def options_changed_cb (self):
+        pass
+
 
 class Report(object):
 
-    def __init__ (self, report_name, report_type=None):
+    def __init__ (self, report_type):
+
+        # this is the equivalent of the following scheme
+        # except currently we are 
+        # ;; gnc:make-report instantiates a report from a report-template.
+        # ;; The actual report is stored away in a hash-table -- only the id is returned.
 
         #pdb.set_trace()
 
-        self.report_name = report_name
+        # something about template parents here which dont understand
+        # apparently the passed report type could a child of a report
 
         # somehow this is where the template is stored - possibly through hash id in scheme
+        # or could well be by report guid
         if report_type != None:
             self.report_type = report_type
         else:
             self.report_type = ReportTemplate()
 
-        self.report_editor_widget = None
         self.id = None
 
-        self.options = self.report_type.new_options()
+        self.options = None
 
-        self.needs_save = False
         self.dirty = False
+        self.needs_save = False
+        self.report_editor_widget = None
         self.ctext = None
         self.custom_template = None
+
+        if self.report_type.options_generator != None:
+            self.options = self.report_type.new_options()
+        else:
+            self.options = self.report_type.new_options()
+
+        # this does a lambda function in scheme
+        # not quite sure of replacement yet
+        # lambda_callback should be in the OptionsDB
+        #self.options.register_callback(None, None, lambda x : self.lambda_callback(x))
+
+    def lambda_callback (self):
+        self.dirty = True
+        cb = self.report_type.options_changed_cb
+        if cb:
+            cb()
+
 
     def get_editor (self):
         return self.report_editor_widget
@@ -153,13 +183,29 @@ class Report(object):
     def get_report_type (self):
         return self.report_type
 
-    def start_editor (self):
+    def options_editor (self):
+        # this changes the editor for some report type
+        if self.report_type == 'd8ba4a2e89e8479ca9f6eccdeb164588':
+            #gnc-column-view-edit-options
+            pass
+        else:
+            return self.default_params_editor
 
+    def edit_options (self):
         if self.report_editor_widget:
            print type(self.report_editor_widget)
            self.report_editor_widget.present()
         else:
-           self.report_editor_widget = self.default_params_editor(self.options)
+           if self.options:
+               options_editor = self.options_editor()
+               self.report_editor_widget = options_editor(self.options)
+           else:
+               # what to do about a parent??
+               #parent = self.win.dialog
+               dialog = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,
+                       gtk.MESSAGE_WARNING,gtk.BUTTONS_OK,N_("This report has no options."))
+               dialog.connect("response", self.dialog_destroy)
+               dialog.show()
 
     # yet I think in python we need to invert the arguments here report first, options next
     # not clear why the report editor isnt just part of the Report object

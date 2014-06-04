@@ -8,6 +8,11 @@ import gobject
 
 import ctypes
 
+
+# junky internationalization function
+def N_(msg):
+    return msg
+
 #pdb.set_trace()
 
 try:
@@ -176,15 +181,25 @@ class MyPlugin(gobject.GObject):
         print >> sys.stderr, "python only plugin_init called"
 
     def load_python_reports (self):
+        # this is effectively the replacement for gnc:add-report-template-menu-items 
+        # in report-gnome.scm
         # ok im wrong - we can instantiate here as long as do
         # very little in the __init__ - in particular no GUI
+        # OK looks like this lookup is done by class - not instance
+        # no - Im thinking it is instance now
+        # the 'edited' reports seem to be the html text result of running the report
+        # cancel the above I now think its a class again
+        # not clear what the advantage is in python - we just loose the local variable
+        # space with in instance compared to the class
         from hello_world import HelloWorld 
-        self.python_reports = {}
-        self.python_reports['HelloWorld'] = HelloWorld()
+        self.python_reports_by_name = {}
+        self.python_reports_by_name['HelloWorld'] = HelloWorld()
+        self.python_reports_by_guid = {}
+        self.python_reports_by_guid[self.python_reports_by_name['HelloWorld'].report_guid] = self.python_reports_by_name['HelloWorld']
 
         menu_list = []
-        for rpt in self.python_reports:
-            menu_list.append(self.add_menuitems(self.python_reports[rpt]))
+        for rpt in self.python_reports_by_name:
+            menu_list.append(self.add_menuitems(rpt,self.python_reports_by_name[rpt]))
 
         # now need to update menu
         # we cannot use the gnc-menu-extensions and gnc-plugin-menu-additions
@@ -193,13 +208,17 @@ class MyPlugin(gobject.GObject):
         self.menu_extensions = gnc_menu_extension.MyMenuAdditions(self.main_window)
         self.menu_extensions.add_to_window(menu_list)
 
-    def add_menuitems (self, rpt):
+    def add_menuitems (self, name, rpt):
         # create the data needed for gtk.ActionGroup.add_actions
+        title = N_("Report")+": "+N_(name)
         menuitm = GncMenuItem()
         ae = GncActionEntry()
         ae.name = rpt.report_guid
         ae.label = rpt.menu_name
-        ae.tooltip = rpt.menu_tip
+        if rpt.menu_tip:
+            ae.tooltip = rpt.menu_tip
+        else:
+            ae.tooltip = N_("Display the %s report"%name)
         ae.stock_id = None
         ae.accelerator = None
         ae.callback = self.reports_cb
@@ -210,6 +229,31 @@ class MyPlugin(gobject.GObject):
         menuitm.type = gtk.UI_MANAGER_MENUITEM
         return menuitm
 
+    def reports_cb (self, actionobj, user_data=None):
+        print >> sys.stderr, "report_cb",actionobj,user_data
+        print >> sys.stderr, "report_cb",actionobj.get_name()
+        #(lambda (window)
+        #  (let ((report (gnc:make-report
+        #        (gnc:report-template-report-guid template))))
+        #    (gnc-main-window-open-report report window)))))
+        window = user_data
+
+        try:
+            # so we need either the report instance, guid or key name here
+            # in scheme/C implementation what is passed here is an integer representing the scheme object
+            # - but what Im not sure currently does that transfer to the python class object for Report here
+            # or an instance of Report
+            # what we are getting is the guid - but it seems to me the SCM id is going to be similarly unique
+            # as the guid ie each different unique report guid is associated with a unique different SCM integer
+            report_guid = actionobj.get_name()
+            report = self.python_reports_by_guid[report_guid]
+            #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(report,window)
+            gnc_plugin_page_python_report.OpenReport(report,window)
+            print "call back done"
+        except Exception, errexc:
+            print >> sys.stderr, "error in reports_cb callback",str(errexc)
+        print  "junke"
+
     # unfortunately looks as though this wont work because of GIL issues
     # - in the python C plugin we lock the callback and plugin_finalize
     # this is crashing when we try a second call
@@ -217,7 +261,7 @@ class MyPlugin(gobject.GObject):
     def plugin_finalize (self):
         print >> sys.stderr, "python only plugin_finalize called"
 
-    def reports_cb (self, actionobj, user_data=None):
+    def old_reports_cb (self, actionobj, user_data=None):
         print >> sys.stderr, "reports_cb",actionobj,user_data
         #pdb.set_trace()
         window = user_data

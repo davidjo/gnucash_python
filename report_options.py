@@ -28,6 +28,7 @@ class OptionsDB(object):
     # note this is a scheme database in normal gnucash
     def __init__ (self,options=None):
         self.option_hash = {}
+        self.options_changed = False
         self.changed_hash = {}
         self.callback_hash = {}
     def lookup_name (self, section, option_name):
@@ -35,7 +36,10 @@ class OptionsDB(object):
         option = self.section_hash[option_name]
         # apparently options can be renamed in scheme
     def option_changed (self, section, option_name):
-        pass
+        self.options_changed = True
+        if section not in self.changed_hash: 
+            self.changed_hash[section] = {}
+        self.changed_hash[section][option_name] = True
     def clear_changes (self):
         pass
     def register_callback (self, section, name, callback):
@@ -48,7 +52,8 @@ class OptionsDB(object):
         else:
             self.option_hash[section]= {}
             self.option_hash[section][name] = new_option
-        new_option.callback = self.option_changed
+        # this doesnt make sense in python
+        new_option.changed_callback = lambda : self.option_changed(section,name)
     def options_for_each (self):
         for section_hash in self.option_hash:
             option_hash = self.option_hash[section_hash]
@@ -120,6 +125,8 @@ class OptionBase(object):
          # ;; Function 5: giving a possible value and returning the index
          # ;; if an option doesn't use these,  this should just be a #f
          self.option_data_fns = None
+         # this seems to be an additional callback
+         self.changed_callback = None
          # ;; This function should return a list of all the strings
          # ;; in the option other than the section, name, (define
          # ;; (list-lookup list item) and documentation-string that
@@ -135,16 +142,21 @@ class OptionBase(object):
          # ;; the user selects "OK" or "Apply".  Therefore, this
          # ;; callback shouldn't be used to make changes to the actual
          # ;; options database.
-         self.widget_changed_proc = None
+         self.widget_changed_cb = None
 
          # value storage for the moment
          self.option_value = None
 
          # make the getters/setters default to the functions defined in base?
-         # not seen where actually define the getters/setters
+         # these are defined in the gnc:make-... functions in scheme
+         # but generally as lambda functions rather than explict functions
+         # dont see why lambda needed in python
          self.getter = self.get_value
          self.default_getter = self.get_default_value
          self.setter = self.set_value
+
+         # unlike scheme going to make this explicit
+         self.setter_function_called_cb = None
 
     # havent seen where this is defined - probably in scheme somewhere
     def get_default_value (self):
@@ -155,12 +167,13 @@ class OptionBase(object):
         # I think gnucash is storing these in the Kvp database - hence
         # those functions
         # punting for the moment
-        # this ought to be calling the setter/getter functions
         if self.option_value == None:
             return self.default_value
         return self.option_value
 
     # havent seen where this is defined - probably in scheme somewhere
+    # the getter and setter seemed to be defined as lambda functions in scheme
+    # we can only do one-line lambdas in python so need to make explicit functions
     def set_value (self, value):
         # I think gnucash is storing these in the Kvp database - hence
         # those functions
@@ -168,10 +181,42 @@ class OptionBase(object):
         # this ought to be calling the setter/getter functions
         # and the validator functions
         self.option_value = value
+
+        if callable(self.setter_function_called_cb):
+            self.setter_function_called_cb(value)
+
+        if self.changed_callback:
+            self.changed_callback()
         
 
 # these only fill partial values of above
 # going with a subclass
+
+class ComplexBooleanOption(OptionBase):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None, setter_function_called_cb=None,option_widget_changed_cb=None):
+        super(ComplexBooleanOption,self).__init__()
+        self.section = section
+        self.name = optname
+        self.type = 'boolean'
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+        self.default_value = default_value
+
+
+        self.callback = None
+        self.widget_changed = option_widget_changed_cb
+
+        # this is stored via a lambda in scheme
+        self.setter_function_called_cb = setter_function_called_cb
+
+        # the setter and getter seem to store in the Kvp database
+
+
+class SimpleBooleanOption(ComplexBooleanOption):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None):
+        super(SimpleBooleanOption,self).__init__(section, optname, sort_tag, tool_tip, default_value=default_value,setter_function_called_cb=None,option_widget_changed_cb=None)
 
 class StringOption(OptionBase):
 
@@ -186,7 +231,7 @@ class StringOption(OptionBase):
 
 class MultiChoiceOption(OptionBase):
 
-    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None):
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,ok_values=[]):
         super(MultiChoiceOption,self).__init__()
         self.section = section
         self.name = optname
@@ -194,6 +239,23 @@ class MultiChoiceOption(OptionBase):
         self.sort_tag = sort_tag
         self.documentation_string = tool_tip # AKA documentation_string
         self.default_value = default_value
+        self.ok_values = ok_values
 
+class MultiChoiceCallbackOption(OptionBase):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,ok_values=[],setter_function_called_cb=None,option_widget_changed_cb=None):
+        super(MultiChoiceOption,self).__init__()
+        self.section = section
+        self.name = optname
+        self.type = 'multichoice'
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+        self.default_value = default_value
+        self.ok_values = ok_values
+
+        self.callback = setter_function_called_cb
+        self.widget_changed = option_widget_changed_cb
+
+        # the setter and getter seem to store in the Kvp database
 
 

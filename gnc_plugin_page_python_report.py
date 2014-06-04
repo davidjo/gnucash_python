@@ -92,6 +92,11 @@ def N_(msg):
     return msg
 
 
+# define a simple function to convert the 64 bit hash to 32 bit
+def hash32 (inhsh):
+    return (inhsh - (inhsh >> 32)) & (2**32 - 1) 
+
+
 def close_handler (arg):
     print >> sys.stderr, "close handler called"
     pdb.set_trace()
@@ -118,24 +123,37 @@ class GncPluginPagePythonReport(PluginPage):
     # OK Im now thinking gobject warning messages were happening previously but just did not get the message
 
     __gproperties__ = {
-                       'report-id' : (gobject.TYPE_INT,              # type
-                                      'integer report id',           # nick name
-                                      'integer report id',           # description
-                                      0,                             # min value
-                                      2000000,                       # max value
-                                      42,                            # default value
-                                      gobject.PARAM_READWRITE),      # flags
+                       'report-id' : (gobject.TYPE_INT,                       # type
+                                      N_('The numeric ID of the report.'),    # nick name
+                                      N_('The numeric ID of the report.'),    # description
+                                      -1,                                     # min value
+                                      gobject.G_MAXINT,                       # max value
+                                      -1,                                     # default value
+                                      gobject.PARAM_READWRITE),               # flags
+                                      #gobject.PARAM_CONSTRUCT_ONLY | gobject.PARAM_READWRITE),      # flags
+                                      # cant figure out how to use gobject.PARAM_CONSTRUCT_ONLY
+                                      # not clear what the "constructor" is in python - __init__ ??
+                                      # but using in constr_init is definitely not
                       }
 
 
 
-    def __init__ (self, report_id):
-
-        #pdb.set_trace()
+    def __init__ (self, report):
 
         # do we need to init the parent class - GncPluginPage
         # do this or use gobject.GObject.__init__(self)
         gncpluginpage.PluginPage.__init__(self)
+
+        # in C report_id is some form of integer/Scheme hash representing the report
+        # in python we pass the report instance directly
+        # still not clear why cant just use the report guid
+        # and if this is per instance or not
+        # so we cant use hash - for initially simplicity convert to 32 bit hash
+        report_id = hash32(hash(report))
+        print "init report_id",report_id
+
+        # this property is set on the g_object_new statement
+        self.set_property("report-id",report_id)
 
         #pdb.set_trace()
 
@@ -248,7 +266,7 @@ class GncPluginPagePythonReport(PluginPage):
         self.class_init()
 
         # gobjects have constructor function
-        self.constructor(report_id)
+        self.constructor(report)
 
 
 
@@ -291,26 +309,40 @@ class GncPluginPagePythonReport(PluginPage):
         print "junk2"
 
 
-    def constructor(self, report_Id):
-
+    def constructor (self, report):
+        #pdb.set_trace()
+        # why this??
+        report_Id = -42;
         #
         # this calls the parent constructor
         # (how does this work in the pygobject universe??)
         # then gets the report-id property by scanning the properties passed as an argument
-        #report_Id = self.get_property("report-id")
+        report_Id = self.get_property("report-id")
+        print "constructor report-id",report_Id
 
-        self.constr_init(report_Id)
+        # scheme passes the report_Id - in python we will pass the report instance
+        self.constr_init(report)
 
-    def constr_init (self, report_id):
+    def constr_init (self, report):
 
+        # in C report_id is some form of integer/Scheme hash representing the report
+        # in python we pass the report instance directly
+        # so we cant use hash - for initially simplicity convert to 32 bit hash
+        report_id = hash32(hash(report))
+        print "constr_init report-id","%x"%report_id
         #pdb.set_trace()
 
         # this sets the property in gnc_plugin_page_report
+        # well thats what I thought it did
+        # I dont get this - the C code sets this into the private variable reportId
+        # I thought is where the property report-id is stored
+        # so we store it, access it just to re-store it???
         self.set_property("report-id",report_id)
+        print "constr_init get report-id","%x"%self.get_property("report-id")
 
         # do some setup - for gnc_plugin_page_report lots of scheme stuff
         #gnc_plugin_page_report_setup(self)
-        self.report_setup()
+        self.report_setup(report)
 
         ui_desc_path = os.path.join(os.environ['HOME'],'.gnucash','ui',"gnc-plugin-page-python-report-ui.xml")
 
@@ -320,7 +352,7 @@ class GncPluginPagePythonReport(PluginPage):
 
         # need to set parent variables - are these properties?? yes!!
         # in the scheme version 
-        self.set_property("page-name", self.initial_report.report_name)
+        self.set_property("page-name", self.initial_report.report_type.name)
         self.set_property("page-uri", "default:")
         self.set_property("ui-description", ui_desc_path)
         self.set_property("use-new-window", False)
@@ -364,7 +396,7 @@ class GncPluginPagePythonReport(PluginPage):
             raise AttributeError, 'unknown property %s' % property.name
 
 
-    def report_setup(self):
+    def report_setup(self, report):
 
         #pdb.set_trace()
 
@@ -374,16 +406,20 @@ class GncPluginPagePythonReport(PluginPage):
         self.name_change_cb_id = None
 
         report_id = self.get_property('report-id')
+        print "report_setup",report_id
 
         # need to do something like this
+        # actually may not need this - in python we pass the report instance
         #if report_id in self.report_dict:
 
-        self.initial_report = Report("Python Report")
+        #self.initial_report = Report()
+        self.initial_report = Report(report_type=report)
 
         # for the moment lets do this
         #self.cur_report = self.initial_report
         # or should it be
-        self.cur_report = Report("Python Report")
+        #self.cur_report = Report()
+        self.cur_report = Report(report_type=report)
 
     def create_widget (self):
 
@@ -557,7 +593,7 @@ class GncPluginPagePythonReport(PluginPage):
         # we have instance of this class for each report
         # ah - but we need separate instance for each variation of this report with
         # different options
-        result = self.cur_report.start_editor()
+        result = self.cur_report.edit_options()
         if result == None:
             #gnc_warning_dialog(GTK_WIDGET(gnc_ui_get_toplevel()), "%s",
             #                   _("There are no options for this report."));
@@ -583,10 +619,18 @@ class GncPluginPagePythonReport(PluginPage):
     # try as module method
     #@classmethod
 
-def OpenReport (report_id, window):
+def OpenReport (report, window):
     global python_pages
+    # so now understand what the C report_id is - it is essentially the value of the SCM
+    # object that is the report object (SCM objects in C are passed around as integers)
+    # (also known as the Scheme-side hash)
+    # so in Python this becomes the report instance directly
     # following the C the gnc_plugin_page_report_new has the report_id as argument
     # which is passed to the constructor as a property
+    # I think we cant use objects directly as dict keys can can use its hash
+    # this is probably quite close to the scheme coding
+    # so we cant use hash - for initially simplicity convert to 32 bit hash
+    report_id = hash32(hash(report))
     try:
 
         # Im  not sure whether should hang onto the myreport object
@@ -602,16 +646,16 @@ def OpenReport (report_id, window):
             print >> sys.stderr, "report already created",report_id
             return
 
-        myreport = GncPluginPagePythonReport(report_id)
+        myreportpage = GncPluginPagePythonReport(report)
 
         # junkily stash the pointer in global to ensure not
         # deallocated 
-        python_pages[report_id] = myreport
+        python_pages[report_id] = myreportpage
 
         windowp = hash(window)
         #windowp = ctypes.cast(windowp,ctypes.POINTER(gnc_main_window.GncMainWindowOpaque))
         #windowp = ctypes.cast(windowp,ctypes.c_void_p)
-        myreportp = hash(myreport)
+        myreportp = hash(myreportpage)
         #myreportp = ctypes.cast(myreportp,ctypes.POINTER(gnc_plugin_page.GncPluginPageOpaque))
         #myreportp = ctypes.cast(myreportp,ctypes.c_void_p)
         #pdb.set_trace()

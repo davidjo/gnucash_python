@@ -5,6 +5,10 @@
 
 import glib_glog
 
+import pdb
+
+#pdb.set_trace()
+
 # oh well thats not going to work - we need to pass log_module
 
 def FATAL (log_module, msg):
