@@ -46,6 +46,8 @@ from report_objects import Report
 
 from gnc_html import HtmlView
 
+from gnucash_log import ENTER
+
 
 libglibnm = ctypes.util.find_library("libglib-2.0")
 if libglibnm is None:
@@ -522,14 +524,31 @@ class GncPluginPagePythonReport(PluginPage):
            traceback.print_exc()
            pdb.set_trace()
 
-    def save_page (self, keyfile, group):
+    def save_page (self, key_file, group_name):
         print >> sys.stderr, "save_page"
-        #pdb.set_trace()
+        # this is a biggy - the scheme version outputs the data needed to regenerate the report
+        # - it appears to be saved under .gnucash/books in the .gcm for the book
+        # - where scheme options are saved - which I think is a GKeyFile entity
+        # maybe in python we can pickle the object 
+        # ah - we just need to ensure save_page and recreate_page coordinate
+        pdb.set_trace()
+        #ENTER("page %p, key_file %p, group_name %s"%(self, key_file, group_name))
+        # so the basic page type and page name are stored by default
+        # I think this saves various option blocks
+        #itmcnt = 1
+        #key_file.set_value(group_name, "PythonOptions%d"%itmcnt, self.cur_report.gen_save_text)
+        # this saves the main report
+        #key_file.set_value(group_name, "PythonOptions", self.cur_report.report_type)
 
     @classmethod
     # this ought to be a class method but still not sorted this
-    def recreate_page (cls, arg1, arg2, arg3):
-        print >> sys.stderr, "recreate_page"
+    def recreate_page (cls, page_type, key_file, page_group):
+        print >> sys.stderr, "recreate_page",page_type, key_file, page_group
+        # call trace
+        #0  0x000000010003dc58 in gnc_plugin_page_report_recreate_page ()
+        #1  0x000000010021d33b in gnc_plugin_page_recreate_page ()
+        #2  0x0000000100219aaf in gnc_main_window_restore_all_windows ()
+        #3  0x00000001000a85b7 in gnc_restore_all_state ()
         pdb.set_trace()
 
     def window_changed (self, *args):
