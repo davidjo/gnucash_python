@@ -5,6 +5,8 @@ import sys
 
 import os
 
+import json
+
 import pdb
 
 import traceback
@@ -42,6 +44,7 @@ import gnc_main_window
 from pygkeyfile import GKeyFile
 
 
+import report_objects
 from report_objects import Report
 
 from gnc_html import HtmlView
@@ -531,25 +534,22 @@ class GncPluginPagePythonReport(PluginPage):
         # - where scheme options are saved - which I think is a GKeyFile entity
         # maybe in python we can pickle the object 
         # ah - we just need to ensure save_page and recreate_page coordinate
-        pdb.set_trace()
+        #pdb.set_trace()
         #ENTER("page %p, key_file %p, group_name %s"%(self, key_file, group_name))
         # so the basic page type and page name are stored by default
         # I think this saves various option blocks
         #itmcnt = 1
         #key_file.set_value(group_name, "PythonOptions%d"%itmcnt, self.cur_report.gen_save_text)
         # this saves the main report
-        #key_file.set_value(group_name, "PythonOptions", self.cur_report.report_type)
-
-    @classmethod
-    # this ought to be a class method but still not sorted this
-    def recreate_page (cls, page_type, key_file, page_group):
-        print >> sys.stderr, "recreate_page",page_type, key_file, page_group
-        # call trace
-        #0  0x000000010003dc58 in gnc_plugin_page_report_recreate_page ()
-        #1  0x000000010021d33b in gnc_plugin_page_recreate_page ()
-        #2  0x0000000100219aaf in gnc_main_window_restore_all_windows ()
-        #3  0x00000001000a85b7 in gnc_restore_all_state ()
+        # for the moment we definitely need the guid
+        # almost works but not quite as the value is a python object
+        # for the moment create new dict with value as module and class name string
         pdb.set_trace()
+        pyitms = {}
+        for key,val in report_objects.python_reports_by_guid.iteritems():
+            pyitms[key] = "%s.%s"%(val.__class__.__module__,val.__class__.__name__)
+        key_file.set_value(group_name, "PythonOptions", repr(pyitms))
+        #key_file.set_value(group_name, "PythonOptions", json.dumps(report_objects.python_reports_by_guid))
 
     def window_changed (self, *args):
         print >> sys.stderr, "window_changed",len(args)
@@ -635,66 +635,125 @@ class GncPluginPagePythonReport(PluginPage):
         self.edited_reports.append(cur_report)
 
 
-    # try as module method
-    #@classmethod
+    @classmethod
+    def recreate_page (cls, window, key_file, page_group):
+        print "recreate_page BEGIN!!"
+        print >> sys.stderr, "recreate_page",window, key_file, page_group
+        # amazing - this is working - it being called if report was open on gnucash
+        # close
+        # now need to figure how to regenerate the report
+        # call trace
+        #0  0x000000010003dc58 in gnc_plugin_page_report_recreate_page ()
+        #1  0x000000010021d33b in gnc_plugin_page_recreate_page ()
+        #2  0x0000000100219aaf in gnc_main_window_restore_all_windows ()
+        #3  0x00000001000a85b7 in gnc_restore_all_state ()
+        #pdb.set_trace()
+        #key_file.get_value(page_group,'PageType')
+        #'GncPluginPagePythonReport'
+        #key_file.get_value(page_group,'PageName')
+        #'Hello, World'
+        pyopts = key_file.get_value(page_group,'PythonOptions')
+        print "recreate_page",pyopts
+        # hmm - will this only have one key??
+        pydict = eval(pyopts)
+        report_guid = pydict.keys()[0]
+        if report_guid in report_objects.python_reports_by_guid:
+            new_page = None
+            new_page = GncPluginPagePythonReport.OpenNewReport(report_objects.python_reports_by_guid[report_guid],window)
+            pass
+        else:
+            # if we need to import the module
+            #newmod = __import__(modnam, globals(), locals(), [subclsnam], -1)
+            pass
+
+        print "recreate_page END!!"
+
+        return new_page
+
+    @classmethod
+    def OpenNewReport (cls, report, window):
+        global python_pages
+        print >> sys.stderr, "OpenNewReport",window
+        # so now understand what the C report_id is - it is essentially the value of the SCM
+        # object that is the report object (SCM objects in C are passed around as integers)
+        # (also known as the Scheme-side hash)
+        # so in Python this becomes the report instance directly
+        # following the C the gnc_plugin_page_report_new has the report_id as argument
+        # which is passed to the constructor as a property
+        # I think we cant use objects directly as dict keys can can use its hash
+        # this is probably quite close to the scheme coding
+        # so we cant use hash - for initially simplicity convert to 32 bit hash
+        report_id = hash32(hash(report))
+        try:
+
+            # Im  not sure whether should hang onto the myreport object
+            # in gnucash it looks like gnc_main_window_open_page will save the
+            # page pointer somewhere - and removed in gnc_main_window_close_page
+            # yes - the page is saved in the installed_pages list by gnc_main_window_connect
+            # called at end of gnc_main_window_open_page
+
+            # check if already created the report
+            # not sure if crashes Im seeing are due to object deletion or something
+            # with creating same report twice
+            if report_id in python_pages:
+                print >> sys.stderr, "report already created",report_id
+                return
+
+            myreportpage = GncPluginPagePythonReport(report)
+
+            # junkily stash the pointer in global to ensure not
+            # deallocated 
+            python_pages[report_id] = myreportpage
+
+            windowp = hash(window)
+            #windowp = ctypes.cast(windowp,ctypes.POINTER(gnc_main_window.GncMainWindowOpaque))
+            #windowp = ctypes.cast(windowp,ctypes.c_void_p)
+            myreportp = hash(myreportpage)
+            #myreportp = ctypes.cast(myreportp,ctypes.POINTER(gnc_plugin_page.GncPluginPageOpaque))
+            #myreportp = ctypes.cast(myreportp,ctypes.c_void_p)
+            #pdb.set_trace()
+            #print >> sys.stderr, "0x%x"%ctypes.addressof(windowp)
+            #print >> sys.stderr, "0x%x"%ctypes.addressof(myreportp)
+            print >> sys.stderr, "0x%x"%windowp
+            print >> sys.stderr, "0x%x"%myreportp
+
+            gnc_main_window.libgnc_gnomeutils.gnc_main_window_open_page(windowp,myreportp)
+
+            #pdb.set_trace()
+            print "junk1"
+
+        except Exception, errexc:
+            traceback.print_exc()
+            print >> sys.stderr, "OpenReport error:",str(errexc)
+            pdb.set_trace()
+
+        return myreportpage
+
 
 def OpenReport (report, window):
-    global python_pages
-    # so now understand what the C report_id is - it is essentially the value of the SCM
-    # object that is the report object (SCM objects in C are passed around as integers)
-    # (also known as the Scheme-side hash)
-    # so in Python this becomes the report instance directly
-    # following the C the gnc_plugin_page_report_new has the report_id as argument
-    # which is passed to the constructor as a property
-    # I think we cant use objects directly as dict keys can can use its hash
-    # this is probably quite close to the scheme coding
-    # so we cant use hash - for initially simplicity convert to 32 bit hash
-    report_id = hash32(hash(report))
-    try:
-
-        # Im  not sure whether should hang onto the myreport object
-        # in gnucash it looks like gnc_main_window_open_page will save the
-        # page pointer somewhere - and removed in gnc_main_window_close_page
-        # yes - the page is saved in the installed_pages list by gnc_main_window_connect
-        # called at end of gnc_main_window_open_page
-
-        # check if already created the report
-        # not sure if crashes Im seeing are due to object deletion or something
-        # with creating same report twice
-        if report_id in python_pages:
-            print >> sys.stderr, "report already created",report_id
-            return
-
-        myreportpage = GncPluginPagePythonReport(report)
-
-        # junkily stash the pointer in global to ensure not
-        # deallocated 
-        python_pages[report_id] = myreportpage
-
-        windowp = hash(window)
-        #windowp = ctypes.cast(windowp,ctypes.POINTER(gnc_main_window.GncMainWindowOpaque))
-        #windowp = ctypes.cast(windowp,ctypes.c_void_p)
-        myreportp = hash(myreportpage)
-        #myreportp = ctypes.cast(myreportp,ctypes.POINTER(gnc_plugin_page.GncPluginPageOpaque))
-        #myreportp = ctypes.cast(myreportp,ctypes.c_void_p)
-        #pdb.set_trace()
-        #print >> sys.stderr, "0x%x"%ctypes.addressof(windowp)
-        #print >> sys.stderr, "0x%x"%ctypes.addressof(myreportp)
-        print >> sys.stderr, "0x%x"%windowp
-        print >> sys.stderr, "0x%x"%myreportp
-
-        gnc_main_window.libgnc_gnomeutils.gnc_main_window_open_page(windowp,myreportp)
-
-        #pdb.set_trace()
-        print "junk1"
-
-    except Exception, errexc:
-        traceback.print_exc()
-        print >> sys.stderr, "OpenReport error:",str(errexc)
-        pdb.set_trace()
+    print "OpenReport BEGIN"
+    GncPluginPagePythonReport.OpenNewReport(report, window)
+    print "OpenReport END"
 
 #pdb.set_trace()
 
 gobject.type_register(GncPluginPagePythonReport)
 
 #tmpexampl = gobject.new(GncPluginPagePythonReport)
+
+
+# right - what we need to do is split out the recreate_page
+# as this needs to exist outside of an instance
+# and not really figured out how to do this as a class method
+# also we need to specially set the class gnc callback for this
+
+# and now setup the callback - passing in the appropriate GType name
+# note this sets into the GncPluginPage class structure of the GncPluginPagePythonReport GType
+# - not the GncPluginPage class structure of the GncPluginPage GType
+# only one class structure of a GType exists for all instances
+# these callbacks are set into the parent class structure of GncPluginPagePythonReport
+# and are the same for all instances of GncPluginPagePythonReport
+
+gncpluginpage.set_recreate_callback("GncPluginPagePythonReport")
+
+

@@ -44,7 +44,7 @@ extern PyTypeObject PyGKeyFile_Type;
 PyObject *pygkeyfile_new(GKeyFile *keyfile)
 {
     PyGILState_STATE gstate;
-    PyGILState_Ensure();
+    gstate = PyGILState_Ensure();
     PyGKeyFile *newgkeyfile = (PyGKeyFile *)PyObject_New(PyGKeyFile,&PyGKeyFile_Type);
     newgkeyfile->key_file = keyfile;
     PyGILState_Release(gstate);

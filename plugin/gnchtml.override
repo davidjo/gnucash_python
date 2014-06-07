@@ -117,7 +117,7 @@ void GncHTMLFlyover_python_callback (GncHtml* html, const gchar *url, gpointer d
 
     fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
 
-    PyGILState_Ensure();
+    gstate = PyGILState_Ensure();
 
     PyObject *py_url = PyString_FromString(url);
     PyObject *py_data = pyg_pointer_new(G_TYPE_POINTER,data);
@@ -186,7 +186,7 @@ void GncHTMLLoad_python_callback (GncHtml* html, URLType type,
 
     fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
 
-    PyGILState_Ensure();
+    gstate = PyGILState_Ensure();
 
     PyObject *py_urltype = PyString_FromString(type);
     PyObject *py_location = PyString_FromString(location);
@@ -260,7 +260,7 @@ int GncHTMLButton_python_callback (GncHtml* html, GdkEventButton *event, gpointe
 
     fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
 
-    PyGILState_Ensure();
+    gstate = PyGILState_Ensure();
 
     PyObject *py_event = pygobject_new((GObject *)event);
     PyObject *py_data = pyg_pointer_new(G_TYPE_POINTER,data);

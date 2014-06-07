@@ -21,10 +21,20 @@ import traceback
 #gtk.gdk.threads_init()
 
 
+# hmm - we need to instantiate the python report page module here
+# - other wise the callbacks wont exist when restoring pages saved on normal shutdown
+# however this means we need a re-factor as can now only do widget stuff later
+# looks like in gnucash modules are not effectively multiply instantiated
+# essentially we need to define the GType now and figure out how to set the callback
+# actually do we need the instantiation - maybe the import is enough??
+# yes - looks like the import is enough
+import gnc_plugin_page_python_report
+
 #import gnc_plugin_python_example
 
-# this way seems to be failing
 import python_only_plugin 
 myplugin = python_only_plugin.MyPlugin()
 
-#import gnc_plugin_page
+#pdb.set_trace()
+
+print "junk"

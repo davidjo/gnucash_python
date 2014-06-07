@@ -209,7 +209,7 @@ gnc_python_callback (GtkAction *action, PyObject *data)
     fprintf(stderr, "data is %llx\n",(unsigned long long)data);
 
     // we apparently need to wrap python calls from arbitrary points with this
-    PyGILState_Ensure();
+    gstate = PyGILState_Ensure();
 
     if (!PyObject_HasAttrString(data,"callbacks")) {
         fprintf(stderr,"gnc_python_callback: data has no callbacks attribute");

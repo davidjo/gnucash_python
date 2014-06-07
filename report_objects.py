@@ -266,5 +266,29 @@ class Report(object):
 # have a hash table for reports - this ensures the
 # report objects are not deallocated
 # for the moment use a global here
+# still not sure if need one for the templates and one for the actual report instantiations
 reports = {}
+
+python_reports_by_name = {}
+python_reports_by_guid = {}
+
+def load_python_reports ():
+    # yes we need the global to write into these objects
+    global python_reports_by_name
+    global python_reports_by_guid
+    # this is effectively the replacement for gnc:add-report-template-menu-items
+    # in report-gnome.scm
+    # ok im wrong - we can instantiate here as long as do
+    # very little in the __init__ - in particular no GUI
+    # OK looks like this lookup is done by class - not instance
+    # no - Im thinking it is instance now
+    # the 'edited' reports seem to be the html text result of running the report
+    # cancel the above I now think its a class again
+    # not clear what the advantage is in python - we just loose the local variable
+    # space with in instance compared to the class
+    from hello_world import HelloWorld
+    python_reports_by_name = {}
+    python_reports_by_name['HelloWorld'] = HelloWorld()
+    python_reports_by_guid = {}
+    python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
 

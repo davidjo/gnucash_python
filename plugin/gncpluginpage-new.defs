@@ -26,6 +26,19 @@
   (return-type "none")
 )
 
+;; for the moment define a special callback to set the recreate_page function
+;; this needs to be done at the module level after the GType has been registered
+;; (when the GType class structure will exist)
+;; would like to make this automatic
+
+(define-function set_recreate_callback
+  (c-name "gnc_plugin_page_set_recreate_callback")
+  (return-type "none")
+  (parameters
+    '("const-gchar*" "page_type")
+  )
+)
+
 ;; this function is defined in gnc-plugin.h but gnc-plugin-page is NOT a subclass
 ;; of gnc-plugin
 ;; also this function does not use the gnc-plugin class/instance structs in any way

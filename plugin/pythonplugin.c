@@ -214,7 +214,7 @@ void python_plugin_init(GncPluginpythongeneric *plugin)
     //PyGILState_STATE gstate;
     if (global_plugin_functions.python_callback_init != NULL)
         {
-        //PyGILState_Ensure();
+        //gstate = PyGILState_Ensure();
         // probably should pass the GncPluginpythongeneric  here
         PyObject_CallMethod(pPluginObject,"plugin_init",NULL);
         if (PyErr_Occurred())
@@ -231,7 +231,7 @@ void python_plugin_finalize(GObject *object)
     PyGILState_STATE gstate;
     if (global_plugin_functions.python_callback_finalize != NULL)
         {
-        PyGILState_Ensure();
+        gstate = PyGILState_Ensure();
         // probably should pass the GObject here
         PyObject_CallMethod(pPluginObject,"plugin_finalize",NULL);
         if (PyErr_Occurred())
@@ -260,7 +260,7 @@ gnc_plugin_python_generic_cmd_callback (GtkAction *action, GncMainWindowActionDa
     fprintf(stderr,"subdata pointer %llx\n",(void *)(data->data));
 
     // we apparently need to wrap python calls from arbitrary points with this
-    PyGILState_Ensure();
+    gstate = PyGILState_Ensure();
 
     /* pygobject_new handles NULL checking */
     PyObject *action_obj = pygobject_new((GObject *)action);

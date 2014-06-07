@@ -56,6 +56,9 @@ import gnc_plugin_page_python_report
 import gnc_menu_extension
 
 
+import report_objects
+
+
 class GncMenuItem(object):
     def __init__ (self,path=None,ae=None,action=None,type=None):
         self.path = path
@@ -175,31 +178,20 @@ class MyPlugin(gobject.GObject):
         print "merge_id",self.merge_id
 
         # load the report classes and create instances
-        self.load_python_reports()
+        # first import the report definitions
+        report_objects.load_python_reports()
+
+        # now setup the menus
+        self.load_python_reports_menu()
 
     def plugin_init (self):
         print >> sys.stderr, "python only plugin_init called"
 
-    def load_python_reports (self):
-        # this is effectively the replacement for gnc:add-report-template-menu-items 
-        # in report-gnome.scm
-        # ok im wrong - we can instantiate here as long as do
-        # very little in the __init__ - in particular no GUI
-        # OK looks like this lookup is done by class - not instance
-        # no - Im thinking it is instance now
-        # the 'edited' reports seem to be the html text result of running the report
-        # cancel the above I now think its a class again
-        # not clear what the advantage is in python - we just loose the local variable
-        # space with in instance compared to the class
-        from hello_world import HelloWorld 
-        self.python_reports_by_name = {}
-        self.python_reports_by_name['HelloWorld'] = HelloWorld()
-        self.python_reports_by_guid = {}
-        self.python_reports_by_guid[self.python_reports_by_name['HelloWorld'].report_guid] = self.python_reports_by_name['HelloWorld']
 
+    def load_python_reports_menu (self):
         menu_list = []
-        for rpt in self.python_reports_by_name:
-            menu_list.append(self.add_menuitems(rpt,self.python_reports_by_name[rpt]))
+        for rpt in report_objects.python_reports_by_name:
+            menu_list.append(self.add_menuitems(rpt,report_objects.python_reports_by_name[rpt]))
 
         # now need to update menu
         # we cannot use the gnc-menu-extensions and gnc-plugin-menu-additions
@@ -246,7 +238,7 @@ class MyPlugin(gobject.GObject):
             # what we are getting is the guid - but it seems to me the SCM id is going to be similarly unique
             # as the guid ie each different unique report guid is associated with a unique different SCM integer
             report_guid = actionobj.get_name()
-            report = self.python_reports_by_guid[report_guid]
+            report = report_objects.python_reports_by_guid[report_guid]
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(report,window)
             gnc_plugin_page_python_report.OpenReport(report,window)
             print "call back done"
