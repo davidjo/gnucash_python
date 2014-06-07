@@ -121,7 +121,6 @@ STOCK_PDF_EXPORT = "gnc-pdf-export"
 
 class GncPluginPagePythonReport(PluginPage):
 
-
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncPluginPagePythonReport'
 
@@ -142,19 +141,15 @@ class GncPluginPagePythonReport(PluginPage):
                       }
 
 
-
     def __init__ (self, report):
 
         # do we need to init the parent class - GncPluginPage
         # do this or use gobject.GObject.__init__(self)
         gncpluginpage.PluginPage.__init__(self)
 
-        # in C report_id is some form of integer/Scheme hash representing the report
-        # in python we pass the report instance directly
-        # still not clear why cant just use the report guid
-        # and if this is per instance or not
-        # so we cant use hash - for initially simplicity convert to 32 bit hash
-        report_id = hash32(hash(report))
+        # again we are passing the instance pointer in python rather than integer report id
+        # - but the report instance contains the report id
+        report_id = report.id
         print "init report_id",report_id
 
         # this property is set on the g_object_new statement
@@ -330,10 +325,9 @@ class GncPluginPagePythonReport(PluginPage):
 
     def constr_init (self, report):
 
-        # in C report_id is some form of integer/Scheme hash representing the report
-        # in python we pass the report instance directly
-        # so we cant use hash - for initially simplicity convert to 32 bit hash
-        report_id = hash32(hash(report))
+        # again we are passing the instance pointer in python rather than integer report id
+        # - but the report instance contains the report id
+        report_id = report.id
         print "constr_init report-id","%x"%report_id
         #pdb.set_trace()
 
@@ -413,18 +407,15 @@ class GncPluginPagePythonReport(PluginPage):
         report_id = self.get_property('report-id')
         print "report_setup",report_id
 
-        # need to do something like this
-        # actually may not need this - in python we pass the report instance
-        #if report_id in self.report_dict:
+        # need to do something like this to follow scheme
+        # currently do not need this - in python we pass the report instance
+        #if report_id in Report.report_ids:
+        #    report = Report.report_ids[report_id]
 
-        #self.initial_report = Report()
-        self.initial_report = Report(report_type=report)
+        self.initial_report = report
 
-        # for the moment lets do this
-        #self.cur_report = self.initial_report
-        # or should it be
-        #self.cur_report = Report()
-        self.cur_report = Report(report_type=report)
+        # in scheme cur_report is another pointer to the report instance
+        self.cur_report = self.initial_report
 
     def create_widget (self):
 
@@ -544,7 +535,7 @@ class GncPluginPagePythonReport(PluginPage):
         # for the moment we definitely need the guid
         # almost works but not quite as the value is a python object
         # for the moment create new dict with value as module and class name string
-        pdb.set_trace()
+        #pdb.set_trace()
         pyitms = {}
         for key,val in report_objects.python_reports_by_guid.iteritems():
             pyitms[key] = "%s.%s"%(val.__class__.__module__,val.__class__.__name__)
@@ -637,7 +628,6 @@ class GncPluginPagePythonReport(PluginPage):
 
     @classmethod
     def recreate_page (cls, window, key_file, page_group):
-        print "recreate_page BEGIN!!"
         print >> sys.stderr, "recreate_page",window, key_file, page_group
         # amazing - this is working - it being called if report was open on gnucash
         # close
@@ -652,21 +642,24 @@ class GncPluginPagePythonReport(PluginPage):
         #'GncPluginPagePythonReport'
         #key_file.get_value(page_group,'PageName')
         #'Hello, World'
+        # I think somehow in scheme the saved strings are evaluated and that creates
+        # the new report instance and defines the scheme integer report id
+        # oh boy thats how to hack gnucash - the .gcm file contains the scheme code to generate
+        # a new report by calls either to gnc:restore-report-by-guid-with-custom-template 
+        # or normally gnc:restore-report-by-guid which is evaluated in the scheme version of
+        # this function
         pyopts = key_file.get_value(page_group,'PythonOptions')
         print "recreate_page",pyopts
         # hmm - will this only have one key??
         pydict = eval(pyopts)
         report_guid = pydict.keys()[0]
         if report_guid in report_objects.python_reports_by_guid:
-            new_page = None
-            new_page = GncPluginPagePythonReport.OpenNewReport(report_objects.python_reports_by_guid[report_guid],window)
-            pass
+            new_report = Report(report_type=report_objects.python_reports_by_guid[report_guid])
+            new_page = GncPluginPagePythonReport.OpenNewReport(new_report,window)
         else:
             # if we need to import the module
             #newmod = __import__(modnam, globals(), locals(), [subclsnam], -1)
             pass
-
-        print "recreate_page END!!"
 
         return new_page
 
@@ -674,16 +667,9 @@ class GncPluginPagePythonReport(PluginPage):
     def OpenNewReport (cls, report, window):
         global python_pages
         print >> sys.stderr, "OpenNewReport",window
-        # so now understand what the C report_id is - it is essentially the value of the SCM
-        # object that is the report object (SCM objects in C are passed around as integers)
-        # (also known as the Scheme-side hash)
-        # so in Python this becomes the report instance directly
-        # following the C the gnc_plugin_page_report_new has the report_id as argument
-        # which is passed to the constructor as a property
-        # I think we cant use objects directly as dict keys can can use its hash
-        # this is probably quite close to the scheme coding
-        # so we cant use hash - for initially simplicity convert to 32 bit hash
-        report_id = hash32(hash(report))
+        # we are currently passing the report instance rather than the integer report id
+        # as scheme does - note that the report id is defined by report.id
+        report_id = report.id
         try:
 
             # Im  not sure whether should hang onto the myreport object
@@ -731,9 +717,7 @@ class GncPluginPagePythonReport(PluginPage):
 
 
 def OpenReport (report, window):
-    print "OpenReport BEGIN"
     GncPluginPagePythonReport.OpenNewReport(report, window)
-    print "OpenReport END"
 
 #pdb.set_trace()
 

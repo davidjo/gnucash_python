@@ -4,6 +4,8 @@
 
 import pdb
 
+import gobject
+
 from report_options import OptionsDB
 from report_options import StringOption,MultiChoiceOption
 
@@ -131,7 +133,12 @@ class ReportTemplate(object):
 
 class Report(object):
 
-    def __init__ (self, report_type):
+    # this encodes the scheme report id functionality
+    # do this as class variables or module globals??
+    report_next_serial_id = 0;
+    report_ids = {}
+
+    def __init__ (self, report_type, options=None):
 
         # this is the equivalent of the following scheme
         # except currently we are 
@@ -145,6 +152,8 @@ class Report(object):
 
         # somehow this is where the template is stored - possibly through hash id in scheme
         # or could well be by report guid
+        # yes it looks as though in scheme this is actually the guid of the report template
+        # (see gnc:make-report in report.scm)
         if report_type != None:
             self.report_type = report_type
         else:
@@ -160,21 +169,52 @@ class Report(object):
         self.ctext = None
         self.custom_template = None
 
-        if self.report_type.options_generator != None:
-            self.options = self.report_type.new_options()
+        # this follows the scheme more closely
+        if options != None:
+            self.options = options
         else:
             self.options = self.report_type.new_options()
 
         # this does a lambda function in scheme
+        # need explicit function here because of python limitations in lambda definitions
         # not quite sure of replacement yet
         # lambda_callback should be in the OptionsDB
+        # I think we are doing this in order to set the dirty flag in this instance
+        # on any option change
         #self.options.register_callback(None, None, lambda x : self.lambda_callback(x))
 
+
+        # ah - this is where the scheme id is set and returned
+        # these are defined in gnc-report.c
+        # where we see the id is actually a simple count of the number of reports
+        # instantiated
+        #(gnc:report-set-id! r (gnc-report-add r))
+        #(gnc:report-id r))
+        self.id = self.report_add()
+
+
     def lambda_callback (self):
+        # I think this is the primary feature of this coding - we need to set the dirty flag
+        # in this instance if any of the options are changed
         self.dirty = True
         cb = self.report_type.options_changed_cb
         if cb:
             cb()
+
+    def report_add (self):
+        if self.id != None:
+            if not self.id in Report.report_ids:
+                Report.report_ids[self.id] = self
+                return self.id
+        Report.report_next_serial_id += 1
+        while Report.report_next_serial_id < gobject.G_MAXINT:
+            new_id = Report.report_next_serial_id 
+            if not new_id in Report.report_ids:
+                Report.report_ids[new_id] = self
+                return new_id
+            Report.report_next_serial_id += 1
+
+        #g_warning("Unable to add report to table. %d reports in use.", G_MAXINT);
 
 
     def get_editor (self):
@@ -262,12 +302,7 @@ class Report(object):
            return default_params_data.win.widget()
 
 
-
-# have a hash table for reports - this ensures the
-# report objects are not deallocated
-# for the moment use a global here
-# still not sure if need one for the templates and one for the actual report instantiations
-reports = {}
+# note these dicts store the report templates
 
 python_reports_by_name = {}
 python_reports_by_guid = {}
@@ -276,8 +311,6 @@ def load_python_reports ():
     # yes we need the global to write into these objects
     global python_reports_by_name
     global python_reports_by_guid
-    # this is effectively the replacement for gnc:add-report-template-menu-items
-    # in report-gnome.scm
     # ok im wrong - we can instantiate here as long as do
     # very little in the __init__ - in particular no GUI
     # OK looks like this lookup is done by class - not instance
@@ -285,7 +318,7 @@ def load_python_reports ():
     # the 'edited' reports seem to be the html text result of running the report
     # cancel the above I now think its a class again
     # not clear what the advantage is in python - we just loose the local variable
-    # space with in instance compared to the class
+    # space with an instance compared to the class
     from hello_world import HelloWorld
     python_reports_by_name = {}
     python_reports_by_name['HelloWorld'] = HelloWorld()

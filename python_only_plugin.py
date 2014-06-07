@@ -1,6 +1,7 @@
 import sys
 import os
 import pdb
+import traceback
 
 
 import gobject
@@ -189,6 +190,9 @@ class MyPlugin(gobject.GObject):
 
 
     def load_python_reports_menu (self):
+        # this is effectively the replacement for gnc:add-report-template-menu-items
+        # in report-gnome.scm
+
         menu_list = []
         for rpt in report_objects.python_reports_by_name:
             menu_list.append(self.add_menuitems(rpt,report_objects.python_reports_by_name[rpt]))
@@ -232,17 +236,20 @@ class MyPlugin(gobject.GObject):
 
         try:
             # so we need either the report instance, guid or key name here
-            # in scheme/C implementation what is passed here is an integer representing the scheme object
-            # - but what Im not sure currently does that transfer to the python class object for Report here
-            # or an instance of Report
-            # what we are getting is the guid - but it seems to me the SCM id is going to be similarly unique
-            # as the guid ie each different unique report guid is associated with a unique different SCM integer
+            # in scheme/C implementation what is passed here is an integer representing the scheme
+            # report object - which is an "instance" of a report template
+            # so finally understood the scheme process - the report is instantiated here
+            # by the gnc:make-report - which returns the report id rather than an instance pointer
+            # so question is do we maintain passing the id integer or go with passing the instance
+            # pointer
             report_guid = actionobj.get_name()
-            report = report_objects.python_reports_by_guid[report_guid]
+            report_type = report_objects.python_reports_by_guid[report_guid]
+            report = report_objects.Report(report_type=report_type)
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(report,window)
             gnc_plugin_page_python_report.OpenReport(report,window)
             print "call back done"
         except Exception, errexc:
+            traceback.print_exc()
             print >> sys.stderr, "error in reports_cb callback",str(errexc)
         print  "junke"
 
@@ -263,6 +270,7 @@ class MyPlugin(gobject.GObject):
             gnc_plugin_page_python_report.OpenReport(42,window)
             print "call back done"
         except Exception, errexc:
+            traceback.print_exc()
             print >> sys.stderr, "error in reports_cb callback",str(errexc)
         print  "junke"
 

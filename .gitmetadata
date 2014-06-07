@@ -7,7 +7,7 @@
 {'st_mtime': '1401664220', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2863'}  ;  gnc_menu_extension.py
 {'st_mtime': '1401575284', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7424'}  ;  gnc_menu_extension_direct.py
 {'st_mtime': '1401059716', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3807'}  ;  gnc_plugin_page.py
-{'st_mtime': '1402099324', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '28059'}  ;  gnc_plugin_page_python_report.py
+{'st_mtime': '1402160388', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '27550'}  ;  gnc_plugin_page_python_report.py
 {'st_mtime': '1400190320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1167'}  ;  gnc_plugin_page_report.py
 {'st_mtime': '1400985475', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4919'}  ;  gnc_plugin_python_example.py
 {'st_mtime': '1399766815', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12037'}  ;  gnucash_ctypes.py
@@ -48,6 +48,6 @@
 {'st_mtime': '1401474838', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2570'}  ;  plugin/setup.py
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c
 {'st_mtime': '1400985604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4563'}  ;  python_example_plugin.py
-{'st_mtime': '1402083203', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10001'}  ;  python_only_plugin.py
-{'st_mtime': '1402083250', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10664'}  ;  report_objects.py
+{'st_mtime': '1402159605', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10280'}  ;  python_only_plugin.py
+{'st_mtime': '1402159671', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11986'}  ;  report_objects.py
 {'st_mtime': '1401923413', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9922'}  ;  report_options.py
