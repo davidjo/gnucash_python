@@ -61,7 +61,7 @@ class Stylesheet(object):
         pass
     @classmethod
     def get_html_style_sheets(cls):
-        return []
+        return [ [ 'dummystyle', 'Dummy Style', 'A Dummy style sheet.' ] ]
 
 
 class ReportTemplate(object):
@@ -74,6 +74,7 @@ class ReportTemplate(object):
         self.version = None
         self.name = "Welcome to GnuCash"
         self.report_guid = None
+        self.menu_name = None
         self.menu_tip = None
         self.menu_path = None
 
@@ -94,7 +95,6 @@ class ReportTemplate(object):
 
         self.in_menu = False
 
-        self.menu_name = None
         self.export_types = None
         self.export_thunk = None
 
@@ -113,7 +113,7 @@ class ReportTemplate(object):
         # it then calls gnc:new-options if the generator is not defined
         # gnc:new-options creates the hash table(s) databases
         namer = StringOption("General","Report name", "0a", N_("Enter a descriptive name for this report."), self.name)
-        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), Stylesheet.get_html_style_sheets())
+        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), 'dummystyle', Stylesheet.get_html_style_sheets())
         #pdb.set_trace()
         # think Ive got this - the report creates the options_generator function
         # which defines the reports options
@@ -269,11 +269,11 @@ class Report(object):
            default_params_data = ParamsData()
 
            # in scheme self.options are the options in scheme which is where the option value is stored
-           # GNCOptionDB essentially wraps those options in code for interacting with those options
+           # GncOptionDB essentially wraps those options in code for interacting with those options
            # using gtk
            default_params_data.options = self.options
            default_params_data.cur_report = self
-           default_params_data.db = dialog_options.GNCOptionDB(default_params_data.options)
+           default_params_data.db = dialog_options.GncOptionDB(default_params_data.options)
 
            rpttyp = self.get_report_type()
            # this is C code
@@ -319,9 +319,14 @@ def load_python_reports ():
     # cancel the above I now think its a class again
     # not clear what the advantage is in python - we just loose the local variable
     # space with an instance compared to the class
-    from hello_world import HelloWorld
     python_reports_by_name = {}
-    python_reports_by_name['HelloWorld'] = HelloWorld()
     python_reports_by_guid = {}
+
+    from reports.hello_world import HelloWorld
+    python_reports_by_name['HelloWorld'] = HelloWorld()
     python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
+
+    from reports.price_scatter import PriceScatter
+    python_reports_by_name['PriceScatter'] = PriceScatter()
+    python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
 

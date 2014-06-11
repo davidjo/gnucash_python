@@ -156,7 +156,7 @@ _wrap_gnc_plugin_page_add_book(PyGObject *self, PyObject *args, PyObject *kwargs
     QofBook *book;
 
     QofBook *curbok = gnc_get_current_book ();
-    fprintf(stderr,"add_book book %llx\n",(unsigned long long)curbok);
+    fprintf(stderr,"add_book book curr %llx\n",(unsigned long long)curbok);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O:GncPluginPage.add_book",
                                      kwlist, &book_obj)) {
@@ -164,10 +164,11 @@ _wrap_gnc_plugin_page_add_book(PyGObject *self, PyObject *args, PyObject *kwargs
         //    PyErr_Print();
         return NULL;
     }
-    fprintf(stderr,"add_book 1\n");
 
     // how to deal with book 
     // for the moment allow either integer or PyCObject
+    // what we really need is to allow for a gnucash python bindings Book object
+    // this might require pulling in some more stuff though
     if (book_obj != Py_None)
         {
         if (PyInt_Check(book_obj)) {
@@ -186,11 +187,10 @@ _wrap_gnc_plugin_page_add_book(PyGObject *self, PyObject *args, PyObject *kwargs
         PyErr_SetString(PyExc_TypeError, "book must be a book object");
         return NULL;
         }
-    fprintf(stderr,"add_book 2\n");
+
+    fprintf(stderr,"add_book book real %llx\n",(unsigned long long)book);
 
     gnc_plugin_page_add_book (GNC_PLUGIN_PAGE(self->obj), book);
-
-    fprintf(stderr,"add_book 3\n");
 
     Py_INCREF(Py_None);
     return Py_None;

@@ -23,12 +23,14 @@ import gobject
 import ctypes
 
 try:
-    import _sw_app_utils
+    # import my fixup module for the raw _sw_app_utils
+    import sw_app_utils
     from gnucash import *
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
     #import gtk
     pass
 except Exception, errexc:
+    traceback.print_exc()
     print >> sys.stderr, "Failed to import!!"
     pdb.set_trace()
 
@@ -356,15 +358,11 @@ class GncPluginPagePythonReport(PluginPage):
         self.set_property("ui-description", ui_desc_path)
         self.set_property("use-new-window", False)
 
-        # not sure what type to convert this to yet
-        curbook = _sw_app_utils.gnc_get_current_book()
-        print >> sys.stderr, "curbook_ptr %x"%curbook.__long__()
-        curbook_ptr = ctypes.cast( curbook.__long__(), ctypes.POINTER( QofBookOpaque ) )
+        # with wrapping module this now returns a gnucash python bindings Book instance
+        curbook = sw_app_utils.get_current_book()
         #pdb.set_trace()
-        print >> sys.stderr, "curbook_ptr %x"%ctypes.addressof(curbook_ptr.contents)
-        #pdb.set_trace()
-        #self.add_book(ctypes.addressof(curbook_ptr.contents))
-        self.add_book(curbook.__long__())
+        # really need to make this function accept a Book instance
+        self.add_book(curbook.instance.__long__())
 
         # Create menu and toolbar information
 

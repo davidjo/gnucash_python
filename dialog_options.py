@@ -26,6 +26,17 @@ import traceback
 import pdb
 
 
+try:
+    from gnc_builder import GncBuilder
+    from gnc_date_format import GncDateFormat
+    from gnc_currency_edit import GncCurrencyEdit
+    from gnc_general_select import GncGeneralSelect
+    from gnc_commodity_edit import GncCommodityEdit
+except Exception, errexc:
+    traceback.print_exc()
+    pdb.set_trace()
+
+
 from gnucash_log import PERR
 
 log_module = "gnc.gui.python"
@@ -42,7 +53,7 @@ def N_(msg):
 #0  0x00000001001e9354 in gnc_options_dialog_build_contents ()
 
 
-class GNCOption(object):
+class GncOption(object):
 
     # ah - the primary purpose of this class is to provide the functionality
     # to interact with an options value through the gtk GUI
@@ -58,7 +69,7 @@ class GNCOption(object):
 
     def get_ui_value (self):
         # OK this is really stupid - we have multiple redirection here
-        # we call a function in the GNCOptionDB class
+        # we call a function in the GncOptionDB class
         # which by default is set to the internal function in this class
         # note that this is for getting the option value from the GUI
         # and storing it in the basic option
@@ -82,6 +93,7 @@ class GNCOption(object):
             return optionTable[option_type_name]
         else:
             PERR(log_module,"Option lookup for type '%s' failed!"%option_type_name)
+            print "Option lookup for type '%s' failed!"%option_type_name
             pdb.set_trace()
             return None
 
@@ -110,6 +122,7 @@ class GNCOption(object):
             bad_value = option_def.set_value(self,use_default,widget,value)
             if bad_value:
                 PERR(log_module,"bad value")
+                print "bad value for option", type,self.guile_option.name,value
                 pdb.set_trace()
                 pass
         else:
@@ -274,10 +287,49 @@ class GNCOption(object):
         if value != None:
             value.set_tooltip_text(documentation)
 
+    def get_color_info (self, use_default):
+        if use_default:
+            #return self.guile_option.default_getter()
+            rgba = self.guile_option.default_getter()
+            scale = self.guile_option.option_data[0]
+        else:
+            #return self.guile_option.getter()
+            rgba = self.guile_option.getter()
+            scale = self.guile_option.option_data[0]
+        scale = 1.0/scale
+        red = rgba[0]*scale
+        green = rgba[1]*scale
+        blue = rgba[2]*scale
+        alpha = rgba[3]*scale
+        return (red, green, blue, alpha)
+
+    def get_range_info (self):
+        rng = self.guile_option.option_data
+        return rng
 
     # load of set callback functions
-    def set_ui_widget_boolean (self, page_box):
-        pass
+    def set_ui_widget_boolean (self, page_box, name, documentation):
+
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=0)
+
+        value = gtk.CheckButton(label=name)
+
+        self.widget = value
+        self.set_ui_value(False)
+
+        value.connect("toggled",self.changed_widget_cb)
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+        enclosing.show_all()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, None)
+
     def set_ui_value_boolean (self, use_default, widget, value):
         pass
     def get_ui_value_boolean (self, widget):
@@ -302,7 +354,7 @@ class GNCOption(object):
         enclosing.pack_start(value, expand=False, fill=False, padding=0)
         enclosing.show_all()
 
-        # need to figure what goes on with padding - is it pass through??
+        # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
 
     def set_ui_value_string (self, use_default, widget, value):
@@ -317,23 +369,71 @@ class GNCOption(object):
         # need to check utf-8'ness here
         return newstr
     def set_ui_widget_text (self, page_box,  name, documentation, enclosing=None, packed=None):
-        pass
+        print "set_ui_widget_text"
     def set_ui_value_text (self, use_default, widget, value):
-        pass
+        print "set_ui_value_text"
     def get_ui_value_text (self, widget):
-        pass
+        print "get_ui_value_text"
     def set_ui_widget_currency (self, page_box,  name, documentation, enclosing=None, packed=None):
-        pass
+        print "set_ui_widget_currency"
+
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=5)
+
+        value = GncCurrencyEdit()
+
+        self.widget = value
+        self.set_ui_value(False)
+
+        value.connect("changed",self.changed_widget_cb)
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+        enclosing.show_all()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, None)
     def set_ui_value_currency (self, use_default, widget, value):
-        pass
+        print "set_ui_value_currency"
     def get_ui_value_currency (self, widget):
-        pass
+        print "get_ui_value_currency"
     def set_ui_widget_commodity (self, page_box,  name, documentation, enclosing=None, packed=None):
-        pass
+        print "set_ui_widget_commodity"
+
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=5)
+
+        # this is not very pythonic
+        # changing - make GncCommodityEdit subclass of GncGeneralSelect
+        #value = GncGeneralSelect(GNC_GENERAL_SELECT_TYPE_SELECT, 
+        #                           gnc_commodity_edit_get_string,
+        #                           gnc_commodity_edit_new_select)
+        value = GncCommodityEdit()
+
+        self.widget = value
+        self.set_ui_value(False)
+
+        if documentation:
+            value.entry.set_tooltip_text(documentation)
+
+        value.entry.connect("changed",self.changed_widget_cb)
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+        enclosing.show_all()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, None)
     def set_ui_value_commodity (self, use_default, widget, value):
-        pass
+        print "set_ui_value_commodity"
     def get_ui_value_commodity (self, widget):
-        pass
+        print "get_ui_value_commodity"
     def set_ui_widget_multichoice (self, page_box,  name, documentation, enclosing=None, packed=None):
         colon_name = name + ":"
         label = gtk.Label(colon_name)
@@ -350,51 +450,191 @@ class GNCOption(object):
         enclosing.pack_start(value, expand=False, fill=False, padding=0)
         enclosing.show_all()
 
-        # need to figure what goes on with padding - is it pass through??
+        # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
     def set_ui_value_multichoice (self, use_default, widget, value):
-        value = value - 1
-        if value > 0 and value < len(self.guile_option.ok_values):
+        if value >= 0 and value < len(self.guile_option.option_data):
             widget.set_active(value)
             return False
         else:
             return True
     def get_ui_value_multichoice (self, widget):
-        # big question is whether to base from 0 or 1
+        # big question is whether to base from 0 or 1 - now going with 0
         # raw indexes are base 0
-        newmulti = widget.get_active() + 1
+        newmulti = widget.get_active()
         # need to check utf-8'ness here
         return newmulti
     def set_ui_widget_date (self, page_box,  name, documentation, enclosing=None, packed=None):
-        pass
+        print "set_ui_widget_date"
+
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=0)
+
+        value = GncDateFormat()
+
+        self.widget = value
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+
+        eventbox = gtk.EventBox()
+        eventbox.add(enclosing)
+        page_box.pack_start(eventbox, expand=False, fill=False, padding=0)
+
+        packed = True
+
+        eventbox.set_tooltip_text(self.guile_option.documentation_string)
+
+        self.set_ui_value(False)
+
+        enclosing.show_all()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, packed)
     def set_ui_value_date (self, use_default, widget, value):
-        pass
+        print "set_ui_value_date"
     def get_ui_value_date (self, widget):
-        pass
+        print "get_ui_value_date"
     def set_ui_widget_account_list (self, page_box,  name, documentation, enclosing=None, packed=None):
-        pass
+        print "set_ui_widget_account_list"
     def set_ui_value_account_list (self, use_default, widget, value):
-        pass
+        print "set_ui_value_account_list"
     def get_ui_value_account_list (self, widget):
-        pass
+        print "get_ui_value_account_list"
     def set_ui_widget_account_sel (self, page_box,  name, documentation, enclosing=None, packed=None):
-        pass
+        print "set_ui_widget_account_sel"
     def set_ui_value_account_sel (self, use_default, widget, value):
-        pass
+        print "set_ui_value_account_sel"
     def get_ui_value_account_sel (self, widget):
-        pass
+        print "get_ui_value_account_sel"
     def set_ui_widget_list (self, page_box,  name, documentation, enclosing=None, packed=None):
-        pass
+        print "set_ui_widget_list"
     def set_ui_value_list (self, use_default, widget, value):
-        pass
+        print "set_ui_value_list"
     def get_ui_value_list (self, widget):
-        pass
+        print "get_ui_value_list"
+    def set_ui_widget_number_range (self, page_box,  name, documentation, enclosing=None, packed=None):
+        print "set_ui_widget_number_range"
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=5)
+
+        (lower_bound, upper_bound, num_decimals, step_size) = self.get_range_info()
+
+        adj = gtk.Adjustment(lower=lower_bound, upper=upper_bound, step_incr=step_size, page_incr=step_size*5,page_size=0)
+
+        value = gtk.SpinButton(adjustment=adj,climb_rate=step_size, digits=num_decimals)
+        value.set_numeric(True)
+
+        biggest = abs(lower_bound)
+        biggest = max(lower_bound,abs(upper_bound))
+        num_digits = 0
+        while biggest >= 1:
+            num_digits += 1
+            biggest = biggest/10
+        if num_digits == 0:
+            num_digits = 1
+        num_digits += num_decimals
+
+        value.set_width_chars(num_digits)
+
+        self.widget = value
+        self.set_ui_value(False)
+
+        value.connect("changed",self.changed_widget_cb)
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+        enclosing.show_all()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, None)
+    def set_ui_value_number_range (self, use_default, widget, value):
+        print "set_ui_value_number_range"
+    def get_ui_value_number_range (self, widget):
+        print "get_ui_value_number_range"
+    def set_ui_widget_color (self, page_box,  name, documentation, enclosing=None, packed=None):
+        print "set_ui_widget_color"
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = gtk.HBox(homogeneous=False, spacing=5)
+
+        use_alpha = self.guile_option.option_data[1]
+
+        value = gtk.ColorButton()
+        value.set_title(name)
+        value.set_use_alpha(use_alpha)
+        self.widget = value
+        self.set_ui_value(False)
+
+        # gnc_option_color_changed_cb just calls gnc_option_changed_widget_cb
+        value.connect("color-set",self.changed_widget_cb)
+
+        enclosing.pack_start(label, expand=False, fill=False, padding=0)
+        enclosing.pack_start(value, expand=False, fill=False, padding=0)
+        enclosing.show_all()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, None)
+    def set_ui_value_color (self, use_default, widget, value):
+        print "set_ui_value_color"
+        #DEBUG("red %f, green %f, blue %f, alpha %f", red, green, blue, alpha)
+        # yes in the C the value argument is totally ignored and get_color_info
+        # actually gets the value from the option
+        clr = self.get_color_info(use_default)
+        if clr:
+            gclr = gtk.gdk.Color(red=clr[0],green=clr[1],blue=clr[2])
+            widget.set_color(gclr)
+            widget.set_alpha(int(clr[3]*0x0ffff))
+            return False
+        return True
+    def get_ui_value_color (self, widget):
+        print "get_ui_value_color"
+    def set_ui_widget_font (self, page_box,  name, documentation, enclosing=None, packed=None):
+        print "set_ui_widget_font"
+    def set_ui_value_font (self, use_default, widget, value):
+        print "set_ui_value_font"
+    def get_ui_value_font (self, widget):
+        print "get_ui_value_font"
+    def set_ui_widget_pixmap (self, page_box,  name, documentation, enclosing=None, packed=None):
+        print "set_ui_widget_pixmap"
+    def set_ui_value_pixmap (self, use_default, widget, value):
+        print "set_ui_value_pixmap"
+    def get_ui_value_pixmap (self, widget):
+        print "get_ui_value_pixmap"
+    def set_ui_widget_radiobutton (self, page_box,  name, documentation, enclosing=None, packed=None):
+        print "set_ui_widget_radiobutton"
+    def set_ui_value_radiobutton (self, use_default, widget, value):
+        print "set_ui_value_radiobutton"
+    def get_ui_value_radiobutton (self, widget):
+        print "get_ui_value_radiobutton"
+    def set_ui_widget_dateformat (self, page_box,  name, documentation, enclosing=None, packed=None):
+        print "set_ui_widget_dateformat"
+    def set_ui_value_dateformat (self, use_default, widget, value):
+        print "set_ui_value_dateformat"
+    def get_ui_value_dateformat (self, widget):
+        print "get_ui_value_dateformat"
+    def set_ui_widget_budget (self, page_box,  name, documentation, enclosing=None, packed=None):
+        print "set_ui_widget_budget"
+    def set_ui_value_budget (self, use_default, widget, value):
+        print "set_ui_value_budget"
+    def get_ui_value_budget (self, widget):
+        print "get_ui_value_budget"
+
 
     def create_multichoice_widget (self):
-        num_values = len(self.guile_option.ok_values)
+
+        num_values = len(self.guile_option.option_data)
 
         store = gtk.ListStore(gobject.TYPE_STRING,gobject.TYPE_STRING)
-        for indx,opt in enumerate(self.guile_option.ok_values):
+        for indx,opt in enumerate(self.guile_option.option_data):
             #label = opt.name
             #tip = opt.description
             label = opt[0]
@@ -404,7 +644,7 @@ class GNCOption(object):
         widget = self.gnc_combott(store)
         # not seeing where this is done in scheme/C
         # note this is making the default value the index
-        widget.set_active(self.guile_option.default_value-1)
+        widget.set_active(self.guile_option.default_value)
         #widget.set_model(store)
         widget.connect("changed",self.multichoice_cb)
 
@@ -421,14 +661,14 @@ class GNCOption(object):
 
 
     def create_radiobutton_widget (self):
-        num_values = len(self.guile_option.ok_values)
+        num_values = len(self.guile_option.option_data)
 
         frame = gtk.Frame()
         box = gtk.HBox(homogeneous=False, spacing=5)
         frame.add(box)
 
         widget = None
-        for indx,opt in enumerate(self.guile_option.ok_values):
+        for indx,opt in enumerate(self.guile_option.option_data):
             label = opt.name
             tip = opt.description
 
@@ -445,11 +685,11 @@ class GNCOption(object):
 # the following implements gnc_options_ui_initialize at python module level
 
 # not sure where to define this yet
-# either as global for this module or as class variable in GNCOption??
+# either as global for this module or as class variable in GncOption??
 # the following is confusing as option_name actually really should be option_type_name
 optionTable = {}
 
-class GNCOptionDef(object):
+class GncOptionDef(object):
     def __init__ (self, option_name, set_widget, set_value, get_value):
         self.option_name = option_name
         self.set_widget = set_widget
@@ -457,26 +697,40 @@ class GNCOptionDef(object):
         self.get_value = get_value
 
 options = [ \
-          GNCOptionDef("boolean", GNCOption.set_ui_widget_boolean,
-            GNCOption.set_ui_value_boolean, GNCOption.get_ui_value_boolean),
-          GNCOptionDef("string", GNCOption.set_ui_widget_string,
-            GNCOption.set_ui_value_string, GNCOption.get_ui_value_string),
-          GNCOptionDef("text", GNCOption.set_ui_widget_text,
-            GNCOption.set_ui_value_text, GNCOption.get_ui_value_text),
-          GNCOptionDef("currency", GNCOption.set_ui_widget_currency,
-            GNCOption.set_ui_value_currency, GNCOption.get_ui_value_currency),
-          GNCOptionDef("commodity", GNCOption.set_ui_widget_commodity,
-            GNCOption.set_ui_value_commodity, GNCOption.get_ui_value_commodity),
-          GNCOptionDef("multichoice", GNCOption.set_ui_widget_multichoice,
-            GNCOption.set_ui_value_multichoice, GNCOption.get_ui_value_multichoice),
-          GNCOptionDef("date", GNCOption.set_ui_widget_date,
-            GNCOption.set_ui_value_date, GNCOption.get_ui_value_date),
-          GNCOptionDef("account-list", GNCOption.set_ui_widget_account_list,
-            GNCOption.set_ui_value_account_list, GNCOption.get_ui_value_account_list),
-          GNCOptionDef("account-sel", GNCOption.set_ui_widget_account_sel,
-            GNCOption.set_ui_value_account_sel, GNCOption.get_ui_value_account_sel),
-          GNCOptionDef("list", GNCOption.set_ui_widget_list,
-            GNCOption.set_ui_value_list, GNCOption.get_ui_value_list),
+          GncOptionDef("boolean", GncOption.set_ui_widget_boolean,
+            GncOption.set_ui_value_boolean, GncOption.get_ui_value_boolean),
+          GncOptionDef("string", GncOption.set_ui_widget_string,
+            GncOption.set_ui_value_string, GncOption.get_ui_value_string),
+          GncOptionDef("text", GncOption.set_ui_widget_text,
+            GncOption.set_ui_value_text, GncOption.get_ui_value_text),
+          GncOptionDef("currency", GncOption.set_ui_widget_currency,
+            GncOption.set_ui_value_currency, GncOption.get_ui_value_currency),
+          GncOptionDef("commodity", GncOption.set_ui_widget_commodity,
+            GncOption.set_ui_value_commodity, GncOption.get_ui_value_commodity),
+          GncOptionDef("multichoice", GncOption.set_ui_widget_multichoice,
+            GncOption.set_ui_value_multichoice, GncOption.get_ui_value_multichoice),
+          GncOptionDef("date", GncOption.set_ui_widget_date,
+            GncOption.set_ui_value_date, GncOption.get_ui_value_date),
+          GncOptionDef("account-list", GncOption.set_ui_widget_account_list,
+            GncOption.set_ui_value_account_list, GncOption.get_ui_value_account_list),
+          GncOptionDef("account-sel", GncOption.set_ui_widget_account_sel,
+            GncOption.set_ui_value_account_sel, GncOption.get_ui_value_account_sel),
+          GncOptionDef("list", GncOption.set_ui_widget_list,
+            GncOption.set_ui_value_list, GncOption.get_ui_value_list),
+          GncOptionDef("number-range", GncOption.set_ui_widget_number_range,
+            GncOption.set_ui_value_number_range, GncOption.get_ui_value_number_range),
+          GncOptionDef("color", GncOption.set_ui_widget_color,
+            GncOption.set_ui_value_color, GncOption.get_ui_value_color),
+          GncOptionDef("font", GncOption.set_ui_widget_font,
+            GncOption.set_ui_value_font, GncOption.get_ui_value_font),
+          GncOptionDef("pixmap", GncOption.set_ui_widget_pixmap,
+            GncOption.set_ui_value_pixmap, GncOption.get_ui_value_pixmap),
+          GncOptionDef("radiobutton", GncOption.set_ui_widget_radiobutton,
+            GncOption.set_ui_value_radiobutton, GncOption.get_ui_value_radiobutton),
+          GncOptionDef("dateformat", GncOption.set_ui_widget_dateformat,
+            GncOption.set_ui_value_dateformat, GncOption.get_ui_value_dateformat),
+          GncOptionDef("budget", GncOption.set_ui_widget_budget,
+            GncOption.set_ui_value_budget, GncOption.get_ui_value_budget),
           ]
 
 for optobj in options:
@@ -487,13 +741,13 @@ last_db_handle = 0
 option_dbs = {}
 
 
-class GNCSection(object):
+class GncSection(object):
 
     def __init__ (self, section_name):
         self.section_name = section_name
         self.options = []
 
-class GNCOptionDB(object):
+class GncOptionDB(object):
     def __init__ (self, guile_options):
         global option_dbs
         global last_db_handle
@@ -525,8 +779,9 @@ class GNCOptionDB(object):
         self.send_options()
 
     def send_options (self):
-        # this should copy options from guile_options into the GNCOptionDB
+        # this should copy options from guile_options into the GncOptionDB
         for option in self.guile_options.options_for_each():
+            print "option send",type(option),option
             self.register_option_db(option)
 
         # in python changing so we now sort after inserting
@@ -541,7 +796,7 @@ class GNCOptionDB(object):
     def register_option_db (self, guile_option):
         odb = option_dbs[self.handle]
         odb.options_dirty = True
-        option = GNCOption(guile_option,False,None,odb)
+        option = GncOption(guile_option,False,None,odb)
         section_name = guile_option.section
         # hmm there is a list of sections (sorted) which is searched for the section name
         # doing it the C/scheme way is complicated - it stores the section structure
@@ -552,7 +807,7 @@ class GNCOptionDB(object):
         if section_name in self.option_sections_dict:
             self.option_sections_dict[section_name].options.append(option)
         else:
-            self.option_sections_dict[section_name] = GNCSection(section_name)
+            self.option_sections_dict[section_name] = GncSection(section_name)
 
 
     def set_ui_callbacks (self, get_ui_value, set_ui_value, set_selectable):
@@ -561,22 +816,22 @@ class GNCOptionDB(object):
         self.set_selectable_cb = set_selectable
 
     def get_ui_value (self, lcl_option):
-        # this is really contorted - we need to pass the GNCOption object
-        # and the function has to be defined in the GNCOption class in any case
+        # this is really contorted - we need to pass the GncOption object
+        # and the function has to be defined in the GncOption class in any case
         # if its the internal object
         func_attr = getattr(lcl_option,self.get_ui_value_cb)
         return func_attr()
 
     def set_ui_value (self, lcl_option):
-        # this is really contorted - we need to pass the GNCOption object
-        # and the function has to be defined in the GNCOption class in any case
+        # this is really contorted - we need to pass the GncOption object
+        # and the function has to be defined in the GncOption class in any case
         # if its the internal object
         func_attr = getattr(lcl_option,self.set_ui_value_cb)
         return func_attr()
 
     def set_selectable (self, lcl_option):
-        # this is really contorted - we need to pass the GNCOption object
-        # and the function has to be defined in the GNCOption class in any case
+        # this is really contorted - we need to pass the GncOption object
+        # and the function has to be defined in the GncOption class in any case
         # if its the internal object
         func_attr = getattr(lcl_option,self.set_selectable_cb)
         return func_attr()
@@ -622,28 +877,6 @@ class GNCOptionDB(object):
 
 
 
-class GNCBuilder(gtk.Builder):
-
-    def __init__ (self):
-        super(gtk.Builder,self).__init__()
-
-    def add_from_file (self, filename,  root):
-
-        # find some global directory
-        #gnc_builder_dir = gnc_path_get_gtkbuilderdir ()
-        gnc_builder_dir = "/opt/local/share/gnucash/gtkbuilder"
-        fname = os.path.join(gnc_builder_dir,filename)
-        print "builder loading from %s root %s"%(fname,root)
-        buildobjs = [ root ]
-        result = self.add_objects_from_file(fname, buildobjs)
-        if result == 0:
-            # dont see immediate way we get errors
-            #PWARN(log_module,"Couldn't load builder file: %s"%"IO ERROR")
-            print "Couldn't load builder file: "
-            pass
-        return result
-
-
 PAGE_INDEX = 0
 PAGE_NAME = 1
 
@@ -651,7 +884,7 @@ MAX_TAB_COUNT = 4
 
 class DialogOption(object):
 
-    # note this class wraps the GNCOptionWin struct of C gnucash
+    # note this class wraps the GncOptionWin struct of C gnucash
 
     # NOTA BENE - switched order so can default modal
     # this combines gnc_options_dialog_new and gnc_options_dialog_new_modal
@@ -679,7 +912,7 @@ class DialogOption(object):
         self.close_cb = None
         #self.close_cb_data = None
 
-        # this is the GNCOptionDB type
+        # this is the GncOptionDB type
         self.option_db = None
 
     def response_cb (self, dialog, response):
@@ -716,7 +949,7 @@ class DialogOption(object):
                                 'gnc_options_dialog_response_cb' : self.response_cb,
                                 }
 
-        self.builder = GNCBuilder()
+        self.builder = GncBuilder()
         self.builder.add_from_file("dialog-options.glade", "GnuCash Options")
 
         self.dialog = self.builder.get_object("GnuCash Options")
@@ -914,7 +1147,7 @@ class DialogOption(object):
     def build_contents_full (self, odb, show_dialog=True):
 
         # this doesnt work the same in python
-        # get_ui_value_internal is a method of GNCOption class
+        # get_ui_value_internal is a method of GncOption class
         #pdb.set_trace()
         #odb.set_ui_callbacks(self.get_ui_value_internal, self.set_ui_value_internal, self.set_selctable_internal)
 

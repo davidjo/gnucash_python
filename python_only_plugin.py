@@ -14,6 +14,11 @@ import ctypes
 def N_(msg):
     return msg
 
+
+#  junk test
+import sw_app_utils
+
+
 #pdb.set_trace()
 
 try:
@@ -127,7 +132,7 @@ class MyPlugin(gobject.GObject):
         #fdes.write(ui_xml)
         #fdes.close()
 
-        # yes - we now can add menu items in python only with some help
+        # yes - we now can add menu items in python with only some help
         # from a gncmainwindow module wrapping GncMainWindow
         # (could not get this to work with ctypes - conversion of the return
         # pointer from gnc_gui_init to a proper pygobject failed)
@@ -149,18 +154,10 @@ class MyPlugin(gobject.GObject):
         # create callback object
         self.save_callbacks = MyCallbacks()
 
-        # now try and fix
-
-        # I dont quite understand this - using the gtk calls leads to a crash on a second
-        # click of the menu
-        # pythoncallback wraps the callbacks in GIL protection and things seem to work
-        # - but I thought GIL protection was being done for gobjects - and as far as I can
-        # see the callbacks are done through pyg_closure_marshal which does pyglib_gil_state_ensure etc
-        # however the problem only happens if the reports page is actually displayed
+        # ok this whole issue may have been because of my stupidity with GIL Ensure
         #newcb = python_callbacktype(self.reports_cb)
-        # well I give up have no real idea why pythoncallback method is needed but it seems to work
-        #actiongroup.add_actions([ 
-        pythoncallback.add_actions(self.save_callbacks, actiongroup, [ \
+        #pythoncallback.add_actions(self.save_callbacks, actiongroup, [ \
+        actiongroup.add_actions([ 
             ("PythonReportsAction", None, "Python Reports...", None, "python reports tooltip", None),
             ("PythonToolsAction", None, "Python Tools...", None, "python tools tooltip", None),
             ("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
@@ -233,6 +230,9 @@ class MyPlugin(gobject.GObject):
         #        (gnc:report-template-report-guid template))))
         #    (gnc-main-window-open-report report window)))))
         window = user_data
+
+        # junk test
+        trybook = sw_app_utils.get_current_book()
 
         try:
             # so we need either the report instance, guid or key name here

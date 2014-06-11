@@ -50,7 +50,8 @@ class HelloWorld(ReportTemplate):
 
         # should the list be a dict or not??
         self.options.register_option(MultiChoiceOption(N_("Hello, World!"), N_("Multi Choice Option"),"b",
-                                                         N_("This is a multi choice option."), 2,
+                                                         N_("This is a multi choice option."),
+                                                         'Second Option',
                                                          [ \
                                                          [ N_("First Option"), N_("Help for first option.") ],
                                                          [ N_("Second Option"), N_("Help for second option.") ],
@@ -64,26 +65,22 @@ class HelloWorld(ReportTemplate):
         dummystr = """
         self.options.register_option(DateOption(N_("Hello, World!"), N_("Just a Date Option"),"d",
                                                       N_("This is a date option."),
-                                                      # this is a lambda in scheme - so may not run now 
-                                                      datetime.now(),
+                                                      lambda : datetime.now(),
                                                       False, 'absolute', False))
 
         self.options.register_option(DateOption(N_("Hello, World!"), N_("Time and Date Option"),"e",
                                                       N_("This is a date option with time."),
-                                                      # this is a lambda in scheme - so may not run now 
-                                                      datetime.now(),
+                                                      lambda : datetime.now(),
                                                       True, 'absolute', False))
 
         self.options.register_option(DateOption(N_("Hello, World!"), N_("Combo Date Option"),"y",
                                                       N_("This is a combination date option."),
-                                                      # this is a lambda in scheme - so may not run now 
-                                                      ('relative', 'start-cal-year'),
+                                                      lambda : ('relative', 'start-cal-year'),
                                                       False, 'both', ('start-cal-year', 'start-prev-year', 'end-prev-year')))
 
         self.options.register_option(DateOption(N_("Hello, World!"), N_("Relative Date Option"),"x",
                                                       N_("This is a relative date option."),
-                                                      # this is a lambda in scheme - so may not run now 
-                                                      ('relative', 'start-cal-year'),
+                                                      lambda : ('relative', 'start-cal-year'),
                                                       False, 'relative', ('start-cal-year', 'start-prev-year', 'end-prev-year')))
 
         self.options.register_option(NumberRangeOption(N_("Hello, World!"), N_("Number Option"),"ee",
