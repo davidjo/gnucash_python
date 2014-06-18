@@ -15,10 +15,15 @@ import _sw_core_utils
 
 import gnucash
 
+print "COREUTILS"
+print dir(_sw_core_utils)
+print "COREUTILS"
 
 
 #pdb.set_trace()
 
 gnc_locale_default_iso_currency_code = _sw_core_utils.gnc_locale_default_iso_currency_code
+
+gnc_path_find_localized_html_file = _sw_core_utils.gnc_path_find_localized_html_file
 
 print "coreutilsjunk"

@@ -8,6 +8,8 @@ import sys
 
 import bisect
 
+import numbers
+
 from operator import attrgetter
 
 import gobject
@@ -36,6 +38,7 @@ except Exception, errexc:
     traceback.print_exc()
     pdb.set_trace()
 
+import gnucash
 
 from gnucash_log import PERR
 
@@ -398,10 +401,18 @@ class GncOption(object):
         return (value, enclosing, None)
     def set_ui_value_currency (self, use_default, widget, value):
         print "set_ui_value_currency"
+        if isinstance(value,gnucash.GncCommodity):
+            widget.set_currency(value)
+            return False
+        else:
+            return True
     def get_ui_value_currency (self, widget):
         print "get_ui_value_currency"
+        newcommod = widget.get_currency()
+        return newcommod
     def set_ui_widget_commodity (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_commodity"
+        #pdb.set_trace()
 
         colon_name = name + ":"
         label = gtk.Label(colon_name)
@@ -415,6 +426,8 @@ class GncOption(object):
         #                           gnc_commodity_edit_get_string,
         #                           gnc_commodity_edit_new_select)
         value = GncCommodityEdit()
+
+        #pdb.set_trace()
 
         self.widget = value
         self.set_ui_value(False)
@@ -432,8 +445,17 @@ class GncOption(object):
         return (value, enclosing, None)
     def set_ui_value_commodity (self, use_default, widget, value):
         print "set_ui_value_commodity"
+        #pdb.set_trace()
+        if isinstance(value,gnucash.GncCommodity):
+            widget.set_selected(value)
+            return False
+        else:
+            return True
     def get_ui_value_commodity (self, widget):
         print "get_ui_value_commodity"
+        #pdb.set_trace()
+        newcommod = widget.get_selected()
+        return newcommod
     def set_ui_widget_multichoice (self, page_box,  name, documentation, enclosing=None, packed=None):
         colon_name = name + ":"
         label = gtk.Label(colon_name)
@@ -556,8 +578,18 @@ class GncOption(object):
         return (value, enclosing, None)
     def set_ui_value_number_range (self, use_default, widget, value):
         print "set_ui_value_number_range"
+        #pdb.set_trace()
+        if isinstance(value, numbers.Number):
+            widget.set_value(value)
+            return False
+        else:
+            return True
     def get_ui_value_number_range (self, widget):
         print "get_ui_value_number_range"
+        newnum = widget.get_value()
+        #pdb.set_trace()
+        # need to check utf-8'ness here
+        return newnum
     def set_ui_widget_color (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_color"
         colon_name = name + ":"
@@ -597,6 +629,11 @@ class GncOption(object):
         return True
     def get_ui_value_color (self, widget):
         print "get_ui_value_color"
+        newclr = widget.get_color()
+        newalp = widget.get_alpha()
+        scl = self.guile_option.option_data[0]
+        newval = [newclr[0],newclr[1],newclr[2],newalp]
+        return newclr
     def set_ui_widget_font (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_font"
     def set_ui_value_font (self, use_default, widget, value):
@@ -748,6 +785,11 @@ class GncSection(object):
         self.options = []
 
 class GncOptionDB(object):
+
+    # this class is instantiated many times in C/Scheme
+    # - each time the option icon is clicked for a report
+    # and each time the report is displayed (if options updated)
+
     def __init__ (self, guile_options):
         global option_dbs
         global last_db_handle
@@ -781,7 +823,7 @@ class GncOptionDB(object):
     def send_options (self):
         # this should copy options from guile_options into the GncOptionDB
         for option in self.guile_options.options_for_each():
-            print "option send",type(option),option
+            #print "option send",type(option),option
             self.register_option_db(option)
 
         # in python changing so we now sort after inserting
@@ -789,9 +831,14 @@ class GncOptionDB(object):
         self.option_sections_names = sorted(self.option_sections_dict.keys())
         self.option_sections = [ self.option_sections_dict[x] for x in self.option_sections_names ]
         for section in self.option_sections:
-            secopts = self.option_sections_dict[section.section_name].options
+            secopts = section.options
             secopts.sort(key=attrgetter('guile_option.sort_tag'))
         print "junk"
+        #pdb.set_trace()
+        #for sect_name in self.option_sections_dict:
+        #    print "sect",sect_name
+        #    for optn in self.option_sections_dict[sect_name].options:
+        #        print optn.guile_option.section,optn.guile_option.name
 
     def register_option_db (self, guile_option):
         odb = option_dbs[self.handle]
@@ -804,10 +851,18 @@ class GncOptionDB(object):
         # going to have a name list and sections list
         # probably should use a sorted dict
         # of course this fails if called outside send_options
-        if section_name in self.option_sections_dict:
-            self.option_sections_dict[section_name].options.append(option)
-        else:
+        if section_name not in self.option_sections_dict:
             self.option_sections_dict[section_name] = GncSection(section_name)
+        self.option_sections_dict[section_name].options.append(option)
+
+
+    def register_change_callback (self, callback, section=None, name=None):
+        print "register_change_callback"
+        return self.guile_options.register_callback(section, name, callback)
+
+    def unregister_change_callback (self, callback_id):
+        print "unregister_change_callback"
+        self.guile_options.unregister_callback(callback_id)
 
 
     def set_ui_callbacks (self, get_ui_value, set_ui_value, set_selectable):
@@ -867,13 +922,40 @@ class GncOptionDB(object):
         #    PERR("not a procedure")
         #    return
         #proc(self.guile_options)
-        pass
+        self.guile_options.run_callbacks()
 
     def destroy (self):
         # in python just make sure we remove holding values
         for section in self.option_sections:
             section.options = None
         self.option_sections = None
+
+    def lookup_string_option (self, section, name, default_value=None):
+
+        option = self.get_option_by_name(section,name)
+
+        if option != None:
+            value = option.guile_option.getter()
+            if value != None:
+                return value
+
+        if default_value == None:
+            return None
+
+        return default_value
+
+    def get_option_by_name (self, section, name):
+
+        if section in self.option_sections_dict:
+            section_dict = self.option_sections_dict[section]
+        else:
+            return None
+
+        for opt in section_dict.options:
+            if opt.guile_option.name == name:
+                return opt
+
+        return None
 
 
 
@@ -917,6 +999,23 @@ class DialogOption(object):
 
     def response_cb (self, dialog, response):
         print "response_cb called"
+        # traceback showing how this response callback ends up running
+        # the report
+        #0  0x00000001001a5bd4 in gnc_run_report ()
+        #1  0x00000001001a5cf3 in gnc_run_report_id_string ()
+        #2  0x00000001000408a3 in gnc_html_report_stream_cb ()
+        #3  0x00000001001c853e in load_to_stream ()
+        #4  0x00000001001c8d97 in impl_webkit_show_url ()
+        #5  0x00000001001c5fb1 in gnc_html_show_url ()
+        #6  0x0000000103e08c76 in _wrap_gncp_option_invoke_callback ()
+        #7  0x0000000104192c26 in deval ()
+        #8  0x000000010419afd1 in scm_dapply ()
+        #9  0x0000000108678d5a in scm_srfi1_for_each ()
+        #10 0x000000010419398d in deval ()
+        #11 0x0000000104192860 in deval ()
+        #12 0x000000010419afd1 in scm_dapply ()
+        #13 0x0000000100041520 in gnc_options_dialog_apply_cb ()
+        #14 0x00000001001e83d8 in gnc_options_dialog_response_cb ()
         if response == gtk.RESPONSE_HELP:
             self.help_cb()
         else:

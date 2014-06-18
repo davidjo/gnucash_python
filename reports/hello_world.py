@@ -16,6 +16,9 @@ def N_(msg):
 # we need to subclass something - but what??
 # Im thinking this is ReportTemplate
 
+#import gnc_html_document_full
+import gnc_html_document
+
 from report_objects import ReportTemplate
 
 # maybe store the class in ReportTemplate then dont need this import
@@ -136,7 +139,8 @@ class HelloWorld(ReportTemplate):
         #  'attribute (list "bgcolor" (gnc:color-option->html bg-color-op))
         #  'font-color (gnc:color-option->html txt-color-op))
 
-        document = HtmlDocument()
+        #document = gnc_html_document_full.HtmlDocument()
+        document = gnc_html_document.HtmlDocument()
 
         document.title = N_("Hello, World")
 
@@ -147,11 +151,10 @@ class HelloWorld(ReportTemplate):
         # account pages
         # the various plotting options
 
-        new_text = _("""This is a sample GnuCash report. 
-See the guile (scheme) source code in the scm/report directory 
-for details on writing your own reports, 
-or extending existing reports.""")
+        new_text = N_("""This is a sample GnuCash report in python.""")
         #new_markup_format = HtmlMarkupFormat(new_text)
         #new_markup_p = HtmlMarkupP(new_markup_format)
         #new_html_text = HtmlTextObject(new_markup_p)
-        #document.add_object(new_html_text)
+        document.add_object(new_text)
+
+        return document.get_doc()

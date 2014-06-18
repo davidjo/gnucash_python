@@ -4,12 +4,16 @@
 
 import pdb
 
+import traceback
+
 import gobject
 
 from report_options import OptionsDB
 from report_options import StringOption,MultiChoiceOption
 
 import dialog_options
+
+from gnc_html_document import HtmlDoc
 
 
 # define a function equivalent to N_ for internationalization
@@ -39,7 +43,7 @@ class ParamsData(object):
     def apply_cb (self):
         print "paramsdata apply_cb called"
         self.db.commit()
-        self.cur_report.dirty = True
+        self.cur_report.set_dirty(True)
     def help_cb (self):
         print "paramsdata help_cb called"
         parent = self.win.dialog
@@ -128,7 +132,7 @@ class ReportTemplate(object):
         return options
 
     def options_changed_cb (self):
-        pass
+        print "reporttemplate options_changed_cb"
 
 
 class Report(object):
@@ -179,8 +183,8 @@ class Report(object):
         # need explicit function here because of python limitations in lambda definitions
         # not quite sure of replacement yet
         # lambda_callback should be in the OptionsDB
-        # I think we are doing this in order to set the dirty flag in this instance
-        # on any option change
+        # this is a separate list of callbacks (multiple callbacks can be registered
+        # on the options)
         #self.options.register_callback(None, None, lambda x : self.lambda_callback(x))
 
 
@@ -192,11 +196,18 @@ class Report(object):
         #(gnc:report-id r))
         self.id = self.report_add()
 
+    def set_dirty (self, value):
+        # finally twigged this - this runs the options_changed_cb
+        # when an option is changed
+        self.dirty = value
+        cb = self.report_type.options_changed_cb
+        if cb:
+            cb()
 
     def lambda_callback (self):
-        # I think this is the primary feature of this coding - we need to set the dirty flag
-        # in this instance if any of the options are changed
-        self.dirty = True
+        # this is a separate callbak registered with options
+        # but still - if this ever gets called wont this run the options_changed_cb twice
+        self.set_dirty(True)
         cb = self.report_type.options_changed_cb
         if cb:
             cb()
@@ -266,6 +277,9 @@ class Report(object):
 
            # is this just used for the callbacks??
            # think so
+           # note that in python every time this is called the previous instance will be
+           # set for garbage collection and new instance created
+           # - same goes for the GncOptionDB
            default_params_data = ParamsData()
 
            # in scheme self.options are the options in scheme which is where the option value is stored
@@ -300,6 +314,124 @@ class Report(object):
            # could use
            #return default_params_data.win.dialog
            return default_params_data.win.widget()
+
+    def run (self):
+         print "run_report"
+         #self.set_busy_cursor()
+         try:
+             htmlstr = self.render_html(headers=True)
+         except Exception, errexc:
+             traceback.print_exc()
+             htmlstr = None
+         #self.unset_busy_cursor()
+         return htmlstr
+
+    def stylesheet (self):
+        # lookup stylesheet option and get stylesheet
+        pass
+
+    def render_html (self, headers=None):
+        print "render_html"
+        pdb.set_trace()
+        # until figure out how self.dirty is set
+        #if not self.dirty:
+        #    return self.ctext
+
+        # this is a very rough approximation of the C/Scheme in gnucash
+        # - this is a temporary coding so it works
+
+        # this is just a subclassed list essentially naming the append
+        # function push - which is all I can figure the scheme push does
+        doclst = HtmlDoc()
+
+        if headers:
+
+            # how do we implement this
+            # where is this written out
+            # do we make a list of strings and join - as concatenating strings would be very slow
+            doclst.push('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" \n"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
+            doclst.push('<html xmlns="http://www.w3.org/1999/xhtml">\n')
+            doclst.push("<head>\n")
+            doclst.push('<meta http-equiv="content-type" content="text/html; charset=utf-8" />\n')
+
+            #if css:
+            #    if styletext:
+            #        doclst.push_list(['</style>', styletext, '<style type="text/css">'])
+
+            # this title seems to different from the report title
+            # this seems to be a document title
+            #title = doc.title
+            # testing title string
+            title = "This is a big test of jqplot"
+            if title:
+                doclst.push("<title>"+title+"</title>\n")
+
+            doclst.push("</head>\n")
+
+            # ;; this lovely little number just makes sure that <body>
+            # ;; attributes like bgcolor get included
+            # (push ((gnc:html-markup/open-tag-only "body") doc))))
+
+            doclst.push("<body>\n")
+
+        # debug text
+        #doclst.push("display this text!!\n")
+
+        renderer = self.report_type.renderer
+
+        stylesheet = self.stylesheet()
+
+        subdoclst = renderer()
+
+        if subdoclst == None:
+            pdb.set_trace()
+            docstr = None
+            raise RuntimeError("Invalid Html subdoclst")
+        else:
+            doclst.extend(subdoclst)
+
+
+        if headers:
+            doclst.push("</body>\n")
+            doclst.push("</html>\n")
+
+
+        # debugging dump
+        if doclst != None:
+            fds = open("junk.html","w")
+            fds.write("".join(doclst))
+            fds.close()
+
+
+        # wrap in try to check for missing data
+        # this is primary place for stupid render errors
+        # currently if something is wrong get None subdoclst
+        if doclst == None:
+            pdb.set_trace()
+            docstr = None
+            raise RuntimeError("Invalid Html doclst")
+        else:
+            try:
+                docstr = "".join(doclst)
+            except Exception, errexc:
+                traceback.print_exc()
+                pdb.set_trace()
+
+        pdb.set_trace()
+        if type(docstr) == str:
+           html_str = docstr
+        else:
+           doc.set_stylesheet(stylesheet)
+           html_str = doc.document_render(headers)
+
+        self.ctext = html_str
+        self.dirty = False
+
+        #fds = open("junkx.html","r")
+        #docstr = fds.read()
+        #fds.close()
+
+        return docstr
 
 
 # note these dicts store the report templates

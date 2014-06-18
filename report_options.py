@@ -7,6 +7,8 @@ import os
 
 import numbers
 
+from operator import itemgetter
+
 
 import pdb
 
@@ -45,19 +47,57 @@ class OptionsDB(object):
         self.options_changed = False
         self.changed_hash = {}
         self.callback_hash = {}
+        self.last_callback_id = 0
     def lookup_name (self, section, option_name):
         section_hash = self.option_hash[section]
-        option = self.section_hash[option_name]
+        option = section_hash[option_name]
         # apparently options can be renamed in scheme
+        # theres a load of coding renaming some options
+        return option
     def option_changed (self, section, option_name):
         self.options_changed = True
         if section not in self.changed_hash: 
             self.changed_hash[section] = {}
         self.changed_hash[section][option_name] = True
     def clear_changes (self):
-        pass
+        self.options_changed = False
+        self.changed_hash = {}
     def register_callback (self, section, name, callback):
-        pass
+        print "optionsDB register_callback"
+        self.last_callback_id += 1
+        self.callback_hash[self.last_callback_id] = [section, name, callback]
+        return self.last_callback_id
+    def unregister_callback (self, callback_id):
+        print "optionsDB unregister_callback"
+        if callback_id in self.callback_hash:
+            del self.callback_hash[self.last_callback_id]
+        else:
+            print "unregister callback - nonexistent ID!!", callback_id
+            pdb.set_trace()
+            print "unregister callback - nonexistent ID!!", callback_id
+    def run_callbacks (self):
+        if self.options_changed:
+            cblist = []
+            for idky in self.callback_hash:
+                cblist.append((idky,self.callback_hash[idky]))
+            cblist.sort(key=itemgetter(1))
+            for clbitm in cblist:
+                self.run_callback(clbitm[0],clbitm[1])
+        self.clear_changes()
+    def run_callback (self, id, cbdata):
+        #pdb.set_trace()
+        section = cbdata[0] 
+        name = cbdata[1] 
+        callback = cbdata[2] 
+        if not section:
+            callback()
+        else:
+            section_changed_hash = self.changed_hash[section]
+            if section_changed_hash:
+                if name == None:
+                    callback()
+                elif name in section_changed_hash:
+                    callback()
     def register_option (self, new_option):
         name = new_option.name
 	section = new_option.section
@@ -492,7 +532,7 @@ class CurrencyOption(OptionBase):
 
     def local_getter (self):
         # need python bindings here
-        pdb.set_trace()
+        #pdb.set_trace()
         currency = self.super_getter()
         # this appears to be what scheme is doing
         if isinstance(currency,str):
@@ -504,7 +544,7 @@ class CurrencyOption(OptionBase):
 
     def local_setter (self, currency):
         pdb.set_trace()
-        if isinstance(commodity,str):
+        if isinstance(currency,str):
             retval = currency
         else:
             retval = currency.get_mnemonic()
@@ -543,7 +583,7 @@ class CommodityOption(OptionBase):
 
     def local_getter (self):
         # need python bindings here
-        pdb.set_trace()
+        #pdb.set_trace()
         commodity_str = self.super_getter()
         # this appears to be what scheme is doing
         cmd_tbl = sw_app_utils.get_current_book().get_table()
@@ -552,7 +592,7 @@ class CommodityOption(OptionBase):
 
     def local_setter (self, commodity):
         # need python bindings here
-        pdb.set_trace()
+        #pdb.set_trace()
         # this appears to be what scheme is doing
         if isinstance(commodity,str):
             option_value = ( 'commodity-scm', "CURRENCY", commodity )

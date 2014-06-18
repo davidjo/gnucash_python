@@ -35,9 +35,9 @@ class GncDateFormat(gtk.HBox):
                       }
     """
 
-    __gsignal__ = {
+    __gsignals__ = {
                    'format_changed' : (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (int,))
-                  }
+                   }
 
 
     def __init__ (self):

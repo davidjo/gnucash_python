@@ -49,6 +49,8 @@ from pygkeyfile import GKeyFile
 import report_objects
 from report_objects import Report
 
+from dialog_options import GncOptionDB
+
 from gnc_html import HtmlView
 
 from gnucash_log import ENTER
@@ -262,6 +264,12 @@ class GncPluginPagePythonReport(PluginPage):
         self.html = None
         self.container = None
 
+        # these are not initialized in C
+        # these seem to be new copies of the options database for a report
+        # Im very confused by their usage
+        self.initial_odb = None
+        self.cur_odb = None
+
         # sort of emulate the functions called in gnc_plugin_page_report.c
         # this is whats in the class_init function
         # this is auto-called after being setup by the gnc_plugin_page_report_get_type function
@@ -393,6 +401,11 @@ class GncPluginPagePythonReport(PluginPage):
             raise AttributeError, 'unknown property %s' % property.name
 
 
+    def get_cur_report (self):
+        # junky little routine to access self.cur_report till figure out
+        # overall calling pattern
+        return self.cur_report
+
     def report_setup(self, report):
 
         #pdb.set_trace()
@@ -412,10 +425,73 @@ class GncPluginPagePythonReport(PluginPage):
 
         self.initial_report = report
 
+        #// all reports need [to be] saved immediately after they're created.
+        #PINFO("set needs save");
+        #report.set_needs_save(True)
+
+
+    def load_cb (self, url_type, url_location, url_label):
+
+        #pdb.set_trace()
+
+        # we need to implement this - this is important for
+        # getting the report to change on option changes
+
+        #ENTER( "load_cb: type=[%s], location=[%s], label=[%s]",
+        #       type ? type : "(null)", location ? location : "(null)",
+        #       label ? label : "(null)" );
+
+        # so first dont understand how this can be true
+        # - report_setup sets initial_report
+        # so I dont see how this is ever done
+        # in C/scheme because we have passed report id we look it up here
+        # and then do this - but this is impossible in python where
+        # we pass the actual instance
+        if self.initial_report == None:
+            #if report_id in Report.report_ids:
+            #    inst_report = Report.report_ids[report_id]
+            #self.initial_report = inst_report
+            self.initial_report.set_needs_save(True)
+            self.initial_odb = GncOoptionDB(self.initial_report.options)
+            self.name_change_cb_id = self.initial_odb.register_change_callback(self.refresh,"General", "Report name")
+
         # in scheme cur_report is another pointer to the report instance
+        if self.cur_report != None and self.cur_odb != None:
+            # unregister some callbacks
+            self.cur_odb.unregister_change_callback(self.option_change_cb_id)
+            self.cur_odb = None
+
+        # but this is important
+        # we need to the GncOptionDB here because if dont change options
+        # we do not have options from the default_params_editor
+        # as suspected when click on options icon we call default_params_editor and get
+        # a new option database
+        # after updating options using default_params_editor when get back into
+        # this routine to actually display report we get another new option database
+        # so looks like we need to ensure GncOptionDB will be garbage collected all the time
+        # still not sorted why need so many copies
         self.cur_report = self.initial_report
+        self.cur_odb = GncOptionDB(self.initial_report.options)
+
+        # this is very important for reloading report on option change
+        self.option_change_cb_id = self.cur_odb.register_change_callback(self.option_change_cb)
+
+        # some history stuff not got into yet
+
 
     def create_widget (self):
+
+        # call stack showing how we get to report renderer function
+        # gnc_run_report calls the scheme gnc:report-run function
+        # which eventually calls the renderer via
+        # gnc:report-render-html (in report.scm)
+        #0  0x00000001001a5bd4 in gnc_run_report ()
+        #1  0x00000001001a5cf3 in gnc_run_report_id_string ()
+        #2  0x00000001000408a3 in gnc_html_report_stream_cb ()
+        #3  0x00000001001c853e in load_to_stream ()
+        #4  0x00000001001c8d97 in impl_webkit_show_url ()
+        #5  0x00000001001c5fb1 in gnc_html_show_url ()
+        #6  0x000000010003e8d6 in gnc_plugin_page_report_create_widget ()
 
         # think we need to trap errors here before returning to C
 
@@ -454,7 +530,22 @@ class GncPluginPagePythonReport(PluginPage):
 
            # need this??
            #gnc_html_set_urltype_cb(priv->html, gnc_plugin_page_report_check_urltype);
+
+           # so far need this as this sets up for re-running report on option changes
            #gnc_html_set_load_cb(priv->html, gnc_plugin_page_report_load_cb, report);
+           self.html.set_load_cb(self.load_cb)
+
+
+           # this seems to be how the report is passed to the html processor
+           # gnc_html_parse_url seems to generate a url_location and url_label
+           # which are then passed to the gnc_html_show_url function
+           # what all this mess seems to be doing is creating a url from components (gnc_build_url)
+           # (I think mainly a file url) which is parsed back to components (gnc_html_parse_url)
+           # - for the moment seems this essentially just copies id_name to url_location
+           #DEBUG( "id=%d", priv->reportId )
+           id_name = "id=%d"%self.reportId
+           #child_name = gnc_build_url( URL_TYPE_REPORT, id_name, NULL );
+           #type = gnc_html_parse_url( priv->html, child_name, &url_location, &url_label);
 
 
            # this seems to be the major drawing bit
@@ -464,9 +555,17 @@ class GncPluginPagePythonReport(PluginPage):
            #g_free(url_location);
            #gnc_window_set_progressbar_window( NULL );
 
-           #pdb.set_trace()
+           pdb.set_trace()
+           # this is complicated now
+           # if we follow the C/scheme self.cur_report is only defined
+           # after the load_cb callback is called so cant pass report here
+           # essentially here C/scheme passes the report Id then looks it
+           # up in load_cb
+           url_type = 'file'
+           url_location = id_name
+           url_label = ""
 
-           self.html.show_url()
+           self.html.show_url(url_type,url_location,url_label,report_cb=self.get_cur_report)
 
 
            #g_signal_connect(priv->container, "expose_event",
@@ -556,6 +655,19 @@ class GncPluginPagePythonReport(PluginPage):
         print >> sys.stderr, "finish_pending"
         return not self.reloading
 
+
+    def option_change_cb (self):
+        print >> sys.stderr, "option_change_cb callback"
+        if self.cur_report == None:
+            return
+        old_name = self.get_page_name()
+        new_name = self.cur_odb.lookup_string_option('General','Report name',None)
+        self.cur_report.set_dirty(True)
+        self.need_reload = True
+        self.html.reload()
+
+    def history_destroy_cb (self, data):
+        print >> sys.stderr, "history_destroy_cb callback"
 
     def expose_event_cb (self, widget, event):
         print >> sys.stderr, "expose_event_cb callback"

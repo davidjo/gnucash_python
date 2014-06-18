@@ -17,14 +17,14 @@ import gnucash
 
 import qof_ctypes
 
-import gnc_utils
+from gnc_utils import GncCBWEMixin
 
 
 def N_(msg):
     return msg
 
 
-class GncCurrencyEdit(gtk.ComboBoxEntry):
+class GncCurrencyEdit(GncCBWEMixin,gtk.ComboBoxEntry):
 
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncCurrencyEdit'
@@ -43,9 +43,9 @@ class GncCurrencyEdit(gtk.ComboBoxEntry):
                       }
 
     cmtstr = """
-    __gsignal__ = {
+    __gsignals__ = {
                    'format_changed' : (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (int,))
-                  }
+                   }
     """
 
 
@@ -66,7 +66,7 @@ class GncCurrencyEdit(gtk.ComboBoxEntry):
         self.set_entry_text_column(0)
 
         # this is where it is in 
-        gnc_utils.gnc_cbwe_require_list_item(self)
+        self.require_list_item()
 
         self.fill_currencies()
 
@@ -116,12 +116,11 @@ class GncCurrencyEdit(gtk.ComboBoxEntry):
     def set_currency (self, currency):
 
         printname = currency.get_printname()
-        gnc_utils.gnc_cbwe_set_by_string(self,printname)
+        self.set_by_string(printname)
 
     def active_changed (self, *args):
         print "active_changed currency",args
         widget = args[0]
-        pdb.set_trace()
 
         currency = self.get_currency()
         mnemonic = currency.get_mnemonic()

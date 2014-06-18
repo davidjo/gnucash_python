@@ -43,9 +43,9 @@ class GncGeneralSelect(gtk.HBox):
                       }
     """
 
-    __gsignal__ = {
+    __gsignals__ = {
                    'changed' : (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (int,))
-                  }
+                   }
 
 
     def __init__ (self, type, get_string, new_select, cb_arg):
@@ -75,8 +75,11 @@ class GncGeneralSelect(gtk.HBox):
 
     def select_cb (self, *args):
         print "select_cb", args
+        print "select_cb", self
+        print "select_cb",self.selected_item
         toplevel = self.get_toplevel()
         new_selection = self.new_select(self.cb_arg, self.selected_item, toplevel)
+        print "select_cb new_selection", new_selection
         if new_selection == None:
             return
         self.set_selected(new_selection)
@@ -87,6 +90,7 @@ class GncGeneralSelect(gtk.HBox):
         self.entry = gtk.Entry()
         self.entry.set_editable(False)
         self.pack_start(self.entry,expand=True,fill=True,padding=0)
+        self.entry.show()
 
         if type == GncGeneralSelect.GNC_GENERAL_SELECT_TYPE_SELECT:
             self.button = gtk.Button(label=N_("Select..."))
@@ -105,7 +109,7 @@ class GncGeneralSelect(gtk.HBox):
 
     def get_printname (self, selection):
 
-        retval = self.get_string(seleciton)
+        retval = self.get_string(selection)
 
         return retval
 
@@ -113,18 +117,20 @@ class GncGeneralSelect(gtk.HBox):
 
         self.selected_item = selection
 
-        if selection:
+        if not selection:
             text = ""
         else:
             text = self.get_printname(selection)
 
         self.entry.set_text(text)
 
+        #pdb.set_trace()
+
         self.emit("changed",0)
 
     def get_selected (self):
 
-        return self.selection_item
+        return self.selected_item
 
     def make_mnemonic_target (self, label):
 
