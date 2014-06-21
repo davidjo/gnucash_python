@@ -90,8 +90,8 @@ def qof_strftime(format,tm):
     newtm.tm_min = tmtupl.tm_min
     newtm.tm_hour = tmtupl.tm_hour
     newtm.tm_mday = tmtupl.tm_mday
-    newtm.tm_mon = tmtupl.tm_mon
-    newtm.tm_year = tmtupl.tm_year
+    newtm.tm_mon = tmtupl.tm_mon - 1
+    newtm.tm_year = tmtupl.tm_year - 1900
     newtm.tm_wday = tmtupl.tm_wday
     newtm.tm_yday = tmtupl.tm_yday
     newtm.tm_isdst = tmtupl.tm_isdst

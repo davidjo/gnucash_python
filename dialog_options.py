@@ -10,6 +10,8 @@ import bisect
 
 import numbers
 
+import time
+
 from operator import attrgetter
 
 import gobject
@@ -18,7 +20,8 @@ import gtk
 
 
 
-import _sw_app_utils
+#import sw_app_utils
+import sw_core_utils
 import gnc_plugin_page
 import ctypes
 
@@ -30,7 +33,7 @@ import pdb
 
 try:
     from gnc_builder import GncBuilder
-    from gnc_date_format import GncDateFormat
+    from gnc_date_edit import GncDateEdit
     from gnc_currency_edit import GncCurrencyEdit
     from gnc_general_select import GncGeneralSelect
     from gnc_commodity_edit import GncCommodityEdit
@@ -495,7 +498,7 @@ class GncOption(object):
 
         enclosing = gtk.HBox(homogeneous=False, spacing=0)
 
-        value = GncDateFormat()
+        value = self.create_date_widget()
 
         self.widget = value
 
@@ -518,6 +521,38 @@ class GncOption(object):
         return (value, enclosing, packed)
     def set_ui_value_date (self, use_default, widget, value):
         print "set_ui_value_date"
+        #pdb.set_trace()
+	bad_value = False
+        if use_default:
+            date_option_type = self.guile_option.default_value[0]
+        else:
+            date_option_type = self.guile_option.option_data[0]
+        vltupl = self.guile_option.getter()
+        if vltupl[0] == 'relative':
+            relative = vltupl[1]
+            indx = self.guile_option.lookup_key(relative)
+            if date_option_type == 'relative':
+                widget.set_active(indx)
+            elif date_option_type == 'both':
+                widget_list = widget.get_children()
+                rel_date_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
+                self.set_select_method(False,True)
+                rel_date_widget.set_active(indx)
+        elif vltupl[0] == 'absolute':
+            pdb.set_trace()
+            ts = vltupl[1]
+            if date_option_type == 'absolute':
+                widget.set_time(ts)
+            elif date_option_type == 'both':
+                widget_list = widget.get_children()
+                ab_date_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
+                self.set_select_method(True,True)
+                ab_date_widget.set_time(ts)
+            else:
+                bad_value = True
+        else:
+            bad_value = True
+        return bad_value
     def get_ui_value_date (self, widget):
         print "get_ui_value_date"
     def set_ui_widget_account_list (self, page_box,  name, documentation, enclosing=None, packed=None):
@@ -664,6 +699,96 @@ class GncOption(object):
         print "set_ui_value_budget"
     def get_ui_value_budget (self, widget):
         print "get_ui_value_budget"
+
+
+    def create_date_widget (self):
+
+        #pdb.set_trace()
+
+        date_type = self.guile_option.option_data[0]
+        show_time = self.guile_option.option_data[1]
+        use24 = sw_core_utils.gnc_prefs_get_bool('general', 'clock-24h')
+
+        if date_type != 'relative':
+            ab_widget = GncDateEdit.new(time.time(), show_time, use24)
+            ab_widget.date_entry.connect("changed", self.changed_option_cb)
+            if show_time:
+                ab_widget.time_entry.connect("changed", self.changed_option_cb)
+
+        if date_type != 'absolute':
+
+            #num_values = self.guile_option.num_permissible_values()
+            num_values = len(self.guile_option.option_data[2])
+
+            store = gtk.ListStore(gobject.TYPE_STRING,gobject.TYPE_STRING)
+
+            def_val = self.guile_option.default_value
+
+            for indx,itm in enumerate(self.guile_option.option_data[2]):
+                itemlst = self.guile_option.lookup_string(itm)
+                itemstr = itemlst[0]
+                itemdes = itemlst[1]
+                store.append((itemstr,itemdes))
+
+            rel_widget = self.gnc_combott(store)
+            # not seeing where this is done in scheme/C
+            # note this is making the default value the index
+            #rel_widget.set_active(self.guile_option.default_value)
+            #rel_widget.set_model(store)
+            rel_widget.connect("changed",self.multichoice_cb)
+
+        if date_type == 'absolute':
+            self.widget = ab_widget
+            return ab_widget
+        elif date_type == 'relative':
+            self.widget = rel_widget
+            return rel_widget
+        elif date_type == 'both':
+            box = gtk.HBox(homogeneous=False, spacing=5)
+            ab_button = gtk.RadioButton(group=None)
+            ab_button.connect("toggled", self.rd_option_ab_set_cb)
+            rel_button = gtk.RadioButton(group=ab_button)
+            rel_button.connect("toggled", self.rd_option_rel_set_cb)
+            box.pack_start(ab_button, expand=False,fill=False,padding=0)
+            box.pack_start(ab_widget, expand=False,fill=False,padding=0)
+            box.pack_start(rel_button, expand=False,fill=False,padding=0)
+            box.pack_start(rel_widget, expand=False,fill=False,padding=0)
+            self.widget = box
+            return box
+        else:
+            return None
+
+
+    def changed_option_cb (self, widget):
+         self.changed_widget_cb(widget)
+
+    def rd_option_ab_set_cb (self, widget):
+         self.set_select_method(True,False)
+         self.changed_option_cb(widget)
+
+
+    def rd_option_rel_set_cb (self, widget):
+         self.set_select_method(False,False)
+         self.changed_option_cb(widget)
+
+    def set_select_method (self, use_absolute, set_buttons):
+         print "set_select_method"
+         widget_list = self.widget.get_children()
+         ab_button = widget_list[GncDateEdit.GNC_RD_WID_AB_BUTTON_POS]
+         ab_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
+         rel_button = widget_list[GncDateEdit.GNC_RD_WID_REL_BUTTON_POS]
+         rel_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
+
+         if use_absolute:
+             ab_widget.set_sensitive(True)
+             rel_widget.set_sensitive(False)
+             if set_buttons:
+                 ab_button.set_active(True)
+         else:
+             ab_widget.set_sensitive(False)
+             rel_widget.set_sensitive(True)
+             if set_buttons:
+                 rel_button.set_active(True)
 
 
     def create_multichoice_widget (self):
@@ -1089,10 +1214,10 @@ class DialogOption(object):
 
         component_id = gnc_plugin_page.libgnc_apputils.gnc_register_gui_component("dialog-options", None, component_close_callback_type(self.component_close_handler), hash(self))
 
-        #session = _sw_app_utils.gnc_get_current_session()
+        #session = sw_app_utils.gnc_get_current_session()
         session = gnc_plugin_page.libgnc_apputils.gnc_get_current_session()
 
-        #_sw_app_utils.gnc_gui_component_set_session(component_id, session)
+        #sw_app_utils.gnc_gui_component_set_session(component_id, session)
         gnc_plugin_page.libgnc_apputils.gnc_gui_component_set_session(component_id, session)
 
 

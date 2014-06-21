@@ -332,7 +332,7 @@ class Report(object):
 
     def render_html (self, headers=None):
         print "render_html"
-        pdb.set_trace()
+        #pdb.set_trace()
         # until figure out how self.dirty is set
         #if not self.dirty:
         #    return self.ctext
@@ -417,7 +417,7 @@ class Report(object):
                 traceback.print_exc()
                 pdb.set_trace()
 
-        pdb.set_trace()
+        #pdb.set_trace()
         if type(docstr) == str:
            html_str = docstr
         else:

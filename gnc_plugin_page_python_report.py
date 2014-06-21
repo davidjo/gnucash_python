@@ -555,7 +555,7 @@ class GncPluginPagePythonReport(PluginPage):
            #g_free(url_location);
            #gnc_window_set_progressbar_window( NULL );
 
-           pdb.set_trace()
+           #pdb.set_trace()
            # this is complicated now
            # if we follow the C/scheme self.cur_report is only defined
            # after the load_cb callback is called so cant pass report here

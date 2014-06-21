@@ -30,6 +30,8 @@ except Exception, errexc:
     print >> sys.stderr, str(errexc)
     pdb.set_trace()
 
+import date_utils
+
 
 #pdb.set_trace()
 
@@ -295,7 +297,7 @@ class OptionBase(object):
 
         if self.changed_callback:
             self.changed_callback()
-        
+
 
 # these only fill partial values of above
 # going with a subclass
@@ -466,6 +468,26 @@ class DateOption(OptionBase):
             return [True, date]
         else:
             return [False, "date-option: illegal date"]
+
+    def date_legal (self, date):
+        pdb.set_trace()
+        return True
+
+    def lookup_string (self, datestr):
+        # somewhere in scheme the DateOption strings are looked up in the
+        # databases defined in date-utilities.scm
+        if datestr in date_utils.relative_date_values:
+            return date_utils.relative_date_values[datestr]
+        else:
+            pdb.set_trace()
+            print "junk"
+
+    def lookup_key (self, x):
+        # return the index for a key string
+        for indx,itm in enumerate(self.option_data[2]):
+            if itm == x:
+                return indx
+        return -1
 
 
 class EndDateOption(DateOption):

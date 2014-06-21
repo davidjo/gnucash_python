@@ -15,6 +15,52 @@ import qof_ctypes
 
 from gnc_builder import GncBuilder
 
+
+
+# adding this class to maintain the date format
+
+class DateFormat(object):
+
+    QOF_DATE_FORMAT_US        = 0 # /**< United states: mm/dd/yyyy */
+    QOF_DATE_FORMAT_UK        = 1 # /**< Britain: dd/mm/yyyy */
+    QOF_DATE_FORMAT_CE        = 2 # /**< Continental Europe: dd.mm.yyyy */
+    QOF_DATE_FORMAT_ISO       = 3 # /**< ISO: yyyy-mm-dd */
+    QOF_DATE_FORMAT_LOCALE    = 4 # /**< Take from locale information */
+    QOF_DATE_FORMAT_UTC       = 5 # /**< UTC: 2004-12-12T23:39:11Z */
+    QOF_DATE_FORMAT_CUSTOM    = 6 # /**< Used by the check printing code */
+
+    QOF_UTC_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+    QOF_DATE_FORMAT = { \
+                       QOF_DATE_FORMAT_US      : "%m/%d/%y",
+                       QOF_DATE_FORMAT_UK      : "%d/%m/%y",
+                       QOF_DATE_FORMAT_CE      : "%m.%d.%y",
+                       QOF_DATE_FORMAT_ISO     : "%Y-%m-%d",
+                       QOF_DATE_FORMAT_LOCALE  : "%Y-%m-%d",
+                       QOF_DATE_FORMAT_UTC     : "%Y-%m-%dT%H:%M:%SZ"
+                       QOF_DATE_FORMAT_CUSTOM  : "%Y-%m-%d",
+                      }
+
+
+   def __init__ (self):
+       self.dateFormat = None
+
+   def get_string (self, df):
+       if df in DateFormat.QOF_DATE_FORMAT:
+           return DateFormat.QOF_DATE_FORMAT[df]
+       else:
+           return "%Y-%m-%d"
+
+   def print_date (self, dttm):
+
+   def get (self):
+       return self.dateFormat
+
+   def set (self, datefmt):
+       self.dateFormat = datefmt
+
+
+
 class GncDateFormat(gtk.HBox):
 
     # ah - this is something I think Ive missed - we can name the GType here
@@ -47,6 +93,8 @@ class GncDateFormat(gtk.HBox):
         builder = GncBuilder()
         builder.add_from_file("gnc-date-format.glade", "format-liststore")
         builder.add_from_file("gnc-date-format.glade", "GNC Date Format")
+
+        #pdb.set_trace()
 
         # junkily we need to list all signals here
         # the gnucash code somehow figures all signals
@@ -103,6 +151,8 @@ class GncDateFormat(gtk.HBox):
 
 
     def refresh (self):
+
+        pdb.set_trace()
 
         sel_option = self.format_combobox.get_active()
 
@@ -174,7 +224,7 @@ class GncDateFormat(gtk.HBox):
         print "compute_format"
         self.refresh()
         #pdb.set_trace()
-        #self.emit("format_changed",0)
+        self.emit("format_changed",0)
 
     def changed_cb (self, *args):
         print "changed_cb", args

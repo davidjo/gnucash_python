@@ -26,4 +26,6 @@ gnc_locale_default_iso_currency_code = _sw_core_utils.gnc_locale_default_iso_cur
 
 gnc_path_find_localized_html_file = _sw_core_utils.gnc_path_find_localized_html_file
 
+gnc_prefs_get_bool = _sw_core_utils.gnc_prefs_get_bool
+
 print "coreutilsjunk"
