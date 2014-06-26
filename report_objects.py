@@ -15,6 +15,8 @@ import dialog_options
 
 from gnc_html_document import HtmlDoc
 
+import xml.etree.ElementTree as ET
+
 
 # define a function equivalent to N_ for internationalization
 def N_(msg):
@@ -340,19 +342,22 @@ class Report(object):
         # this is a very rough approximation of the C/Scheme in gnucash
         # - this is a temporary coding so it works
 
-        # this is just a subclassed list essentially naming the append
-        # function push - which is all I can figure the scheme push does
-        doclst = HtmlDoc()
+        # now going using a python xml dom model - currently ElementTree
+        docxml = HtmlDoc()
 
         if headers:
 
             # how do we implement this
             # where is this written out
             # do we make a list of strings and join - as concatenating strings would be very slow
-            doclst.push('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" \n"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
-            doclst.push('<html xmlns="http://www.w3.org/1999/xhtml">\n')
-            doclst.push("<head>\n")
-            doclst.push('<meta http-equiv="content-type" content="text/html; charset=utf-8" />\n')
+            # we dont add this I think - will be added at string generation
+            docxml.dtd('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" \n"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
+            htmlobj = docxml.Element('html', attrib={'xmlns' : "http://www.w3.org/1999/xhtml"})
+            htmlobj.text = "\n"
+            headobj = docxml.SubElement(htmlobj,"head")
+            headobj.text = "\n"
+            metaobj = docxml.SubElement(headobj,'meta', attrib={'http-equiv' : "content-type", 'content' : "text/html; charset=utf-8"})
+            metaobj.text = "\n"
 
             #if css:
             #    if styletext:
@@ -364,15 +369,15 @@ class Report(object):
             # testing title string
             title = "This is a big test of jqplot"
             if title:
-                doclst.push("<title>"+title+"</title>\n")
-
-            doclst.push("</head>\n")
+                titlobj = docxml.SubElement(headobj,"title")
+                titlobj.text = title
 
             # ;; this lovely little number just makes sure that <body>
             # ;; attributes like bgcolor get included
             # (push ((gnc:html-markup/open-tag-only "body") doc))))
 
-            doclst.push("<body>\n")
+            bodyobj = docxml.SubElement(htmlobj,"body")
+            bodyobj.text = "\n"
 
         # debug text
         #doclst.push("display this text!!\n")
@@ -381,41 +386,43 @@ class Report(object):
 
         stylesheet = self.stylesheet()
 
-        subdoclst = renderer()
+        try:
+            subdocxml = renderer()
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
 
-        if subdoclst == None:
+        if subdocxml == None:
             pdb.set_trace()
             docstr = None
-            raise RuntimeError("Invalid Html subdoclst")
+            raise RuntimeError("Invalid Html subdocxml")
         else:
-            doclst.extend(subdoclst)
+            pass
 
+        #pdb.set_trace()
 
-        if headers:
-            doclst.push("</body>\n")
-            doclst.push("</html>\n")
+        try:
+            bodyobj.append(subdocxml)
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
 
+        try:
+            # only in python 2.7
+            #docstr = ET.tostring(htmlobj, encoding="utf-8", method="html")
+            docstr = docxml.tostring(encoding="utf-8")
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
 
         # debugging dump
-        if doclst != None:
+        if docxml != None:
             fds = open("junk.html","w")
-            fds.write("".join(doclst))
+            fds.write(docstr)
             fds.close()
 
-
-        # wrap in try to check for missing data
-        # this is primary place for stupid render errors
-        # currently if something is wrong get None subdoclst
-        if doclst == None:
-            pdb.set_trace()
-            docstr = None
+        if docstr == None:
             raise RuntimeError("Invalid Html doclst")
-        else:
-            try:
-                docstr = "".join(doclst)
-            except Exception, errexc:
-                traceback.print_exc()
-                pdb.set_trace()
 
         #pdb.set_trace()
         if type(docstr) == str:

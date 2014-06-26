@@ -337,9 +337,14 @@ class GncOption(object):
         return (value, enclosing, None)
 
     def set_ui_value_boolean (self, use_default, widget, value):
-        pass
+        if isinstance(value,bool):
+            widget.set_active(value)
+            return False
+        else:
+            return True
     def get_ui_value_boolean (self, widget):
-        pass
+        newval = widget.get_active()
+        return newval
 
     def set_ui_widget_string (self, page_box, name, documentation):
 
@@ -487,7 +492,6 @@ class GncOption(object):
         # big question is whether to base from 0 or 1 - now going with 0
         # raw indexes are base 0
         newmulti = widget.get_active()
-        # need to check utf-8'ness here
         return newmulti
     def set_ui_widget_date (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_date"
@@ -539,15 +543,14 @@ class GncOption(object):
                 self.set_select_method(False,True)
                 rel_date_widget.set_active(indx)
         elif vltupl[0] == 'absolute':
-            pdb.set_trace()
-            ts = vltupl[1]
+            dttm = vltupl[1]
             if date_option_type == 'absolute':
-                widget.set_time(ts)
+                widget.set_time_dt(dttm)
             elif date_option_type == 'both':
                 widget_list = widget.get_children()
                 ab_date_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
                 self.set_select_method(True,True)
-                ab_date_widget.set_time(ts)
+                ab_date_widget.set_time_dt(dttm)
             else:
                 bad_value = True
         else:
@@ -555,6 +558,33 @@ class GncOption(object):
         return bad_value
     def get_ui_value_date (self, widget):
         print "get_ui_value_date"
+        #pdb.set_trace()
+        subtype = self.guile_option.option_data[0]
+        widget_list = widget.get_children()
+        if subtype == 'relative':
+            rel_date_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
+            relval = rel_date_widget.get_active()
+            relval = self.guile_option.lookup_index(relval)
+            retval = ('relative', relval)
+        elif subtype == 'absolute':
+            ab_date_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
+            #absval = rel_date_widget.get_property('time')
+            absval = rel_date_widget.get_date()
+            retval = ('absolute', absval)
+        elif subtype == 'both':
+            ab_button = widget_list[GncDateEdit.GNC_RD_WID_AB_BUTTON_POS]
+            ab_date_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
+            rel_button = widget_list[GncDateEdit.GNC_RD_WID_REL_BUTTON_POS]
+            rel_date_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
+            if ab_button.get_active():
+                #absval = rel_date_widget.get_property('time')
+                absval = rel_date_widget.get_date()
+                retval = ('absolute', absval)
+            elif rel_button.get_active():
+                relval = rel_date_widget.get_active()
+                relval = self.guile_option.lookup_index(relval)
+                retval = ('relative', relval)
+        return retval
     def set_ui_widget_account_list (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_account_list"
     def set_ui_value_account_list (self, use_default, widget, value):
@@ -569,10 +599,52 @@ class GncOption(object):
         print "get_ui_value_account_sel"
     def set_ui_widget_list (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_list"
+        colon_name = name + ":"
+        label = gtk.Label(colon_name)
+        label.set_alignment(1.0, 0.5)
+
+        enclosing = self.create_list_widget(name)
+        value = self.widget
+
+        eventbox = gtk.EventBox()
+        eventbox.add(enclosing)
+        page_box.pack_start(eventbox, expand=False, fill=False, padding=5)
+        packed = True
+
+        eventbox.set_tooltip_text(self.guile_option.documentation_string)
+
+        self.set_ui_value(False)
+
+        enclosing.show_all()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, packed)
     def set_ui_value_list (self, use_default, widget, value):
         print "set_ui_value_list"
+        pdb.set_trace()
+        selection = widget.get_selection()
+        if use_default:
+            for rw in self.guile_option.default_value:
+                if rw >= 0 and rw < len(self.guile_option.option_data):
+                    selection.select_path((rw,))
+                else:
+                    return True
+        else:
+            for rw in value:
+                if rw >= 0 and rw < len(self.guile_option.option_data):
+                    selection.select_path((rw,))
+                else:
+                    return True
+        return False
     def get_ui_value_list (self, widget):
         print "get_ui_value_list"
+        pdb.set_trace()
+        # big question is whether to base from 0 or 1 - now going with 0
+        # raw indexes are base 0
+        selection = widget.get_selection()
+        newslc = selection.get_selected_rows()
+        newlst = [ x[0] for x in newslc[1] ]
+        return newlst
     def set_ui_widget_number_range (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_number_range"
         colon_name = name + ":"
@@ -585,7 +657,7 @@ class GncOption(object):
 
         adj = gtk.Adjustment(lower=lower_bound, upper=upper_bound, step_incr=step_size, page_incr=step_size*5,page_size=0)
 
-        value = gtk.SpinButton(adjustment=adj,climb_rate=step_size, digits=num_decimals)
+        value = gtk.SpinButton(adjustment=adj,climb_rate=step_size, digits=int(num_decimals))
         value.set_numeric(True)
 
         biggest = abs(lower_bound)
@@ -596,7 +668,7 @@ class GncOption(object):
             biggest = biggest/10
         if num_digits == 0:
             num_digits = 1
-        num_digits += num_decimals
+        num_digits += int(num_decimals)
 
         value.set_width_chars(num_digits)
 
@@ -789,6 +861,91 @@ class GncOption(object):
              rel_widget.set_sensitive(True)
              if set_buttons:
                  rel_button.set_active(True)
+
+
+
+    def create_list_widget (self, name):
+
+        frame = gtk.Frame(label=name)
+        hbox = gtk.HBox(homogeneous=False, spacing=0)
+        frame.add(hbox)
+
+        store = gtk.ListStore(gobject.TYPE_STRING)
+        view = gtk.TreeView(model=store)
+        renderer = gtk.CellRendererText()
+        column = gtk.TreeViewColumn("",renderer,text=0)
+        view.append_column(column)
+        view.set_headers_visible(False)
+
+        num_values = len(self.guile_option.option_data)
+
+        for indx,opt in enumerate(self.guile_option.option_data):
+            #label = opt.name
+            #tip = opt.description
+            label = opt[0]
+            tip = opt[1]
+            store.append((label,))
+
+        hbox.pack_start(view,expand=False,fill=False,padding=0)
+
+        selection = view.get_selection()
+        selection.set_mode(gtk.SELECTION_MULTIPLE)
+
+        selection.connect("changed",self.list_changed_cb)
+
+        for rw in self.guile_option.default_value:
+            selection.select_path((rw,))
+
+        bbox = gtk.VButtonBox()
+        bbox.set_layout(gtk.BUTTONBOX_SPREAD)
+        hbox.pack_start(bbox,expand=False,fill=False,padding=10)
+
+        button = gtk.Button(label=N_("Select All"))
+        bbox.pack_start(button,expand=False,fill=False,padding=0)
+        button.set_tooltip_text(N_("Select all entries."))
+
+        button.connect("clicked", self.list_select_all_cb)
+
+        button = gtk.Button(label=N_("Clear All"))
+        bbox.pack_start(button,expand=False,fill=False,padding=0)
+        button.set_tooltip_text(N_("Clear the selection and unselect all entries."))
+
+        button.connect("clicked", self.list_clear_all_cb)
+
+        button = gtk.Button(label=N_("Select Default"))
+        bbox.pack_start(button,expand=False,fill=False,padding=0)
+        button.set_tooltip_text(N_("Select the default selection."))
+
+        button.connect("clicked", self.default_cb)
+
+        self.widget = view
+
+        return frame
+
+    def list_changed_cb (self, selection):
+        #pdb.set_trace()
+        view = selection.get_tree_view()
+        self.changed_widget_cb(view)
+
+    def list_select_all_cb (self, selection):
+        #pdb.set_trace()
+        view = self.widget
+        selection = view.get_selection()
+        selection.select_all()
+        self.changed_widget_cb(view)
+
+    def list_clear_all_cb (self, selection):
+        #pdb.set_trace()
+        view = self.widget
+        selection = view.get_selection()
+        selection.unselect_all()
+        self.changed_widget_cb(view)
+
+    def default_cb (self, widget):
+        pdb.set_trace()
+        self.set_ui_value(True)
+        self.changed = True
+        self.changed_internal(widget,True)
 
 
     def create_multichoice_widget (self):

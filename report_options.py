@@ -278,7 +278,7 @@ class OptionBase(object):
         # those functions
         # punting for the moment
         if self.option_value == None:
-            return self.default_value
+            return self.get_default_value()
         return self.option_value
 
     # havent seen where this is defined - probably in scheme somewhere
@@ -420,10 +420,201 @@ class MultiChoiceCallbackOption(OptionBase):
         return [ (x[1],x[2]) for itm in self.option_data ]
 
 
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        optmrk = self.getter()
+        return self.option_data[optmrk][0]
+
+
+
 class MultiChoiceOption(MultiChoiceCallbackOption):
 
     def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,ok_values=[]):
         super(MultiChoiceOption,self).__init__(section, optname, sort_tag, tool_tip, default_value=default_value,ok_values=ok_values,setter_function_called_cb=None,option_widget_changed_cb=None)
+
+
+class ListOption(OptionBase):
+
+    # in scheme this somehow maps to an account list option - keep as a simple list option here
+
+    #  self.options.register_option(ListOption(N_("Hello, World!"), N_("A list option"),"h",
+    #                                             N_("This is a list option."),
+    #                                             [0],
+    #                                             # again is this a dict or simple list??
+    #                                             [ \
+    #                                             [ N_("The Good"), N_("Good option.") ],
+    #                                             [ N_("The Bad"), N_("Bad option.") ],
+    #                                             [ N_("The Ugly"), N_("Ugly option.") ],
+    #                                             ]))
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,ok_values=None,option_widget_changed_cb=None):
+        super(ListOption,self).__init__()
+        self.section = section
+        self.name = optname
+        self.type = 'list'
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+        self.option_data = ok_values
+        self.option_data_fns = [ \
+                                lambda : len(self.option_data),
+                                lambda x: self.option_data[x][0],
+                                lambda x: self.option_data[x][1],
+                                lambda x: self.option_data[x][2],
+                                lambda x: self.lookup(x),
+                               ]
+        # scheme stores the key index string - here we store a list
+        # of default indices
+        self.default_value = default_value
+
+        #self.setter = self.local_setter
+
+        # the setter and getter seem to store in the Kvp database
+
+        # 
+
+        self.widget_changed_cb = option_widget_changed_cb
+
+        self.strings_getter = self.list_strings
+
+        #self.setter_function_called_cb = setter_function_called_cb
+
+    def local_setter (self, x):
+        if self.legal(x):
+            if callable(self.setter_function_called_cb):
+                self.setter_function_called_cb(x)
+        else:
+            # gnc:error "Illegal List option set"
+            pass
+
+    def lookup_key (self, x):
+        # return the index for a key string
+        for indx,itm in enumerate(self.option_data):
+            if itm[0] == x:
+                return indx
+        return -1
+
+    def lookup (self, x):
+        # return whole sublist for a key as per scheme
+        for indx,itm in enumerate(self.option_data):
+            if itm[0] == x:
+                return itm
+        return None
+
+    def legal (self, x):
+        # this checks the key string (index 0) - not the displayed strings (index 1 or 2)
+        for itm in self.option_data:
+            if itm[0] == x:
+                return True
+        return False
+
+    def list_strings (self):
+        # this returns the displayed strings - the option string and its tool tip
+        if len(self.option_data) == 0:
+           return []
+        return [ (x[1],x[2]) for itm in self.option_data ]
+
+
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        optmrk = self.getter()
+        return self.option_data[optmrk][0]
+
+
+class AccountListLimited(OptionBase):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,value_validator=None,multiple_selection=None,acct_type_list=None,option_widget_changed_cb=None):
+        super(AccountListLimited,self).__init__()
+        self.section = section
+        self.name = optname
+        self.type = 'account-list'
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+        self.option_data = ok_values
+        self.option_data_fns = [ \
+                                lambda : len(self.option_data),
+                                lambda x: self.option_data[x][0],
+                                lambda x: self.option_data[x][1],
+                                lambda x: self.option_data[x][2],
+                                lambda x: self.lookup(x),
+                               ]
+        # cant do this till set option_data!!
+        # scheme stores the key index string - here we store the index
+        self.default_value = self.lookup_key(default_value)
+
+        #self.setter = self.local_setter
+
+        # the setter and getter seem to store in the Kvp database
+
+        # 
+
+        self.widget_changed_cb = option_widget_changed_cb
+
+        self.strings_getter = self.multichoice_strings
+
+        self.setter_function_called_cb = setter_function_called_cb
+
+    def account_list_setter (self, x):
+        if self.option_value == None or len(self.option_value) == 0:
+            self.option_value = self.default_value
+        newlst = []
+        for x in self.option_value:
+             xacc = xaccAccountLookup(gnc_get_current_book(),x)
+             newlst.append(xacc)
+        self.option_value = newlst
+        # list should be validated
+        # for x in newlst: self.value_validator(x)
+        if valid:
+            self.option_value = map(convert_to_guid(self.option_value))
+            self.option_set = True
+        else:
+            #gnc:error "Illegal account list value set"
+            pass
+
+    def account_list_default_getter (self, x):
+        return convert_to_account(self.default_value)
+
+    def local_setter (self, x):
+        if self.legal(x):
+            if callable(self.setter_function_called_cb):
+                self.setter_function_called_cb(x)
+        else:
+            # gnc:error "Illegal Multichoice option set"
+            pass
+
+    def lookup_key (self, x):
+        # return the index for a key string
+        for indx,itm in enumerate(self.option_data):
+            if itm[0] == x:
+                return indx
+        return -1
+
+    def lookup (self, x):
+        # return whole sublist for a key as per scheme
+        for indx,itm in enumerate(self.option_data):
+            if itm[0] == x:
+                return itm
+        return None
+
+    def legal (self, x):
+        # this checks the key string (index 0) - not the displayed strings (index 1 or 2)
+        for itm in self.option_data:
+            if itm[0] == x:
+                return True
+        return False
+
+    def multichoice_strings (self):
+        # this returns the displayed strings - the option string and its tool tip
+        if len(self.option_data) == 0:
+           return []
+        return [ (x[1],x[2]) for itm in self.option_data ]
+
+
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        optmrk = self.getter()
+        return self.option_data[optmrk][0]
+
+
 
 
 class DateOption(OptionBase):
@@ -438,6 +629,7 @@ class DateOption(OptionBase):
 
         # although this is called the default_getter its actually the default value
         # these are lambda functions in scheme but dont know why
+        # I guess this can either be a callable (lambda in scheme) or plain value
         self.default_value = default_getter
 
         #self.generate_restore_form = ??.restore_form_generator(self.option_value)
@@ -453,6 +645,14 @@ class DateOption(OptionBase):
         self.strings_getter = None
         # which means this is not set
         #self.widget_changed_cb = None
+
+    def get_default_value (self):
+        # re-define to deal with lambda definitions
+        if callable(self.default_value):
+            return self.default_value()
+        else:
+            return self.default_value
+
 
     def default_setter (self, date):
         if self.date_legal(date):
@@ -488,6 +688,21 @@ class DateOption(OptionBase):
             if itm == x:
                 return indx
         return -1
+
+    def lookup_index (self, x):
+        # return the key string for an index
+        datestr = self.option_data[2][x]
+        return datestr
+
+    def get_option_value (self):
+        # this is a function for returning suitable python values 
+        # not figured a good name yet
+        optval = self.getter()
+        rettpl = self.lookup_string(optval[1])
+        fy_period = rettpl[2]()
+        return fy_period
+        
+
 
 
 class EndDateOption(DateOption):

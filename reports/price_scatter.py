@@ -11,11 +11,16 @@ def N_(msg):
     return msg
 
 
+import xml.etree.ElementTree as ET
+
+
 import sw_app_utils
 import sw_core_utils
 
 import gnc_jqplot
 import gnc_html_scatter
+
+import gnc_html_document
 
 
 # this is an attempt at replicating the Price Scatter scheme report
@@ -101,36 +106,31 @@ class PriceScatter(ReportTemplate):
         #  'attribute (list "bgcolor" (gnc:color-option->html bg-color-op))
         #  'font-color (gnc:color-option->html txt-color-op))
 
-        newdoc = gnc_html_scatter.HtmlScatter()
+        #document = gnc_html_document_full.HtmlDocument()
+        document = gnc_html_document.HtmlDocument()
 
-        newdoc.title = N_("Price Scatter")
+        document.title = N_("Price Scatter")
+
+        chart = gnc_html_scatter.HtmlScatter()
 
         # Im seeing how this works in scheme report system
         # the scheme report system creates lists of entities to be added
-        # Im thinking this is not the way to go in python
+        # now using one of the HTML/XML python modules to do this - why reinvent the wheel?
         # the only real issue is option replacement and links to
         # account pages
-        # the various plotting options
 
-        new_text = N_("""This is a sample GnuCash report. 
-See the guile (scheme) source code in the scm/report directory 
-for details on writing your own reports, 
-or extending existing reports.""")
-        #new_markup_format = HtmlMarkupFormat(new_text)
-        #new_markup_p = HtmlMarkupP(new_markup_format)
-        #new_html_text = HtmlTextObject(new_markup_p)
-        #document.add_object(new_html_text)
+        # the various plotting options
 
         #pdb.set_trace()
 
         optobj = self.options.lookup_name('General','Report name')
-        newdoc.title = optobj.getter()
+        chart.title = optobj.getter()
 
         optobj = self.options.lookup_name('Display','Plot Width')
-        newdoc.width = optobj.getter()
+        chart.width = optobj.getter()
 
         optobj = self.options.lookup_name('Display','Plot Height')
-        newdoc.height = optobj.getter()
+        chart.height = optobj.getter()
 
         optobj = self.options.lookup_name('General','Step Size')
         optstp = optobj.option_data[optobj.getter()][0]
@@ -141,15 +141,14 @@ or extending existing reports.""")
                       'MonthDelta' : N_("Months"),
                       'YearDelta' : N_("Years"),
                        }
-        newdoc.x_axis_label = mapinterval[optstp]
+        chart.x_axis_label = mapinterval[optstp]
 
         optobj = self.options.lookup_name('Display','Marker')
-        optmrk = optobj.getter()
-        newdoc.marker = optobj.option_data[optmrk][0]
+        chart.marker = optobj.get_option_value()
 
         optobj = self.options.lookup_name('Display','Marker Color')
         optclr = optobj.getter()
-        newdoc.markercolor = "%2x%2x%2x"%(optclr[0],optclr[1],optclr[2])
+        chart.markercolor = "%2x%2x%2x"%(optclr[0],optclr[1],optclr[2])
 
 
         commod_table = sw_app_utils.get_current_commodities()
@@ -162,9 +161,15 @@ or extending existing reports.""")
         optobj = self.options.lookup_name('Price','Invert prices')
         optinv = optobj.getter()
         if optinv:
-            newdoc.y_axis_label = stock.get_mnemonic()
+            chart.y_axis_label = stock.get_mnemonic()
         else:
-            newdoc.y_axis_label = cur.get_mnemonic()
+            chart.y_axis_label = cur.get_mnemonic()
+
+        optobj = self.options.lookup_name('General','Start Date')
+        strtdt = optobj.get_option_value()
+
+        optobj = self.options.lookup_name('General','End Date')
+        enddt = optobj.get_option_value()
 
 
         # this tests the same namespace and mnemonic same
@@ -185,10 +190,13 @@ or extending existing reports.""")
             prcdb = book.get_price_db()
             prclst = prcdb.get_prices(stock,cur)
 
+            #pdb.set_trace()
+
             prcordr = []
             for prc in prclst:
                 prcdt = prc.get_time()
-                prcordr.append((float(prcdt.strftime("%s")),prc))
+                if prcdt >= strtdt.date() and prcdt <= enddt.date():
+                    prcordr.append((float(prcdt.strftime("%s")),prc))
             prcordr.sort()
 
             prclst0 = prcordr[0][1]
@@ -202,18 +210,31 @@ or extending existing reports.""")
                 # we need to convert the date to seconds
                 cnvdt = (prctm-prcdt0)/mapxscale[optstp]
 
-                newdoc.add_datapoint((cnvdt,rlprc))
+                chart.add_datapoint((cnvdt,rlprc))
 
-            newdoc.render()
+            docelm = chart.render()
 
-            doclst = newdoc.get_doc()
+            stdelm = ET.Element('p')
+            stdelm.text = "Start Date %s"%str(strtdt)
+            docelm.append(stdelm)
+
+            endelm = ET.Element('p')
+            endelm.text = "End Date %s"%str(enddt)
+            docelm.append(endelm)
 
         else:
 
-            docstr = "<h2>"+N_("Identical commodities")+"</h2>"
-            docstr += "<p>"+N_("Your selected commodity and the currency of the report \
+            #docstr = "<h2>"+N_("Identical commodities")+"</h2>"
+            #docstr += "<p>"+N_("Your selected commodity and the currency of the report \
+#are identical. It doesn't make sense to show prices for identical \
+#commodities.")+"</p>"
+            #doclst = [docstr]
+            docelm = ET.Element('div',attrib={'id' : 'scatter1'})
+            docobj = ET.SubElement(docelm,'h2')
+            docobj.text = N_("Identical commodities")
+            newelm = ET.SubElement(docelm,'p')
+            newelm.text = N_("Your selected commodity and the currency of the report \
 are identical. It doesn't make sense to show prices for identical \
-commodities.")+"</p>"
-            doclst = [docstr]
+commodities.")
 
-        return doclst
+        return docelm

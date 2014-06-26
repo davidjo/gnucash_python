@@ -172,8 +172,10 @@ class GncDateEdit(gtk.HBox):
         self.calendar.show()
 
     def set_time_internal (self, the_time):
-        # in C we convert the time passed in seconds BACK to a time tuple - why??
-        #mytm = time.localtime(the_time)
+        # in C we convert the time passed in seconds BACK to a time tuple
+        # because we have defined the gobject property as a gint64 so it has
+        # to be a time in seconds
+        mytm = time.localtime(the_time)
         # do we do this in time type tuples or as datetime objects
         mydttm = datetime.datetime.fromtimestamp(float(the_time))
 
@@ -197,11 +199,16 @@ class GncDateEdit(gtk.HBox):
         self.emit("time_changed", 0)
         
 
+    def set_time_dt (self, the_time):
+        ts = time.mktime(the_time.timetuple())
+        self.set_time(ts)
+
     def set_time_ts (self, the_time):
         self.set_time(the_time)
 
     def set_time (self, the_time):
         # is this needed??
+        # note this must be a timestamp in seconds
         self.initial_time = the_time
         self.set_property("time", the_time)
 
@@ -271,6 +278,13 @@ class GncDateEdit(gtk.HBox):
                 return (True, newdt)
         else:
             return (True, newdt)
+
+    def get_date (self):
+        pdb.set_trace()
+        # changed to get_date_internal returns a python datetime
+        dttm = self.get_date_internal()
+        #return time.mktime(tm)
+        return dttm
 
     def get_date_internal (self):
         pdb.set_trace()

@@ -9,6 +9,16 @@
 def N_(msg):
     return msg
 
+import datetime
+
+# ah - so essentially what the Scheme is doing is using a DOM model
+# so Im now thinking in python why re-invent the wheel - just use the
+# python inbuilt xml dom models
+# the suggestion is to use  ElementTree rather than minidom
+# - although minidom might be closer to the Scheme implementation
+
+import xml.etree.ElementTree as ET
+
 # this is an attempt at replicating the Hello, World scheme report
 
 # this will be used to figure out ways to implement report writing in python
@@ -65,15 +75,14 @@ class HelloWorld(ReportTemplate):
         self.options.register_option(StringOption(N_("Hello, World!"), N_("String Option"),"c",
                                                       N_("This is a string option."), N_("Hello, World")))
 
-        dummystr = """
         self.options.register_option(DateOption(N_("Hello, World!"), N_("Just a Date Option"),"d",
                                                       N_("This is a date option."),
-                                                      lambda : datetime.now(),
+                                                      lambda : ('absolute', datetime.datetime.now()),
                                                       False, 'absolute', False))
 
         self.options.register_option(DateOption(N_("Hello, World!"), N_("Time and Date Option"),"e",
                                                       N_("This is a date option with time."),
-                                                      lambda : datetime.now(),
+                                                      lambda : ('absolute', datetime.datetime.now()),
                                                       True, 'absolute', False))
 
         self.options.register_option(DateOption(N_("Hello, World!"), N_("Combo Date Option"),"y",
@@ -102,12 +111,14 @@ class HelloWorld(ReportTemplate):
                                                    N_("This is a color option."),
                                                    (0x00, 0x00, 0x00, 0), 255, False))
 
-        self.options.register_option(AccountListOption(N_("Hello, World!"), N_("An account list option"),"g",
+        dummystr = """
+        self.options.register_option(AccountListOption(N_("Hello Again"), N_("An account list option"),"g",
                                                          N_("This is a account list option."),
                                                          [],
                                                          False, True))
+        """
 
-        self.options.register_option(ListOption(N_("Hello, World!"), N_("A list option"),"h",
+        self.options.register_option(ListOption(N_("Hello Again"), N_("A list option"),"h",
                                                   N_("This is a list option."),
                                                   [0],
                                                   # again is this a dict or simple list??
@@ -116,7 +127,6 @@ class HelloWorld(ReportTemplate):
                                                   [ N_("The Bad"), N_("Bad option.") ],
                                                   [ N_("The Ugly"), N_("Ugly option.") ],
                                                   ]))
-        """
 
         # we need to set the default option section - the one selected
         # gnc:options-set-default-section options "Hello, World!"
@@ -152,9 +162,40 @@ class HelloWorld(ReportTemplate):
         # the various plotting options
 
         new_text = N_("""This is a sample GnuCash report in python.""")
-        #new_markup_format = HtmlMarkupFormat(new_text)
-        #new_markup_p = HtmlMarkupP(new_markup_format)
-        #new_html_text = HtmlTextObject(new_markup_p)
-        document.add_object(new_text)
 
-        return document.get_doc()
+        base_markup = document.doc.Element("p")
+        base_markup.text = new_text
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The current time is ")
+
+        new_time = document.doc.SubElement(new_markup,"b")
+        new_time.text = datetime.datetime.now().strftime("%X")
+        # annoying but this is where we add the remaining string for "The current time is "
+        new_time.tail = N_(".")
+
+        optobj = self.options.lookup_name('Hello, World!','Boolean Option')
+        optval = optobj.getter()
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The boolean option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = N_("true") if optval else N_("false")
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+        optobj = self.options.lookup_name('Hello, World!','Multi Choice Option')
+        optval = optobj.get_option_value()
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The multi-choice option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = optval
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+
+
+        return document.get_xml()

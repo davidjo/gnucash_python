@@ -14,19 +14,27 @@ from ctypes.util import find_library
 
 import pdb
 
+import gobject
 
 import sw_core_utils
+
+
+#pdb.set_trace()
 
 
 class GncCommodityOpaque(ctypes.Structure):
     pass
 
 gboolean = ctypes.c_byte
+gint64 = ctypes.c_longlong
 
 # we cant search the gnucash sublib directory with find_library
 # also to use CDLL means need to detect extension!!
+# ah - maybe we can get the extension from core-utils and use that
+# it looks as though should be the same
 libgnc_coreutilnm = find_library("gnc-core-utils")
-libgnc_apputilnm = os.path.join(os.path.dirname(libgnc_coreutilnm),"gnucash","libgncmod-app-utils.dylib")
+libgnc_ext = os.path.splitext(libgnc_coreutilnm)[1]
+libgnc_apputilnm = os.path.join(os.path.dirname(libgnc_coreutilnm),"gnucash","libgncmod-app-utils"+libgnc_ext)
 if not os.path.exists(libgnc_apputilnm):
     pdb.set_trace()
     raise RuntimeError("Can't find a libgncmod-app-utils library to use.")
@@ -39,25 +47,25 @@ libgnc_apputils.gnc_default_report_currency.restype = ctypes.POINTER(GncCommodit
 libgnc_apputils.gnc_is_euro_currency.argtypes = [ ctypes.POINTER(GncCommodityOpaque) ]
 libgnc_apputils.gnc_is_euro_currency.restype = gboolean
 
+libgnc_apputils.gnc_is_euro_currency.argtypes = [ ctypes.POINTER(GncCommodityOpaque) ]
+libgnc_apputils.gnc_is_euro_currency.restype = gboolean
 
-# theres no good way to do this
-# we have to access the returned commodity by ctypes, get the individual values
-# and create new GncCommodity using these values
-libgnc_enginenm = os.path.join(os.path.dirname(libgnc_coreutilnm),"gnucash","libgncmod-engine.dylib")
-if not os.path.exists(libgnc_enginenm):
-    pdb.set_trace()
-    raise RuntimeError("Can't find a libgncmod-engine library to use.")
-libgnc_engine = ctypes.CDLL(libgnc_enginenm)
-libgnc_engine.gnc_commodity_get_fullname.argtypes = []
-libgnc_engine.gnc_commodity_get_fullname.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_namespace.argtypes = []
-libgnc_engine.gnc_commodity_get_namespace.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_mnemonic.argtypes = []
-libgnc_engine.gnc_commodity_get_mnemonic.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_cusip.argtypes = []
-libgnc_engine.gnc_commodity_get_cusip.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_fraction.argtypes = []
-libgnc_engine.gnc_commodity_get_fraction.restype = ctypes.c_int
+
+libgnc_apputils.gnc_accounting_period_fiscal_start.argtypes = []
+libgnc_apputils.gnc_accounting_period_fiscal_start.restype = gint64
+
+libgnc_apputils.gnc_accounting_period_fiscal_end.argtypes = []
+libgnc_apputils.gnc_accounting_period_fiscal_end.restype = gint64
+
+
+def gnc_accounting_period_fiscal_start ():
+    tmvl = libgnc_apputils.gnc_accounting_period_fiscal_start()
+    return tmvl
+
+def gnc_accounting_period_fiscal_end ():
+    tmvl = libgnc_apputils.gnc_accounting_period_fiscal_end()
+    return tmvl
+
 
 
 import _sw_app_utils
@@ -72,6 +80,9 @@ class QofBookOpaque(ctypes.Structure):
 
 
 def get_current_book ():
+
+    #print "types at get_current_book"
+    #print gobject.type_children(gobject.type_from_name('GObject'))
 
     # not sure what type to convert this to yet
     curbook_inst = _sw_app_utils.gnc_get_current_book()
@@ -92,8 +103,28 @@ def get_current_book ():
     #self.add_book(curbook.__long__())
 
 
-# so this function is apparently "inlined" in the swig
 
+# theres no good way to do this
+# we have to access the returned commodity by ctypes, get the individual values
+# and create new GncCommodity using these values
+libgnc_enginenm = os.path.join(os.path.dirname(libgnc_coreutilnm),"gnucash","libgncmod-engine"+libgnc_ext)
+if not os.path.exists(libgnc_enginenm):
+    pdb.set_trace()
+    raise RuntimeError("Can't find a libgncmod-engine library to use.")
+libgnc_engine = ctypes.CDLL(libgnc_enginenm)
+libgnc_engine.gnc_commodity_get_fullname.argtypes = []
+libgnc_engine.gnc_commodity_get_fullname.restype = ctypes.c_char_p
+libgnc_engine.gnc_commodity_get_namespace.argtypes = []
+libgnc_engine.gnc_commodity_get_namespace.restype = ctypes.c_char_p
+libgnc_engine.gnc_commodity_get_mnemonic.argtypes = []
+libgnc_engine.gnc_commodity_get_mnemonic.restype = ctypes.c_char_p
+libgnc_engine.gnc_commodity_get_cusip.argtypes = []
+libgnc_engine.gnc_commodity_get_cusip.restype = ctypes.c_char_p
+libgnc_engine.gnc_commodity_get_fraction.argtypes = []
+libgnc_engine.gnc_commodity_get_fraction.restype = ctypes.c_int
+
+
+# so this function is apparently "inlined" in the swig
 
 def default_report_currency ():
 
@@ -193,3 +224,4 @@ def locale_default_currency ():
     currency = table.lookup('CURRENCY', "USD")
 
     return currency
+

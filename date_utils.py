@@ -6,6 +6,15 @@
 import datetime
 import calendar
 
+import pdb
+
+import qof_ctypes
+
+import sw_core_utils
+
+import sw_app_utils
+
+
 
 def N_(msg):
     return msg
@@ -55,129 +64,137 @@ deltalist = [ \
 
 def get_start_cal_year ():
     newtim = datetime.datetime.now()
-    return newtim.replace(sec=0,min=0,hour=0,mday=0,mon=0,tzinfo=None)
+    return newtim.replace(second=0,minute=0,hour=0,day=0,month=1,tzinfo=None)
 
 def get_end_cal_year ():
     newtim = datetime.datetime.now()
-    return newtim.replace(sec=59,min=59,hour=23,mday=31,mon=12,tzinfo=None)
+    return newtim.replace(second=59,minute=59,hour=23,day=31,month=12,tzinfo=None)
 
 def get_start_prev_year ():
     newtim = datetime.datetime.now()
-    return newtim.replace(year=newtim.year-1,sec=0,min=0,hour=0,mday=1,mon=0,tzinfo=None)
+    return newtim.replace(year=newtim.year-1,second=0,minute=0,hour=0,day=1,month=1,tzinfo=None)
 
 def get_end_prev_year ():
     newtim = datetime.datetime.now()
-    return newtim.replace(year=newtim.year-1,sec=59,min=59,hour=23,mday=31,mon=12,tzinfo=None)
+    return newtim.replace(year=newtim.year-1,second=59,minute=59,hour=23,day=31,month=12,tzinfo=None)
 
 def get_start_next_year ():
     newtim = datetime.datetime.now()
-    return newtim.replace(year=newtim.year+1,sec=0,min=0,hour=0,mday=1,mon=1,tzinfo=None)
+    return newtim.replace(year=newtim.year+1,second=0,minute=0,hour=0,day=1,month=1,tzinfo=None)
 
 def get_end_next_year ():
     newtim = datetime.datetime.now()
-    return newtim.replace(year=newtim.year+1,sec=59,min=59,hour=23,mday=31,mon=12,tzinfo=None)
+    return newtim.replace(year=newtim.year+1,second=59,minute=59,hour=23,day=31,month=12,tzinfo=None)
 
 def get_start_accounting_period ():
+    # this is complicated - apparently this is a book preference stored in the KvP system
     #(gnc:secs->timepair (gnc-accounting-period-fiscal-start)))
-    pass
+    # these return timestamps - to be consistent convert to datetime entities
+    tmvl = sw_app_utils.gnc_accounting_period_fiscal_start()
+    newtim = datetime.datetime.fromtimestamp(tmvl)
+    return newtim
 
 def get_end_accounting_period ():
+    # this is complicated - apparently this is a book preference stored in the KvP system
     #(gnc:secs->timepair (gnc-accounting-period-fiscal-end)))
-    pass
+    # these return timestamps - to be consistent convert to datetime entities
+    tmvl = sw_app_utils.gnc_accounting_period_fiscal_end()
+    newtim = datetime.datetime.fromtimestamp(tmvl)
+    return newtim
 
 def get_start_this_month ():
     newtim = datetime.datetime.now()
-    return newtim.replace(sec=0,min=0,hour=0,mday=1,tzinfo=None)
+    return newtim.replace(second=0,minute=0,hour=0,day=1,tzinfo=None)
 
 def get_end_this_month ():
     newtim = datetime.datetime.now()
-    monrng = calendar.monthrange(newtim.year,newtim.mon)
-    return newtim.replace(sec=59,min=59,hour=23,mday=monrng[1],tzinfo=None)
+    monrng = calendar.monthrange(newtim.year,newtim.month)
+    return newtim.replace(second=59,minute=59,hour=23,day=monrng[1],tzinfo=None)
     
 def get_start_prev_month ():
     newtim = datetime.datetime.now()
-    if newtim.mon == 1:
-        return newtim.replace(sec=59,min=59,hour=23,mday=1,mon=12,year=newtim.year-1,tzinfo=None)
+    if newtim.month == 1:
+        return newtim.replace(second=59,minute=59,hour=23,day=1,month=12,year=newtim.year-1,tzinfo=None)
     else:
-        return newtim.replace(sec=0,min=0,hour=0,mday=1,mon=newtim.mon-1,tzinfo=None)
+        return newtim.replace(second=0,minute=0,hour=0,day=1,month=newtim.month-1,tzinfo=None)
 
 def get_end_prev_month ():
     newtim = datetime.datetime.now()
-    if newtim.mon == 1:
+    if newtim.month == 1:
         monrng = calendar.monthrange(newtim.year-1,12)
-        return newtim.replace(sec=59,min=59,hour=23,mday=monrng[1],mon=12,year=newtim.year-1,tzinfo=None)
+        return newtim.replace(second=59,minute=59,hour=23,day=monrng[1],month=12,year=newtim.year-1,tzinfo=None)
     else:
-        monrng = calendar.monthrange(newtim.year,newtim.mon-1)
-        return newtim.replace(sec=0,min=0,hour=0,mday=monrng[1],mon=newtim.mon-1,tzinfo=None)
+        monrng = calendar.monthrange(newtim.year,newtim.month-1)
+        return newtim.replace(second=0,minute=0,hour=0,day=monrng[1],month=newtim.month-1,tzinfo=None)
     
 def get_start_next_month ():
     newtim = datetime.datetime.now()
-    if newtim.mon == 12:
-        return newtim.replace(sec=0,min=0,hour=0,mday=1,mon=1,year=newtim.year+1,tzinfo=None)
+    if newtim.month == 12:
+        return newtim.replace(second=0,minute=0,hour=0,day=1,month=1,year=newtim.year+1,tzinfo=None)
     else:
-        return newtim.replace(sec=0,min=0,hour=0,mday=1,mon=newtim.mon+1,tzinfo=None)
+        return newtim.replace(second=0,minute=0,hour=0,day=1,month=newtim.month+1,tzinfo=None)
 
 def get_end_next_month ():
     newtim = datetime.datetime.now()
-    if newtim.mon == 12:
+    if newtim.month == 12:
         monrng = calendar.monthrange(newtim.year+1,1)
-        return newtim.replace(sec=59,min=59,hour=23,mday=monrng[1],mon=1,year=newtim.year+1,tzinfo=None)
+        return newtim.replace(second=59,minute=59,hour=23,day=monrng[1],month=1,year=newtim.year+1,tzinfo=None)
     else:
-        monrng = calendar.monthrange(newtim.year,newtim.mon+1)
-        return newtim.replace(sec=0,min=0,hour=0,mday=monrng[1],mon=newtim.mon+1,tzinfo=None)
+        monrng = calendar.monthrange(newtim.year,newtim.month+1)
+        return newtim.replace(second=0,minute=0,hour=0,day=monrng[1],month=newtim.month+1,tzinfo=None)
     
 def get_start_current_quarter ():
     newtim = datetime.datetime.now()
-    return newtim.replace(sec=0,min=0,hour=0,mday=1,mon=newtim.mon-((newtim.mon-1)%3),tzinfo=None)
+    return newtim.replace(second=0,minute=0,hour=0,day=1,month=newtim.month-((newtim.month-1)%3),tzinfo=None)
 
 def get_end_current_quarter ():
     newtim = datetime.datetime.now()
-    endmon = newtim.mon + (2 - ((newtim.mon-1)%3))
+    endmon = newtim.month + (2 - ((newtim.month-1)%3))
     monrng = calendar.monthrange(newtim.year,endmon)
     newtim = datetime.datetime.now()
-    return newtim.replace(sec=59,min=59,hour=23,mday=monrng[1],mon=endmon,tzinfo=None)
+    return newtim.replace(second=59,minute=59,hour=23,day=monrng[1],month=endmon,tzinfo=None)
 
 def get_start_prev_quarter ():
     newtim = datetime.datetime.now()
-    prvmon = newtim.mon - ((newtim.mon-1)%3) - 3
+    prvmon = newtim.month - ((newtim.month-1)%3) - 3
     if prvmon < 1:
         prvmon = 9
         prvyr = newtim.year-1
     else:
         prvyr = newtim.year
-    return newtim.replace(sec=0,min=0,hour=0,mday=1,mon=prvmon,year=prvyr,tzinfo=None)
+    return newtim.replace(second=0,minute=0,hour=0,day=1,month=prvmon,year=prvyr,tzinfo=None)
 
 def get_end_prev_quarter ():
     newtim = datetime.datetime.now()
-    prvmon = newtim.mon + ((newtim.mon-1)%3) - 3
+    prvmon = newtim.month + ((newtim.month-1)%3) - 3
     if prvmon < 1:
         prvmon = 12
         prvyr = newtim.year-1
     else:
         prvyr = newtim.year
     monrng = calendar.monthrange(prvyr,prvmon)
-    return newtim.replace(sec=59,min=59,hour=23,mday=monrng[1],mon=prvmon,year=prvyr,tzinfo=None)
+    return newtim.replace(second=59,minute=59,hour=23,day=monrng[1],month=prvmon,year=prvyr,tzinfo=None)
 
 def get_start_next_quarter ():
     newtim = datetime.datetime.now()
-    nxtmon = newtim.mon + 3 - ((newtim.mon-1)%3)
+    nxtmon = newtim.month + 3 - ((newtim.month-1)%3)
     if nxtmon > 12:
         nxtmon = 1
         nxtyr = newtim.year+1
     else:
         nxtyr = newtim.year
-    return newtim.replace(sec=0,min=0,hour=0,mday=1,mon=nxtmon,year=nxtyr,tzinfo=None)
+    return newtim.replace(second=0,minute=0,hour=0,day=1,month=nxtmon,year=nxtyr,tzinfo=None)
 
 def get_end_next_quarter ():
     newtim = datetime.datetime.now()
-    nxtmon = newtim.mon + 3 + ((newtim.mon-1)%3)
+    nxtmon = newtim.month + 3 + ((newtim.month-1)%3)
     if nxtmon > 12:
         nxtmon = 3
         nxtyr = newtim.year+1
     else:
         nxtyr = newtim.year
     monrng = calendar.monthrange(nxtyr,nxtmon)
-    return newtim.replace(sec=59,min=59,hour=23,mday=monrng[1],mon=nxtmon,year=nxtyr,tzinfo=None)
+    return newtim.replace(second=59,minute=59,hour=23,day=monrng[1],month=nxtmon,year=nxtyr,tzinfo=None)
 
 
 def get_today ():
@@ -188,114 +205,114 @@ def get_today ():
 
 def get_one_month_ago ():
     prvtim = datetime.datetime.now()
-    if prvtim.mon == 1:
+    if prvtim.month == 1:
         prvmon = 12
         prvyr = prvtim.year-1
     else:
-        prvmon = prvtim.mon-1
+        prvmon = prvtim.month-1
         prvyr = prvtim.year
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(prvyr,prvmon)
-    prvmdy = prvtim.mday
-    if monrng[1] > prvtim.mday:
+    prvmdy = prvtim.day
+    if monrng[1] > prvtim.day:
         prvmdy = monrng[1]
-    return prvtim.replace(mday=prvmdy,mon=prvmon,year=prvyr,tzinfo=None)
+    return prvtim.replace(day=prvmdy,month=prvmon,year=prvyr,tzinfo=None)
 
 
 def get_three_months_ago ():
     prvtim = datetime.datetime.now()
-    if prvtim.mon < 3:
-        prvmon = prvtim.mon + 12
+    if prvtim.month < 3:
+        prvmon = prvtim.month + 12
         prvyr = prvtim.year-1
     else:
         prvyr = prvtim.year
-    prvmon = prvtim.mon - 3
+    prvmon = prvtim.month - 3
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(prvyr,prvmon)
-    prvmdy = prvtim.mday
-    if monrng[1] > prvtim.mday:
+    prvmdy = prvtim.day
+    if monrng[1] > prvtim.day:
         prvmdy = monrng[1]
-    return prvtim.replace(mday=prvmdy,mon=prvmon,year=prvyr,tzinfo=None)
+    return prvtim.replace(day=prvmdy,month=prvmon,year=prvyr,tzinfo=None)
 
 def get_six_months_ago ():
     prvtim = datetime.datetime.now()
-    if prvtim.mon < 6:
-        prvmon = prvtim.mon + 12
+    if prvtim.month < 6:
+        prvmon = prvtim.month + 12
         prvyr = prvtim.year-1
     else:
         prvyr = prvtim.year
-    prvmon = prvtim.mon - 6
+    prvmon = prvtim.month - 6
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(prvyr,prvmon)
-    prvmdy = prvtim.mday
-    if monrng[1] > prvtim.mday:
+    prvmdy = prvtim.day
+    if monrng[1] > prvtim.day:
         prvmdy = monrng[1]
-    return prvtim.replace(mday=prvmdy,mon=prvmon,year=prvyr,tzinfo=None)
+    return prvtim.replace(day=prvmdy,month=prvmon,year=prvyr,tzinfo=None)
 
 def get_one_year_ago ():
     prvtim = datetime.datetime.now()
     prvyr = prvtim.year-1
     # it looks as though the scheme gets the length of the previous month
-    monrng = calendar.monthrange(prvyr,prvtim.mon)
-    prvmdy = prvtim.mday
-    if monrng[1] > prvtim.mday:
+    monrng = calendar.monthrange(prvyr,prvtim.month)
+    prvmdy = prvtim.day
+    if monrng[1] > prvtim.day:
         prvmdy = monrng[1]
-    return prvtim.replace(mday=prvmdy,year=prvyr,tzinfo=None)
+    return prvtim.replace(day=prvmdy,year=prvyr,tzinfo=None)
 
 def get_one_month_ahead ():
     newtim = datetime.datetime.now()
-    if newtim.mon == 12:
+    if newtim.month == 12:
         newmon = 1
 	newyr = newtim.year+1
     else:
-        newmon = newtim.mon+1
+        newmon = newtim.month+1
         newyr = newtim.year
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(newyr,newmon)
-    newmdy = newtim.mday
-    if monrng[1] > newtim.mday:
+    newmdy = newtim.day
+    if monrng[1] > newtim.day:
         newmdy = monrng[1]
-    return newtim.replace(mday=newmdy,mon=newmon,year=newyr,tzinfo=None)
+    return newtim.replace(day=newmdy,month=newmon,year=newyr,tzinfo=None)
 
 def get_three_months_ahead ():
     newtim = datetime.datetime.now()
-    if newtim.mon > 9:
-        newmon = newtim.mon - 9
+    if newtim.month > 9:
+        newmon = newtim.month - 9
 	newyr = newtim.year+1
     else:
-        newmon = newtim.mon+3
+        newmon = newtim.month+3
         newyr = newtim.year
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(newyr,newmon)
-    newmdy = newtim.mday
-    if monrng[1] > newtim.mday:
+    newmdy = newtim.day
+    if monrng[1] > newtim.day:
         newmdy = monrng[1]
-    return newtim.replace(mday=newmdy,mon=newmon,year=newyr,tzinfo=None)
+    return newtim.replace(day=newmdy,month=newmon,year=newyr,tzinfo=None)
 
 def get_six_months_ahead ():
     newtim = datetime.datetime.now()
-    if newtim.mon > 6:
-        newmon = newtim.mon - 6
+    if newtim.month > 6:
+        newmon = newtim.month - 6
 	newyr = newtim.year+1
     else:
-        newmon = newtim.mon+6
+        newmon = newtim.month+6
         newyr = newtim.year
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(newyr,newmon)
-    newmdy = newtim.mday
-    if monrng[1] > newtim.mday:
+    newmdy = newtim.day
+    if monrng[1] > newtim.day:
         newmdy = monrng[1]
-    return newtim.replace(mday=newmdy,mon=newmon,year=newyr,tzinfo=None)
+    return newtim.replace(day=newmdy,month=newmon,year=newyr,tzinfo=None)
 
 def get_one_year_ahead ():
     newtim = datetime.datetime.now()
     newyr = newtim.year+1
     # it looks as though the scheme gets the length of the previous month
-    monrng = calendar.monthrange(newyr,newtim.mon)
-    newmdy = newtim.mday
-    if monrng[1] > newtim.mday:
+    monrng = calendar.monthrange(newyr,newtim.month)
+    newmdy = newtim.day
+    if monrng[1] > newtim.day:
         newmdy = monrng[1]
-    return newtim.replace(mday=newmdy,year=newyr,tzinfo=None)
+    return newtim.replace(day=newmdy,year=newyr,tzinfo=None)
 
 # and now for the relative dates
 

@@ -1,6 +1,9 @@
 
 import random
 
+import xml.etree.ElementTree as ET
+
+
 import pdb
 import traceback
 
@@ -11,12 +14,13 @@ from gnc_html_document import HtmlDoc
 from gnc_html_document import HtmlDocument
 
 
+# this is not a subclass of HtmlDocument
+# - we need to allow for multiple scatter plots in one HTML document
 
-class HtmlScatter(HtmlDocument):
+class HtmlScatter(object):
 
     def __init__ (self,width=None,height=None,title=None,subtitle=None,x_axis_label=None,y_axis_label=None,data=None,
                    marker=None,marker_color=None):
-        super(HtmlScatter,self).__init__()
         self.width = None
         self.height = None
         self.title = None
@@ -47,38 +51,43 @@ class HtmlScatter(HtmlDocument):
 
         if len(self.data) > 0:
 
-           self.doc.push(gnc_jqplot.html_js_include("jqplot/jquery.min.js"))
-           self.doc.push(gnc_jqplot.html_js_include("jqplot/jquery.jqplot.js"))
-           self.doc.push(gnc_jqplot.html_css_include("jqplot/jquery.jqplot.css"))
+           # cant figure the good way of doing this
+           # ah - looks like we can nest div elements
+           # we probably need to count each scatter plot
+           bodydiv = ET.Element('div', attrib={'id' : 'scatter1'})
+           bodydiv.text = "\n"
 
-           self.doc.push('<div id="'+chart_id+'" style="width:')
-           self.doc.push(str(self.width))
-           self.doc.push("px;height:")
-           self.doc.push(str(self.height))
-           self.doc.push('px;"></div>\n')
-           self.doc.push('<script id="source">\n$(function () {')
+           bodydiv.append(gnc_jqplot.html_js_include("jqplot/jquery.min.js"))
+           bodydiv.append(gnc_jqplot.html_js_include("jqplot/jquery.jqplot.js"))
+           bodydiv.append(gnc_jqplot.html_css_include("jqplot/jquery.jqplot.css"))
 
-           self.doc.push("var data = [];")
-           self.doc.push("var series = [];\n")
+           stylstr = "width:"+str(self.width)+"px;height:"+str(self.height)+"px;"
+           divelm = ET.SubElement(bodydiv,'div',attrib={'id' : chart_id, 'style' : stylstr})
+           divelm.text = "\n"
+           divelm.tail = "\n"
+           screlm = ET.Element('script',attrib={'id' : "source"})
+           bodydiv.append(screlm)
+
+           txtlst = ["$(function () {\nvar data = [];var series = [];\n"]
 
            for x_data,y_data in self.data:
-              self.doc.push("  data.push([")
-              self.doc.push(str(x_data))
-              self.doc.push(", ")
-              self.doc.push(str(y_data))
-              self.doc.push("]);\n")
+              txtlst.append("  data.push([")
+              txtlst.append(str(x_data))
+              txtlst.append(", ")
+              txtlst.append(str(y_data))
+              txtlst.append("]);\n")
 
-           self.doc.push("var series = [];\n")
-           self.doc.push("""var options = {
+           txtlst.append("var series = [];\n")
+           txtlst.append("""var options = {
                     legend: { show: false, },
                     seriesDefaults: {
                         markerOptions: {
                             style: '""")
-           self.doc.push(marker)
-           self.doc.push("""',
+           txtlst.append(marker)
+           txtlst.append("""',
                             color: '""")
-           self.doc.push(markercolor)
-           self.doc.push("""', },
+           txtlst.append(markercolor)
+           txtlst.append("""', },
                     },
                     series: series,
                     axesDefaults: {
@@ -93,28 +102,35 @@ class HtmlScatter(HtmlDocument):
                 };\n""")
 
            if title:
-               self.doc.push('  options.title = "')
-               self.doc.push(title)
-               self.doc.push('";\n')
+               txtlst.append('  options.title = "')
+               txtlst.append(title)
+               txtlst.append('";\n')
 
            if subtitle:
-               self.doc.push('  options.title += " (')
-               self.doc.push(subtitle)
-               self.doc.push(')";\n')
+               txtlst.append('  options.title += " (')
+               txtlst.append(subtitle)
+               txtlst.append(')";\n')
 
            if x_label:
-               self.doc.push('  options.axes.xaxis.label = "')
-               self.doc.push(x_label)
-               self.doc.push('";\n')
+               txtlst.append('  options.axes.xaxis.label = "')
+               txtlst.append(x_label)
+               txtlst.append('";\n')
 
            if y_label:
-               self.doc.push('  options.axes.yaxis.label = "')
-               self.doc.push(y_label)
-               self.doc.push('";\n')
+               txtlst.append('  options.axes.yaxis.label = "')
+               txtlst.append(y_label)
+               txtlst.append('";\n')
 
-           self.doc.push("$.jqplot.config.enablePlugins = true;\n")
-           self.doc.push("var plot = $.jqplot('"+chart_id+"', [data], options);\n")
-           self.doc.push("});\n</script>\n")
+           txtlst.append("$.jqplot.config.enablePlugins = true;\n")
+           txtlst.append("var plot = $.jqplot('"+chart_id+"', [data], options);\n")
+           txtlst.append("});\n")
+
+           screlm.text = "".join(txtlst)
+
+           stdelm = ET.Element('p')
+           bodydiv.append(stdelm)
+
+           return bodydiv
 
         else:
 

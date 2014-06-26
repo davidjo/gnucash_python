@@ -95,6 +95,14 @@ gncpluginpagereporttype = gobject.type_from_name('GncPluginPageReport')
 
 tmppluginpage = gobject.new(gobject.type_from_name('GncPluginPage'))
 
+#print "GObject types"
+
+#print gobject.type_children(gobject.type_from_name('GncPluginPage'))
+#print gobject.type_children(gobject.type_from_name('QofBook'))
+#print gobject.type_parent(gobject.type_from_name('GncPluginPage'))
+#for gtyp in gobject.type_children(gobject.type_from_name('GObject')):
+#    print gtyp
+
 
 # define a function equivalent to N_ for internationalization
 def N_(msg):
