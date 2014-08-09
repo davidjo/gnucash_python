@@ -526,15 +526,15 @@ class GncPluginPagePythonReport(PluginPage):
            #pdb.set_trace()
            close_callback_type = ctypes.CFUNCTYPE(None,ctypes.c_void_p)
 
-           self.component_manager_id = gnc_plugin_page.libgnc_apputils.gnc_register_gui_component("window-report", None, close_callback_type(close_handler), hash(self))
+           self.component_manager_id = sw_app_utils.libgnc_apputils.gnc_register_gui_component("window-report", None, close_callback_type(close_handler), hash(self))
            # debugging - doesnt appear to have any effect
-           #self.component_manager_id = gnc_plugin_page.libgnc_apputils.gnc_register_gui_component("window-report", None, None, None)
+           #self.component_manager_id = sw_app_utils.libgnc_apputils.gnc_register_gui_component("window-report", None, None, None)
 
            #session = _sw_app_utils.gnc_get_current_session()
-           session = gnc_plugin_page.libgnc_apputils.gnc_get_current_session()
+           session = sw_app_utils.libgnc_apputils.gnc_get_current_session()
 
            #_sw_app_utils.gnc_gui_component_set_session(self.component_manager_id, session)
-           gnc_plugin_page.libgnc_apputils.gnc_gui_component_set_session(self.component_manager_id, session)
+           sw_app_utils.libgnc_apputils.gnc_gui_component_set_session(self.component_manager_id, session)
 
            # need this??
            #gnc_html_set_urltype_cb(priv->html, gnc_plugin_page_report_check_urltype);
@@ -615,7 +615,7 @@ class GncPluginPagePythonReport(PluginPage):
         print >> sys.stderr, "destroy_widget"
         try:
 
-           gnc_plugin_page.libgnc_apputils.gnc_unregister_gui_component(self.component_manager_id)
+           sw_app_utils.libgnc_apputils.gnc_unregister_gui_component(self.component_manager_id)
            self.component_manager_id = 0
            del python_pages[self.reportId]
 

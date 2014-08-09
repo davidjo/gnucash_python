@@ -32,7 +32,9 @@ except Exception, errexc:
     print >> sys.stderr, "Failed to import!!"
     pdb.set_trace()
 
+
 gncmainwindowtype = gobject.type_from_name('GncMainWindow')
+
 
 # this lists the properties
 print >> sys.stderr, gobject.list_properties(gncmainwindowtype)
@@ -55,7 +57,7 @@ print >> sys.stderr, dir(gncmainwindowtype)
 
 
 
-import gnc_main_window
+import gnome_utils_ctypes
 
 
 import gnc_plugin_page_python_report
@@ -141,7 +143,7 @@ class MyPlugin(gobject.GObject):
         # currently using ctypes version
         # we apparently have to use the main window ui_merge object
 
-        self.main_window = gnc_main_window.gnc_gui_init()
+        self.main_window = gnome_utils_ctypes.gnc_gui_init()
         self.main_ui_merge = self.main_window.get_uimanager()
 
         self.merge_id = 0
@@ -155,7 +157,7 @@ class MyPlugin(gobject.GObject):
         self.actiongroup = actiongroup
 
         # create callback object
-        self.save_callbacks = MyCallbacks()
+        #self.save_callbacks = MyCallbacks()
 
         # ok this whole issue may have been because of my stupidity with GIL Ensure
         #newcb = python_callbacktype(self.reports_cb)

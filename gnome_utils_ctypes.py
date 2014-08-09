@@ -8,7 +8,6 @@ import sys
 
 import gobject
 
-import gncmainwindow
 
 import pdb
 
@@ -17,51 +16,7 @@ from ctypes.util import find_library
 from ctypes import *
 
 
-# this is taken from pygtk FAQ 23.41
-
-# this boilerplate can convert a memory address
-# into a proper python gobject.
-
-# this fixup is needed as the apparent return type for PyCObject_AsVoidPtr
-# is c_int!!
-
-pythonapi.PyCObject_AsVoidPtr.argtypes = [ py_object ]
-pythonapi.PyCObject_AsVoidPtr.restype = c_void_p
-
-class _PyGObject_Functions(Structure):
-    _fields_ = [
-        ('register_class',
-         PYFUNCTYPE(c_void_p, c_char_p,
-                           c_int, py_object,
-                           py_object)),
-        ('register_wrapper',
-         PYFUNCTYPE(c_void_p, py_object)),
-        ('register_sinkfunc',
-         PYFUNCTYPE(py_object, c_void_p)),
-        ('lookupclass',
-         PYFUNCTYPE(py_object, c_int)),
-        ('newgobj',
-         PYFUNCTYPE(py_object, c_void_p)),
-        ]
-    
-class PyGObjectCPAI(object):
-    def __init__(self):
-        #print "pygobject addr 1",gobject._PyGObject_API
-        addr = pythonapi.PyCObject_AsVoidPtr(
-            py_object(gobject._PyGObject_API))
-        #print "pygobject addr %x"%addr
-        self._api = _PyGObject_Functions.from_address(addr)
-
-    def pygobject_new(self, addr):
-        return self._api.newgobj(addr)
-
-
-# call like this:
-# Cgobject = PyGObjectCPAI()
-# Cgobject.pygobject_new(memory_address)
-
-# to get memory address from a gobject:
-#  address = hash(obj)
+from pygobjectcapi import PyGObjectCAPI
 
 
 #gboolean = c_byte
@@ -69,22 +24,6 @@ gboolean = c_int
 gpointer = c_void_p
 guint = c_uint
 gsize = c_uint
-
-
-class GncMainWindowOpaque(Structure):
-    pass
-
-GncMainWindowOpaquePtr = POINTER(GncMainWindowOpaque)
-
-class GncPluginPageOpaque(Structure):
-    pass
-
-class GncMainWindowActionData(Structure):
-    pass
-GncMainWindowActionData._fields_ = [
-                                    ('window', POINTER(GncMainWindowOpaque)),
-                                    ('data', gpointer),
-                                   ]
 
 
 # find core-utils then add gnucash to path to get to gnome-utuils
@@ -103,12 +42,11 @@ if not os.path.exists(libgnc_gnomeutilnm):
 libgnc_gnomeutils = CDLL(libgnc_gnomeutilnm)
 
 
-
-libgnc_gnomeutils.gnc_main_window_open_page.argtypes = [ c_void_p, c_void_p ]
-libgnc_gnomeutils.gnc_main_window_open_page.restype = None
-
-libgnc_gnomeutils.gnc_main_window_close_page.argtypes = [ c_void_p ]
-libgnc_gnomeutils.gnc_main_window_close_page.restype = None
+# Im undecided how to partition these calls as gnome-utils has calls for a lot
+# of different objects
+# for the moment Im going to move the call definitions into the python
+# ctypes module for an object
+# only generic calls will be done here
 
 
 libgnc_gnomeutils.gnc_shutdown.argtypes = [ c_int ]
@@ -120,6 +58,27 @@ libgnc_gnomeutils.gnc_shutdown.restype = None
 # even though the resulting python type is an integer in both cases
 libgnc_gnomeutils.gnc_gui_init.argtypes = []
 libgnc_gnomeutils.gnc_gui_init.restype = c_void_p
+
+
+def gnc_gui_init ():
+
+    # OK - this does work if I use the right restype for gnc_gui_init!!
+    # note that the gnc_gui_init just returns main window object pointer
+    # if already called - we assume gnc_gui_init has already been called here
+    main_window_ptr = libgnc_gnomeutils.gnc_gui_init()
+
+    print >> sys.stderr, "main_window_ptr %x"%main_window_ptr
+
+    #pdb.set_trace()
+
+    # call like this:
+    Cgobject = PyGObjectCAPI()
+    main_window = Cgobject.pygobject_new(main_window_ptr)
+
+    #pdb.set_trace()
+
+    return main_window
+
 
 
 

@@ -75,6 +75,20 @@ if not os.path.exists(libgnc_apputilnm):
 
 libgnc_apputils = ctypes.CDLL(libgnc_apputilnm)
 
+#libgnc_apputils.gnc_register_gui_component("window-report", None, close_handler, self)
+libgnc_apputils.gnc_register_gui_component.argtypes = [ ctypes.c_char_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p ]
+libgnc_apputils.gnc_register_gui_component.restype = ctypes.c_int
+
+libgnc_apputils.gnc_get_current_session.argtypes = []
+libgnc_apputils.gnc_get_current_session.restype = ctypes.c_void_p
+
+libgnc_apputils.gnc_unregister_gui_component.argtypes = [ ctypes.c_int ]
+libgnc_apputils.gnc_unregister_gui_component.restype = None
+
+libgnc_apputils.gnc_unregister_gui_component_by_data.argtypes = [ ctypes.c_char_p, ctypes.c_void_p ]
+libgnc_apputils.gnc_unregister_gui_component_by_data.restype = None
+
+
 libgnc_apputils.gnc_default_report_currency.argtypes = []
 libgnc_apputils.gnc_default_report_currency.restype = ctypes.POINTER(GncCommodityOpaque)
 

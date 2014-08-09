@@ -75,6 +75,8 @@ print >> sys.stderr, gobject.signal_list_names(gncpluginpagetype)
 
 #newpage = gobject.new(gncpluginpagetype)
 
+# at the time didnt seem possible to use the gncpluginpage directly
+# so made a python module using same methods as done to create pygtk
 
 import gncpluginpage
 
@@ -83,53 +85,6 @@ from pygkeyfile import GKeyFile
 
 #pdb.set_trace()
 
-
-#libgnc_gnomeutilnm = find_library("libgncmod-gnome-utils")
-#if libgnc_gnomeutilnm is None:
-#    pdb.set_trace()
-#    raise RuntimeError("Can't find a libgncmod-gnome-utils library to use.")
-
-libgnc_gnomeutilnm = "/opt/local/lib/gnucash/libgncmod-gnome-utils.dylib"
-if not os.path.exists(libgnc_gnomeutilnm):
-    pdb.set_trace()
-    raise RuntimeError("Can't find a libgncmod-gnome-utils library to use.")
-
-libgnc_gnomeutils = CDLL(libgnc_gnomeutilnm)
-
-
-class GncMainWindowOpaque(Structure):
-    pass
-
-class GncPluginPageOpaque(Structure):
-    pass
-
-
-libgnc_gnomeutils.gnc_main_window_open_page.argtypes = [ c_void_p, c_void_p ]
-libgnc_gnomeutils.gnc_main_window_open_page.restype = None
-
-
-libgnc_apputilnm = "/opt/local/lib/gnucash/libgncmod-app-utils.dylib"
-if not os.path.exists(libgnc_apputilnm):
-    pdb.set_trace()
-    raise RuntimeError("Can't find a libgncmod-app-utils library to use.")
-
-libgnc_apputils = CDLL(libgnc_apputilnm)
-
-#libgnc_apputils.gnc_register_gui_component("window-report", None, close_handler, self)
-libgnc_apputils.gnc_register_gui_component.argtypes = [ c_char_p, c_void_p, c_void_p, c_void_p ]
-libgnc_apputils.gnc_register_gui_component.restype = c_int
-
-libgnc_apputils.gnc_get_current_session.argtypes = []
-libgnc_apputils.gnc_get_current_session.restype = c_void_p
-
-libgnc_apputils.gnc_unregister_gui_component.argtypes = [ c_int ]
-libgnc_apputils.gnc_unregister_gui_component.restype = None
-
-libgnc_apputils.gnc_unregister_gui_component_by_data.argtypes = [ c_char_p, c_void_p ]
-libgnc_apputils.gnc_unregister_gui_component_by_data.restype = None
-
-
-#pdb.set_trace()
 
 # OK attempt to create a Python class for gnc_plugin_page
 # we will use a helper module to do the 

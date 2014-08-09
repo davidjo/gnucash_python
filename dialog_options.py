@@ -19,10 +19,6 @@ import gobject
 import gtk
 
 
-
-#import sw_app_utils
-import sw_core_utils
-import gnc_plugin_page
 import ctypes
 
 
@@ -31,6 +27,11 @@ import traceback
 import pdb
 
 import gc
+
+
+import sw_core_utils
+import sw_app_utils
+
 
 
 try:
@@ -1580,13 +1581,13 @@ class DialogOption(object):
 
         component_close_callback_type = ctypes.CFUNCTYPE(None,ctypes.c_void_p)
 
-        component_id = gnc_plugin_page.libgnc_apputils.gnc_register_gui_component("dialog-options", None, component_close_callback_type(self.component_close_handler), hash(self))
+        component_id = sw_app_utils.libgnc_apputils.gnc_register_gui_component("dialog-options", None, component_close_callback_type(self.component_close_handler), hash(self))
 
         #session = sw_app_utils.gnc_get_current_session()
-        session = gnc_plugin_page.libgnc_apputils.gnc_get_current_session()
+        session = sw_app_utils.libgnc_apputils.gnc_get_current_session()
 
         #sw_app_utils.gnc_gui_component_set_session(component_id, session)
-        gnc_plugin_page.libgnc_apputils.gnc_gui_component_set_session(component_id, session)
+        sw_app_utils.libgnc_apputils.gnc_gui_component_set_session(component_id, session)
 
 
     def component_close_handler (self, arg):
@@ -1594,7 +1595,7 @@ class DialogOption(object):
 
     def dialog_destroy (self):
 
-        gnc_plugin_page.libgnc_apputils.gnc_unregister_gui_component_by_data("dialog-options", hash(self))
+        sw_app_utils.libgnc_apputils.gnc_unregister_gui_component_by_data("dialog-options", hash(self))
 
         self.dialog.destroy()
 
