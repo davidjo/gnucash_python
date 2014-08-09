@@ -3,38 +3,59 @@ import os
 import pdb
 import traceback
 
+# wrap all this in try except so can silently fail in init.py
+# if local_init.py does not exist
 
-#pdb.set_trace()
+try:
 
-# see if calling this prevents the crashes
-# no - this causes a total lockup after first menu click
-# so this is really confusing - currently if we make callbacks
-# for gnucash menus looks like we need to do a GIL state ensure
-# before going into python - even though all the evidence I have
-# is that this also being done by eg pyg_closure_marshal before going into python
-# otherwise on second menu click we get a crash in the callback
-# at Py_EnterRecursiveCall (which gets bad thread data for checking recursion limit)
-#import gobject
-#gobject.threads_init()
-# and this locks up main loop as expected!!
-#import gtk
-#gtk.gdk.threads_init()
+    #pdb.set_trace()
+
+    # see if calling this prevents the crashes
+    # no - this causes a total lockup after first menu click
+    # so this is really confusing - currently if we make callbacks
+    # for gnucash menus looks like we need to do a GIL state ensure
+    # before going into python - even though all the evidence I have
+    # is that this also being done by eg pyg_closure_marshal before going into python
+    # otherwise on second menu click we get a crash in the callback
+    # at Py_EnterRecursiveCall (which gets bad thread data for checking recursion limit)
+    #import gobject
+    #gobject.threads_init()
+    # and this locks up main loop as expected!!
+    #import gtk
+    #gtk.gdk.threads_init()
 
 
-# hmm - we need to instantiate the python report page module here
-# - other wise the callbacks wont exist when restoring pages saved on normal shutdown
-# however this means we need a re-factor as can now only do widget stuff later
-# looks like in gnucash modules are not effectively multiply instantiated
-# essentially we need to define the GType now and figure out how to set the callback
-# actually do we need the instantiation - maybe the import is enough??
-# yes - looks like the import is enough
-import gnc_plugin_page_python_report
+    # hmm - we need to instantiate the python report page module here
+    # - other wise the callbacks wont exist when restoring pages saved on normal shutdown
+    # however this means we need a re-factor as can now only do widget stuff later
+    # looks like in gnucash modules are not effectively multiply instantiated
+    # essentially we need to define the GType now and figure out how to set the callback
+    # actually do we need the instantiation - maybe the import is enough??
+    # yes - looks like the import is enough
+    import gnc_plugin_page_python_report
 
-#import gnc_plugin_python_example
+    #import gnc_plugin_python_example
 
-import python_only_plugin 
-myplugin = python_only_plugin.MyPlugin()
+    # see if can turn off g_log handlers installed by pygobject
 
-#pdb.set_trace()
+    print "loading CAPI"
+    from pygobjectcapi import PyGObjectCAPI
 
-print "junk"
+    Cgobject = PyGObjectCAPI()
+    Cgobject.disable_warning_redirections()
+
+    print "done CAPI"
+
+
+    import python_only_plugin 
+    myplugin = python_only_plugin.MyPlugin()
+
+    #pdb.set_trace()
+
+    print "junk"
+
+except Exception, errexc:
+    print >> sys.stderr, "Failed to import!!"
+    traceback.print_exc()
+    pdb.set_trace()
+

@@ -15,48 +15,10 @@ import pdb
 
 from ctypes import *
 
-
-# this is taken from pygtk FAQ 23.41
-
-# this boilerplate can convert a memory address
-# into a proper python gobject.
-
-# this fixup is needed as the apparent return type for PyCObject_AsVoidPtr
-# is c_int!!
-
-pythonapi.PyCObject_AsVoidPtr.argtypes = [ py_object ]
-pythonapi.PyCObject_AsVoidPtr.restype = c_void_p
-
-class _PyGObject_Functions(Structure):
-    _fields_ = [
-        ('register_class',
-         PYFUNCTYPE(c_void_p, c_char_p,
-                           c_int, py_object,
-                           py_object)),
-        ('register_wrapper',
-         PYFUNCTYPE(c_void_p, py_object)),
-        ('register_sinkfunc',
-         PYFUNCTYPE(py_object, c_void_p)),
-        ('lookupclass',
-         PYFUNCTYPE(py_object, c_int)),
-        ('newgobj',
-         PYFUNCTYPE(py_object, c_void_p)),
-        ]
-    
-class PyGObjectCPAI(object):
-    def __init__(self):
-        #print "pygobject addr 1",gobject._PyGObject_API
-        addr = pythonapi.PyCObject_AsVoidPtr(
-            py_object(gobject._PyGObject_API))
-        #print "pygobject addr %x"%addr
-        self._api = _PyGObject_Functions.from_address(addr)
-
-    def pygobject_new(self, addr):
-        return self._api.newgobj(addr)
-
+from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
-# Cgobject = PyGObjectCPAI()
+# Cgobject = PyGObjectCAPI()
 # Cgobject.pygobject_new(memory_address)
 
 # to get memory address from a gobject:
@@ -123,7 +85,7 @@ def gnc_gui_init ():
         #pdb.set_trace()
 
         # call like this:
-        Cgobject = PyGObjectCPAI()
+        Cgobject = PyGObjectCAPI()
         main_window = Cgobject.pygobject_new(main_window_ptr)
 
         #pdb.set_trace()
