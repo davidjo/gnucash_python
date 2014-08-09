@@ -85,5 +85,5 @@
 {'st_mtime': '1402183307', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '0'}  ;  reports/__init__.py
 {'st_mtime': '1407510376', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '14727'}  ;  reports/hello_world.py
 {'st_mtime': '1403822921', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8840'}  ;  reports/price_scatter.py
-{'st_mtime': '1407592830', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9544'}  ;  sw_app_utils.py
+{'st_mtime': '1407602582', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10492'}  ;  sw_app_utils.py
 {'st_mtime': '1403135583', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '617'}  ;  sw_core_utils.py

@@ -21,6 +21,8 @@ import sw_core_utils
 
 import engine_ctypes
 
+import swighelpers
+
 import gnucash
 
 
@@ -92,6 +94,7 @@ libgnc_apputils.gnc_unregister_gui_component_by_data.restype = None
 
 
 libgnc_apputils.gnc_default_report_currency.argtypes = []
+#libgnc_apputils.gnc_default_report_currency.restype = ctypes.c_void_p
 libgnc_apputils.gnc_default_report_currency.restype = ctypes.POINTER(GncCommodityOpaque)
 
 libgnc_apputils.gnc_is_euro_currency.argtypes = [ ctypes.POINTER(GncCommodityOpaque) ]
@@ -159,7 +162,7 @@ def get_current_book ():
 
 # so this function is apparently "inlined" in the swig
 
-def default_report_currency ():
+def default_report_currency_old ():
 
     #pdb.set_trace()
 
@@ -186,7 +189,7 @@ def default_report_currency ():
 
     curbook = get_current_book()
 
-    # bugger - to do this we need to convert the ctypes pointer to a low-level swig pointer
+    # to do this we need to convert the ctypes pointer to a low-level swig pointer
 
     # theres only one way I can see
     # allocate a new GncCommodity
@@ -200,6 +203,29 @@ def default_report_currency ():
     # - of course this is completely new object and wont reflect changes made to the gnucash
     # internal default currency without re-calling this routine
     def_curr = gnucash.GncCommodity(curbook,def_fullname,def_namespace,def_mnemonic,def_cusip,def_fraction)
+
+    return def_curr
+
+# new version of default_report_currency using swighelpers!!
+# yay - working nicely!!
+
+def default_report_currency ():
+
+    #pdb.set_trace()
+
+    #def_curr_inst = _sw_app_utils.gnc_default_report_currency()
+    #def_curr = gnucash.GncCommodity(instance=def_curr_inst)
+
+    def_curr_ptr = libgnc_apputils.gnc_default_report_currency()
+
+    # we have confirmed that this gives the address of the raw C object
+    # when the function return is defined as a POINTER type
+    print >> sys.stderr, "curr ptr %x"%ctypes.addressof(def_curr_ptr.contents)
+
+    # to do this we need to convert the ctypes pointer to a low-level swig pointer
+    # - which we can now do via swighelpers!!
+    def_curr_inst = swighelpers.int_to_swig(ctypes.addressof(def_curr_ptr.contents),"_p_gnc_commodity")
+    def_curr = gnucash.GncCommodity(instance=def_curr_inst)
 
     return def_curr
 
