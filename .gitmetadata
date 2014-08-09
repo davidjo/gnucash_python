@@ -52,6 +52,14 @@
 {'st_mtime': '1402067603', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1758'}  ;  plugin/gncpluginpage-new.defs
 {'st_mtime': '1402244914', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33632'}  ;  plugin/gncpluginpage.override
 {'st_mtime': '1400285444', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '585'}  ;  plugin/gncpluginpagemodule.c
+{'st_mtime': '1404192676', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '0'}  ;  plugin/gnctreeview-new.defs
+{'st_mtime': '1404349368', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4242'}  ;  plugin/gnctreeview-types.py
+{'st_mtime': '1404352102', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '21096'}  ;  plugin/gnctreeview.override
+{'st_mtime': '1403886780', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '0'}  ;  plugin/gnctreeviewaccount-new.defs
+{'st_mtime': '1404056354', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7911'}  ;  plugin/gnctreeviewaccount-types.py
+{'st_mtime': '1404192441', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4317'}  ;  plugin/gnctreeviewaccount.override
+{'st_mtime': '1403886632', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '619'}  ;  plugin/gnctreeviewaccountmodule.c
+{'st_mtime': '1403886587', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '570'}  ;  plugin/gnctreeviewmodule.c
 {'st_mtime': '1400783824', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1139'}  ;  plugin/gpointer-types.py
 {'st_mtime': '1400095077', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '645'}  ;  plugin/patch-fields.diff
 {'st_mtime': '1402098737', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '34951'}  ;  plugin/pygkeyfile.c

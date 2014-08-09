@@ -1,0 +1,545 @@
+%%
+headers
+
+#include "config.h"
+
+#include "pygobject.h"
+
+#include "glib.h"
+
+#include "gtk/gtk.h"
+
+#include "gnc-plugin-page.h"
+
+#include "gnc-tree-view.h"
+
+#include "gnc-gnome-utils.h"
+
+
+// boring - we cannot link this but apparently this is needed
+// junkily copied from gtk-types.c in pygtk
+
+GtkTreePath *
+pygtk_tree_path_from_pyobject(PyObject *object)
+{
+    if (PyString_Check(object)) {
+	GtkTreePath *path;
+
+	path = gtk_tree_path_new_from_string(PyString_AsString(object));
+	return path;
+    } else if (PyInt_Check(object)) {
+	GtkTreePath *path;
+
+	path = gtk_tree_path_new();
+	gtk_tree_path_append_index(path, PyInt_AsLong(object));
+	return path;
+    } else if (PyTuple_Check(object)) {
+	GtkTreePath *path;
+	guint len, i;
+
+	len = PyTuple_Size(object);
+	if (len < 1)
+	    return NULL;
+	path = gtk_tree_path_new();
+	for (i = 0; i < len; i++) {
+	    PyObject *item = PyTuple_GetItem(object, i);
+	    gint index = PyInt_AsLong(item);
+	    if (PyErr_Occurred()) {
+		gtk_tree_path_free(path);
+		PyErr_Clear();
+		return NULL;
+	    }
+	    gtk_tree_path_append_index(path, index);
+	}
+	return path;
+    }
+    return NULL;
+}
+
+// again junkily copied from gtkobject-support.c
+
+void
+pygtk_boxed_unref_shared(PyObject *boxed)
+{
+    if (boxed == Py_None) {
+        Py_DECREF(Py_None);
+        return;
+    }
+    PyGBoxed *pyboxed;
+    g_return_if_fail(boxed != NULL && PyObject_TypeCheck(boxed, &PyGBoxed_Type));
+    pyboxed = (PyGBoxed *) boxed;
+    if (pyboxed->ob_refcnt != 1) {
+        if (!pyboxed->free_on_dealloc) {
+            pyboxed->boxed = g_boxed_copy(pyboxed->gtype,
+                                          pyboxed->boxed);
+            pyboxed->free_on_dealloc = TRUE;
+        }
+    }
+    Py_DECREF(boxed);
+}
+
+
+%%
+modulename gnctreeview
+%%
+import gobject.GObject as PyGObject_Type
+import gtk.TreeIterCompareFunc as PyGtkTreeIterCompareFunc_Type
+import gtk.TreeViewColumn as PyGtkTreeViewColumn_Type
+import gtk.TreeModel as PyGtkTreeModel_Type
+import gtk.TreeView as PyGtkTreeView_Type
+
+%%
+ignore-glob
+  *_get_type
+
+ignore gnc_tree_view_expand_columns
+
+%%
+override gnc_tree_view_add_text_column kwargs
+
+//typedef gint (* GtkTreeIterCompareFunc) (GtkTreeModel *model,
+//                                         GtkTreeIter  *a,
+//                                         GtkTreeIter  *b,
+//                                         gpointer      user_data);
+
+// dont see we can access this directly
+typedef struct {
+    PyObject *func, *data;
+} PyGtkCustomNotify;
+
+// this coding borrowed from gtktreeview.override in the pygtk system
+// this creates a C callback which calls a python function
+// no - we cannot use this directly - the sort function gets added
+// without setting the userdata pointer via gnc_tree_view_column_properties
+// note this function has the same type as GtkTreeIterCompareFunc
+static gint
+pygtk_tree_column_sort_cb(GtkTreeModel *model, GtkTreeIter *iter1,
+                            GtkTreeIter *iter2, gpointer user_data)
+{
+    PyGILState_STATE state;
+    // the column number seems to be what is passed
+    // - unfortunately this is fixed by gnc_tree_view_column_properties
+    gint data_column = (gint64) user_data;
+    PyObject *py_model, *py_iter2, *py_iter1, *retobj;
+    gint ret = 0;
+
+    //PyGtkCustomNotify *cunote;
+
+    GtkTreeView *view = g_object_get_data(G_OBJECT(model), "add_column_python_data");
+
+    GtkTreeViewColumn *column = gtk_tree_view_get_column(view, data_column);
+    PyObject *func = g_object_get_data(G_OBJECT(column), "add_column_python_data");
+
+    g_assert(func);
+
+    state = pyg_gil_state_ensure();
+
+    py_model = pygobject_new((GObject *)model);
+    py_iter1 = pyg_boxed_new(GTK_TYPE_TREE_ITER, iter1, FALSE, FALSE);
+    py_iter2 = pyg_boxed_new(GTK_TYPE_TREE_ITER, iter2,  FALSE, FALSE);
+
+    if (data_column) {
+        retobj = PyEval_CallFunction(func, "(NOOO)", py_model,
+                                     py_iter1, py_iter2, data_column);
+    } else {
+        retobj = PyEval_CallFunction(func, "(NOO)", py_model,
+                                     py_iter1, py_iter2);
+    }
+    pygtk_boxed_unref_shared(py_iter1);
+    pygtk_boxed_unref_shared(py_iter2);
+    if (retobj)
+        ret = PyInt_AsLong(retobj);
+    if (PyErr_Occurred()) {
+        PyErr_Print();
+        ret = 0;
+    }
+    Py_XDECREF(retobj);
+
+    pyg_gil_state_release(state);
+    return ret;
+}
+
+
+static PyObject *
+_wrap_gnc_tree_view_add_text_column(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "column_title", "pref_name", "stock_icon_name", "sizing_text", "model_data_column", "model_visibility_column", "column_sort_fn", NULL };
+    char *column_title, *pref_name, *stock_icon_name, *sizing_text;
+    int model_data_column, model_visibility_column;
+    GtkTreeIterCompareFunc column_sort_fn = NULL;
+    GtkTreeViewColumn *ret;
+    PyObject *py_column_sort_fn;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"ssssiiO:Gnc.TreeView.add_text_column", kwlist, &column_title, &pref_name, &stock_icon_name, &sizing_text, &model_data_column, &model_visibility_column, &py_column_sort_fn))
+        return NULL;
+
+    if (py_column_sort_fn == NULL || py_column_sort_fn == Py_None) {
+        column_sort_fn = NULL;
+    } else if (!PyCallable_Check(py_column_sort_fn)) {
+        PyErr_SetString(PyExc_TypeError, "func must be a callable object");
+        return NULL;
+    } else {
+        //cunote = g_new0(PyGtkCustomNotify, 1);
+        column_sort_fn = pygtk_tree_column_sort_cb;
+    }
+
+    ret = gnc_tree_view_add_text_column(GNC_TREE_VIEW(self->obj), column_title, pref_name, stock_icon_name, sizing_text, model_data_column, model_visibility_column, column_sort_fn);
+
+    if (ret != NULL) {
+        // we need to get the model from the view
+	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->obj));
+
+        // just directly store PyObject address
+        // big question about increfing
+        //cunote->func = py_column_sort_fn;
+        //cunote->data = ret;
+        //Py_INCREF(cunote->func);
+
+        // the only way I can see is to add to the GtkTreeModel (a gobject) via set_data a pointer to the python
+        // data - as the model is the only Gobject in the sort function arguments
+        // this is complicated - the model does not have any view information - but we have multiple columns
+        // only way is to save the tree view here then can access the column from the view
+	g_object_set_data(G_OBJECT(model), "add_column_python_data", GNC_TREE_VIEW(self->obj));
+
+	g_object_set_data(G_OBJECT(ret), "add_column_python_data", py_column_sort_fn);
+    }
+
+    /* pygobject_new handles NULL checking */
+    return pygobject_new((GObject *)ret);
+}
+
+%%
+override gnc_tree_view_add_combo_column kwargs
+
+static PyObject *
+_wrap_gnc_tree_view_add_combo_column(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "column_title", "pref_name", "sizing_text", "model_data_column", "model_visibility_column", "combo_tree_model", "combo_model_text_column", "column_sort_fn", NULL };
+    int model_data_column, model_visibility_column, combo_model_text_column;
+    GtkTreeIterCompareFunc column_sort_fn;
+    char *column_title, *pref_name, *sizing_text;
+    GtkTreeViewColumn *ret;
+    PyGObject *combo_tree_model;
+    PyObject *py_column_sort_fn;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"sssiiO!iO:Gnc.TreeView.add_combo_column", kwlist, &column_title, &pref_name, &sizing_text, &model_data_column, &model_visibility_column, &PyGtkTreeModel_Type, &combo_tree_model, &combo_model_text_column, &py_column_sort_fn))
+        return NULL;
+
+    if (py_column_sort_fn == NULL || py_column_sort_fn == Py_None) {
+        column_sort_fn = NULL;
+    } else if (!PyCallable_Check(py_column_sort_fn)) {
+        PyErr_SetString(PyExc_TypeError, "func must be a callable object");
+        return NULL;
+    } else {
+        //cunote = g_new0(PyGtkCustomNotify, 1);
+        column_sort_fn = pygtk_tree_column_sort_cb;
+    }
+    
+    ret = gnc_tree_view_add_combo_column(GNC_TREE_VIEW(self->obj), column_title, pref_name, sizing_text, model_data_column, model_visibility_column, GTK_TREE_MODEL(combo_tree_model->obj), combo_model_text_column, column_sort_fn);
+
+    if (ret != NULL) {
+        // we need to get the model from the view
+	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->obj));
+
+        // just directly store PyObject address
+        // big question about increfing
+        //cunote->func = py_column_sort_fn;
+        //cunote->data = ret;
+        //Py_INCREF(cunote->func);
+
+        // the only way I can see is to add to the GtkTreeModel (a gobject) via set_data a pointer to the python
+        // data - as the model is the only Gobject in the sort function arguments
+        // this is complicated - the model does not have any view information - but we have multiple columns
+        // only way is to save the tree view here then can access the column from the view
+	g_object_set_data(G_OBJECT(model), "add_column_python_data", GNC_TREE_VIEW(self->obj));
+
+	g_object_set_data(G_OBJECT(ret), "add_column_python_data", py_column_sort_fn);
+    }
+    
+    /* pygobject_new handles NULL checking */
+    return pygobject_new((GObject *)ret);
+}
+
+%%
+override gnc_tree_view_add_date_column kwargs
+
+static PyObject *
+_wrap_gnc_tree_view_add_date_column(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "column_title", "pref_name", "stock_icon_name", "sizing_text", "model_data_column", "model_visibility_column", "column_sort_fn", NULL };
+    char *column_title, *pref_name, *stock_icon_name, *sizing_text;
+    int model_data_column, model_visibility_column;
+    GtkTreeIterCompareFunc column_sort_fn;
+    GtkTreeViewColumn *ret;
+    PyObject *py_column_sort_fn;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"ssssiiO:Gnc.TreeView.add_date_column", kwlist, &column_title, &pref_name, &stock_icon_name, &sizing_text, &model_data_column, &model_visibility_column, &py_column_sort_fn))
+        return NULL;
+
+    if (py_column_sort_fn == NULL || py_column_sort_fn == Py_None) {
+        column_sort_fn = NULL;
+    } else if (!PyCallable_Check(py_column_sort_fn)) {
+        PyErr_SetString(PyExc_TypeError, "func must be a callable object");
+        return NULL;
+    } else {
+        //cunote = g_new0(PyGtkCustomNotify, 1);
+        column_sort_fn = pygtk_tree_column_sort_cb;
+    }
+    
+    ret = gnc_tree_view_add_date_column(GNC_TREE_VIEW(self->obj), column_title, pref_name, stock_icon_name, sizing_text, model_data_column, model_visibility_column, column_sort_fn);
+
+    if (ret != NULL) {
+        // we need to get the model from the view
+	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->obj));
+
+        // just directly store PyObject address
+        // big question about increfing
+        //cunote->func = py_column_sort_fn;
+        //cunote->data = ret;
+        //Py_INCREF(cunote->func);
+
+        // the only way I can see is to add to the GtkTreeModel (a gobject) via set_data a pointer to the python
+        // data - as the model is the only Gobject in the sort function arguments
+        // this is complicated - the model does not have any view information - but we have multiple columns
+        // only way is to save the tree view here then can access the column from the view
+	g_object_set_data(G_OBJECT(model), "add_column_python_data", GNC_TREE_VIEW(self->obj));
+
+	g_object_set_data(G_OBJECT(ret), "add_column_python_data", py_column_sort_fn);
+    }
+    
+    /* pygobject_new handles NULL checking */
+    return pygobject_new((GObject *)ret);
+}
+
+%%
+override gnc_tree_view_add_numeric_column kwargs
+
+static PyObject *
+_wrap_gnc_tree_view_add_numeric_column(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "column_title", "pref_name", "sizing_text", "model_data_column", "model_color_column", "model_visibility_column", "column_sort_fn", NULL };
+    char *column_title, *pref_name, *sizing_text;
+    int model_data_column, model_color_column, model_visibility_column;
+    GtkTreeIterCompareFunc column_sort_fn;
+    GtkTreeViewColumn *ret;
+    PyObject *py_column_sort_fn;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"sssiiiO:Gnc.TreeView.add_numeric_column", kwlist, &column_title, &pref_name, &sizing_text, &model_data_column, &model_color_column, &model_visibility_column, &py_column_sort_fn))
+        return NULL;
+
+    if (py_column_sort_fn == NULL || py_column_sort_fn == Py_None) {
+        column_sort_fn = NULL;
+    } else if (!PyCallable_Check(py_column_sort_fn)) {
+        PyErr_SetString(PyExc_TypeError, "func must be a callable object");
+        return NULL;
+    } else {
+        //cunote = g_new0(PyGtkCustomNotify, 1);
+        column_sort_fn = pygtk_tree_column_sort_cb;
+    }
+    
+    ret = gnc_tree_view_add_numeric_column(GNC_TREE_VIEW(self->obj), column_title, pref_name, sizing_text, model_data_column, model_color_column, model_visibility_column, column_sort_fn);
+
+    if (ret != NULL) {
+        // we need to get the model from the view
+	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->obj));
+
+        // just directly store PyObject address
+        // big question about increfing
+        //cunote->func = py_column_sort_fn;
+        //cunote->data = ret;
+        //Py_INCREF(cunote->func);
+
+        // the only way I can see is to add to the GtkTreeModel (a gobject) via set_data a pointer to the python
+        // data - as the model is the only Gobject in the sort function arguments
+        // this is complicated - the model does not have any view information - but we have multiple columns
+        // only way is to save the tree view here then can access the column from the view
+	g_object_set_data(G_OBJECT(model), "add_column_python_data", GNC_TREE_VIEW(self->obj));
+
+	g_object_set_data(G_OBJECT(ret), "add_column_python_data", py_column_sort_fn);
+    }
+    
+    /* pygobject_new handles NULL checking */
+    return pygobject_new((GObject *)ret);
+}
+
+%%
+override gnc_tree_view_keynav kwargs
+
+static PyObject *
+_wrap_gnc_tree_view_keynav(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "col", "path", "event", NULL };
+    PyObject *py_col, *py_path, *py_event;
+    GtkTreeViewColumn **col;
+    GdkEvent *event = NULL;
+    GtkTreePath *path;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"OOO:Gnc.TreeView.keynav", kwlist, &py_col, &py_path, &py_event))
+        return NULL;
+
+    // this is a list of GtkTreeViewColumn pointers
+    if (!PyList_Check(py_col)) {
+        PyErr_SetString(PyExc_TypeError, "col argument is not a list");
+        return NULL;
+    }
+    int nitms = PyList_Size(py_col);
+    col = (GtkTreeViewColumn **) g_malloc(sizeof(GtkTreeViewColumn*)*(nitms+1));
+    int indx = 0;
+    for (indx=0; indx<nitms; indx++)
+        {
+        PyObject *plst = PyList_GetItem(py_col,indx);
+        if (!PyList_Check(plst)) {
+            PyErr_SetString(PyExc_TypeError, "col list item is not a list");
+            return NULL;
+        }
+        PyObject *psub = PyList_GetItem(plst,indx);
+        col[indx] = (GtkTreeViewColumn*)PyCObject_AsVoidPtr(psub);
+        }
+
+    path = pygtk_tree_path_from_pyobject(py_path);
+    if (!path) {
+        PyErr_SetString(PyExc_TypeError, "could not convert path to a GtkTreePath");
+        return NULL;
+    }
+    if (pyg_boxed_check(py_event, GDK_TYPE_EVENT))
+        event = pyg_boxed_get(py_event, GdkEvent);
+    else {
+        PyErr_SetString(PyExc_TypeError, "event should be a GdkEvent");
+        return NULL;
+    }
+
+    gnc_tree_view_keynav(GNC_TREE_VIEW(self->obj), col, path, (GdkEventKey *)event);
+
+    if (path)
+        gtk_tree_path_free(path);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+%%
+override gnc_tree_view_add_toggle_column kwargs
+
+//typedef void (* renderer_toggled) (GtkCellRendererToggle *cell_renderer_toggle,
+//                                   const gchar           *path,
+//                                   gpointer               user_data);
+
+// this coding borrowed from gtktreeview.override in the pygtk system
+// this creates a C callback which calls a python function
+// no - we cannot use this directly - the sort function gets added
+// without setting the userdata pointer via gnc_tree_view_column_properties
+// note this function has the same type as GtkTreeIterCompareFunc
+static void
+pygtk_renderer_toggled(GtkCellRendererToggle *cell_renderer_toggle, gchar *path, gpointer user_data)
+{
+    PyGILState_STATE state;
+    // the column number seems to be what is passed
+    // - unfortunately this is fixed by gnc_tree_view_column_properties
+    gint data_column = (gint64) user_data;
+    PyObject *py_cell_renderer_toggle, *py_path, *py_userdata;
+    gint ret = 0;
+
+    //PyGtkCustomNotify *cunote;
+
+    //GtkTreeView *view = g_object_get_data(G_OBJECT(model), "add_column_python_data");
+
+    //GtkTreeViewColumn *column = gtk_tree_view_get_column(view, data_column);
+    //PyObject *func = g_object_get_data(G_OBJECT(column), "add_column_python_data");
+
+    //g_assert(func);
+
+    state = pyg_gil_state_ensure();
+
+    py_cell_renderer_toggle = pygobject_new((GObject *)cell_renderer_toggle);
+    py_path = PyString_FromString(path);
+    py_userdata = PyCObject_AsVoidPtr(user_data);
+
+    if (user_data) {
+        retobj = PyEval_CallFunction(func, "(NOO)", py_model,
+                                     py_path, py_userdata);
+    } else {
+        retobj = PyEval_CallFunction(func, "(NO)", py_model,
+                                     py_path);
+    }
+    Py_DECREF(py_path);
+    Py_DECREF(py_userdata);
+    if (retobj)
+        ret = PyInt_AsLong(retobj);
+    if (PyErr_Occurred()) {
+        PyErr_Print();
+        ret = 0;
+    }
+    Py_XDECREF(retobj);
+
+    pyg_gil_state_release(state);
+    return ret;
+}
+
+
+static PyObject *
+_wrap_gnc_tree_view_add_toggle_column(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "column_title", "column_short_title", "pref_name", "model_data_column", "model_visibility_column", "column_sort_fn", "toggle_edited_cb", NULL };
+    renderer_toggled toggle_edited_cb;
+    int model_data_column, model_visibility_column;
+    GtkTreeIterCompareFunc column_sort_fn;
+    char *column_title, *column_short_title, *pref_name;
+    GtkTreeViewColumn *ret;
+    PyObject *py_column_sort_fn, *py_toggle_edited_cb;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"sssiiOO:Gnc.TreeView.add_toggle_column", kwlist, &column_title, &column_short_title, &pref_name, &model_data_column, &model_visibility_column, &py_column_sort_fn, &py_toggle_edited_cb))
+        return NULL;
+
+    if (py_column_sort_fn == NULL || py_column_sort_fn == Py_None) {
+        column_sort_fn = NULL;
+    } else if (!PyCallable_Check(py_column_sort_fn)) {
+        PyErr_SetString(PyExc_TypeError, "func must be a callable object");
+        return NULL;
+    } else {
+        //cunote = g_new0(PyGtkCustomNotify, 1);
+        column_sort_fn = pygtk_tree_column_sort_cb;
+    }
+
+    if (py_toggle_edited_cb == NULL || py_toggle_edited_cb == Py_None) {
+        toggle_edited_cb = NULL;
+    } else if (!PyCallable_Check(py_toggle_edited_cb)) {
+        PyErr_SetString(PyExc_TypeError, "func must be a callable object");
+        return NULL;
+    } else {
+        //cunote = g_new0(PyGtkCustomNotify, 1);
+        toggle_edited_cb = pygtk_cell_toggle_edited_cb;
+    }
+
+    ret = gnc_tree_view_add_toggle_column(GNC_TREE_VIEW(self->obj), column_title, column_short_title, pref_name, model_data_column, model_visibility_column, column_sort_fn, toggle_edited_cb);
+
+    if (ret != NULL) {
+        // we need to get the model from the view
+	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->obj));
+
+        // just directly store PyObject address
+        // big question about increfing
+        //cunote->func = py_column_sort_fn;
+        //cunote->data = ret;
+        //Py_INCREF(cunote->func);
+
+        // the only way I can see is to add to the GtkTreeModel (a gobject) via set_data a pointer to the python
+        // data - as the model is the only Gobject in the sort function arguments
+        // this is complicated - the model does not have any view information - but we have multiple columns
+        // only way is to save the tree view here then can access the column from the view
+	g_object_set_data(G_OBJECT(model), "add_column_python_data", GNC_TREE_VIEW(self->obj));
+
+	g_object_set_data(G_OBJECT(ret), "add_column_python_data", py_column_sort_fn);
+
+        // the only way I can see is to add to the GtkTreeModel (a gobject) via set_data a pointer to the python
+        // data - as the model is the only Gobject in the sort function arguments
+        // this is complicated - the model does not have any view information - but we have multiple columns
+        // only way is to save the tree view here then can access the column from the view
+	g_object_set_data(G_OBJECT(model), "add_toggle_column_python_data", GNC_TREE_VIEW(self->obj));
+
+	g_object_set_data(G_OBJECT(ret), "add_toggle_column_python_data", py_toggle_edited_cb);
+    }
+
+    /* pygobject_new handles NULL checking */
+    return pygobject_new((GObject *)ret);
+}
+
+
