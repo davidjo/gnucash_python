@@ -3,6 +3,8 @@ import os
 import pdb
 import traceback
 
+import gc
+
 # wrap all this in try except so can silently fail in init.py
 # if local_init.py does not exist
 
@@ -10,19 +12,29 @@ try:
 
     #pdb.set_trace()
 
+    gc.set_debug(gc.DEBUG_LEAK)
+
     # see if calling this prevents the crashes
-    # no - this causes a total lockup after first menu click
-    # so this is really confusing - currently if we make callbacks
-    # for gnucash menus looks like we need to do a GIL state ensure
-    # before going into python - even though all the evidence I have
-    # is that this also being done by eg pyg_closure_marshal before going into python
-    # otherwise on second menu click we get a crash in the callback
+    # well the previous comments are now incorrect - we do need to do this
+    # and this solves the crash in the callback
     # at Py_EnterRecursiveCall (which gets bad thread data for checking recursion limit)
-    #import gobject
-    #gobject.threads_init()
-    # and this locks up main loop as expected!!
-    #import gtk
-    #gtk.gdk.threads_init()
+    # did I remove this when trying out importing webkit python module?
+    # (now using gnucash functions that call webkit)
+    import gobject
+    gobject.threads_init()
+
+    # see if can turn off g_log handlers installed by pygobject
+    # note need to do this AFTER importing gobject
+    # do we need to do this now?
+    # maybe the threads_init above will fix this as well
+
+    #print "loading CAPI"
+    #from pygobjectcapi import PyGObjectCAPI
+
+    #Cgobject = PyGObjectCAPI()
+    #Cgobject.disable_warning_redirections()
+
+    #print "done CAPI"
 
 
     # hmm - we need to instantiate the python report page module here
@@ -35,16 +47,6 @@ try:
     import gnc_plugin_page_python_report
 
     #import gnc_plugin_python_example
-
-    # see if can turn off g_log handlers installed by pygobject
-
-    print "loading CAPI"
-    from pygobjectcapi import PyGObjectCAPI
-
-    Cgobject = PyGObjectCAPI()
-    Cgobject.disable_warning_redirections()
-
-    print "done CAPI"
 
 
     import python_only_plugin 
