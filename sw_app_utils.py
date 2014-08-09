@@ -19,6 +19,8 @@ import pdb
 
 import sw_core_utils
 
+import engine_ctypes
+
 import gnucash
 
 
@@ -155,27 +157,6 @@ def get_current_book ():
     #self.add_book(curbook.__long__())
 
 
-
-# theres no good way to do this
-# we have to access the returned commodity by ctypes, get the individual values
-# and create new GncCommodity using these values
-libgnc_enginenm = os.path.join(os.path.dirname(libgnc_coreutilnm),"gnucash","libgncmod-engine"+libgnc_ext)
-if not os.path.exists(libgnc_enginenm):
-    pdb.set_trace()
-    raise RuntimeError("Can't find a libgncmod-engine library to use.")
-libgnc_engine = ctypes.CDLL(libgnc_enginenm)
-libgnc_engine.gnc_commodity_get_fullname.argtypes = []
-libgnc_engine.gnc_commodity_get_fullname.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_namespace.argtypes = []
-libgnc_engine.gnc_commodity_get_namespace.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_mnemonic.argtypes = []
-libgnc_engine.gnc_commodity_get_mnemonic.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_cusip.argtypes = []
-libgnc_engine.gnc_commodity_get_cusip.restype = ctypes.c_char_p
-libgnc_engine.gnc_commodity_get_fraction.argtypes = []
-libgnc_engine.gnc_commodity_get_fraction.restype = ctypes.c_int
-
-
 # so this function is apparently "inlined" in the swig
 
 def default_report_currency ():
@@ -189,15 +170,15 @@ def default_report_currency ():
 
     print >> sys.stderr, "curr ptr %x"%ctypes.addressof(def_curr_ptr.contents)
 
-    def_fullname = libgnc_engine.gnc_commodity_get_fullname(def_curr_ptr)
+    def_fullname = engine_ctypes.libgnc_engine.gnc_commodity_get_fullname(def_curr_ptr)
     print >> sys.stderr, "curr fullname %s"%def_fullname
-    def_namespace = libgnc_engine.gnc_commodity_get_namespace(def_curr_ptr)
+    def_namespace = engine_ctypes.libgnc_engine.gnc_commodity_get_namespace(def_curr_ptr)
     print >> sys.stderr, "curr namespace %s"%def_namespace
-    def_mnemonic = libgnc_engine.gnc_commodity_get_mnemonic(def_curr_ptr)
+    def_mnemonic = engine_ctypes.libgnc_engine.gnc_commodity_get_mnemonic(def_curr_ptr)
     print >> sys.stderr, "curr mnemonic %s"%def_mnemonic
-    def_cusip = libgnc_engine.gnc_commodity_get_cusip(def_curr_ptr)
+    def_cusip = engine_ctypes.libgnc_engine.gnc_commodity_get_cusip(def_curr_ptr)
     print >> sys.stderr, "curr cusip %s"%def_cusip
-    def_fraction = libgnc_engine.gnc_commodity_get_fraction(def_curr_ptr)
+    def_fraction = engine_ctypes.libgnc_engine.gnc_commodity_get_fraction(def_curr_ptr)
     print >> sys.stderr, "curr fraction %d"%def_fraction
 
     #curbook_inst = _sw_app_utils.gnc_get_current_book()
