@@ -11,7 +11,7 @@ from ctypes import *
 import pdb
 
 
-gboolean = c_byte
+gboolean = c_int
 gpointer = c_void_p
 guint = c_uint
 gsize = c_uint
@@ -88,14 +88,22 @@ libglib.g_list_last.argtypes = [POINTER(GListRaw)]
 libglib.g_list_last.restype = POINTER(GListRaw)
 libglib.g_list_first.argtypes = [POINTER(GListRaw)]
 libglib.g_list_first.restype = POINTER(GListRaw)
-libglib.g_list_nth.argtypes = [POINTER(GListRaw)]
+libglib.g_list_nth.argtypes = [POINTER(GListRaw), guint]
 libglib.g_list_nth.restype = POINTER(GListRaw)
-libglib.g_list_nth_data.argtypes = [POINTER(GListRaw)]
+libglib.g_list_nth_data.argtypes = [POINTER(GListRaw), guint]
 libglib.g_list_nth_data.restype = gpointer
 libglib.g_list_length.argtypes = [POINTER(GListRaw)]
 libglib.g_list_length.restype = guint
 libglib.g_list_free.argtypes = [POINTER(GListRaw)]
 libglib.g_list_free.restype = None
+libglib.g_list_alloc.argtypes = []
+libglib.g_list_alloc.restype = POINTER(GListRaw)
+libglib.g_list_prepend.argtypes = [POINTER(GListRaw),gpointer]
+libglib.g_list_prepend.restype = POINTER(GListRaw)
+libglib.g_list_append.argtypes = [POINTER(GListRaw),gpointer]
+libglib.g_list_append.restype = POINTER(GListRaw)
+libglib.g_list_reverse.argtypes = [POINTER(GListRaw)]
+libglib.g_list_reverse.restype = POINTER(GListRaw)
 
 
 libglib.g_hash_table_get_keys.argtypes = [POINTER(GHashTableOpaque)]
@@ -103,8 +111,12 @@ libglib.g_hash_table_get_keys.restype = POINTER(GListRaw)
 libglib.g_hash_table_get_values.argtypes = [POINTER(GHashTableOpaque)]
 libglib.g_hash_table_get_values.restype = POINTER(GListRaw)
 
+# is this the way to do this??
+def g_list_next (glist):
+    return glist.contents.next
 
-class GList(list):
+
+class GListSWIG(list):
 
     def __init__ (self,instance=None):
         if instance == None:
@@ -153,9 +165,8 @@ def glib_hash_table_get_values (hsh):
     vals = GList(vals)
     dt = vals[0]
 
-libglib.g_list_last.argtypes = [POINTER(GListRaw)]
-libglib.g_list_last.restype = POINTER(GListRaw)
 
+"""
 g_key_file_set_list_separator
 g_key_file_has_group
 g_key_file_get_start_group
@@ -203,3 +214,4 @@ g_key_file_set_locale_string_list
 g_key_file_set_locale_string
 g_key_file_set_string_list
 g_key_file_set_string
+"""

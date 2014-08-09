@@ -13,7 +13,8 @@ from ctypes import *
 import pdb
 
 
-gboolean = c_byte
+#gboolean = c_byte
+gboolean = c_int
 gpointer = c_void_p
 guint = c_uint
 gsize = c_uint

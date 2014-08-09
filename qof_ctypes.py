@@ -17,7 +17,8 @@ import sw_app_utils
 import pdb
 
 
-gboolean = c_byte
+#gboolean = c_byte
+gboolean = c_int
 gpointer = c_void_p
 gcharp = c_char_p
 gint = c_int
@@ -142,6 +143,10 @@ libgnc_qof.qof_instance_set_dirty.restype = None
 
 libgnc_qof.qof_instance_get_slots.argtypes = [POINTER(QofInstanceOpaque)]
 libgnc_qof.qof_instance_get_slots.restype = POINTER(KvpFrameOpaque)
+
+libgnc_qof.qof_instance_get_guid.argtypes = [POINTER(QofInstanceOpaque)]
+libgnc_qof.qof_instance_get_guid.restype = POINTER(GncGUIDRaw)
+
 
 # ah - I think I understand the kvp system - this is a hash/python dict
 # type system using glib hashes
