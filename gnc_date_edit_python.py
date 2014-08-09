@@ -263,6 +263,7 @@ class GncDateEdit(gtk.HBox):
 
     def scan_date (self, txtstr):
         # re-implement junkily here
+        print "scan_date",txtstr
 
         # bad date formats apparently give ValueError exception
         try:
@@ -280,14 +281,14 @@ class GncDateEdit(gtk.HBox):
             return (True, newdt)
 
     def get_date (self):
-        pdb.set_trace()
+        #pdb.set_trace()
         # changed to get_date_internal returns a python datetime
         dttm = self.get_date_internal()
         #return time.mktime(tm)
         return dttm
 
     def get_date_internal (self):
-        pdb.set_trace()
+        #pdb.set_trace()
         txtstr = self.date_entry.get_text()
 
         (date_was_valid, dttm) = self.scan_date(txtstr)
@@ -298,7 +299,7 @@ class GncDateEdit(gtk.HBox):
             dttm = dttm.replace(hour=0,minute=0,second=0,microsecond=0)
 
         # some code dealing with time
-        if (self.flags & GNC_DATE_EDIT_SHOW_TIME):
+        if (self.flags & GncDateEdit.GNC_DATE_EDIT_SHOW_TIME):
            timstr = self.time_entry.get_text()
            newtm = None
            try:
