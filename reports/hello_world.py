@@ -1,4 +1,5 @@
 
+import pdb
 
 # how to do internationalization in python
 #import gettext
@@ -22,6 +23,11 @@ import xml.etree.ElementTree as ET
 # this is an attempt at replicating the Hello, World scheme report
 
 # this will be used to figure out ways to implement report writing in python
+
+import sw_app_utils
+
+# partial implementation mainly for URL handlers
+import gnc_html_ctypes
 
 # we need to subclass something - but what??
 # Im thinking this is ReportTemplate
@@ -53,6 +59,8 @@ class HelloWorld(ReportTemplate):
 
 
     def options_generator (self):
+
+        #pdb.set_trace()
 
         # need to instantiate the options database
         self.options = OptionsDB()
@@ -111,12 +119,10 @@ class HelloWorld(ReportTemplate):
                                                    N_("This is a color option."),
                                                    (0x00, 0x00, 0x00, 0), 255, False))
 
-        dummystr = """
         self.options.register_option(AccountListOption(N_("Hello Again"), N_("An account list option"),"g",
                                                          N_("This is a account list option."),
                                                          [],
                                                          False, True))
-        """
 
         self.options.register_option(ListOption(N_("Hello Again"), N_("A list option"),"h",
                                                   N_("This is a list option."),
@@ -174,6 +180,7 @@ class HelloWorld(ReportTemplate):
         # annoying but this is where we add the remaining string for "The current time is "
         new_time.tail = N_(".")
 
+
         optobj = self.options.lookup_name('Hello, World!','Boolean Option')
         optval = optobj.getter()
 
@@ -184,6 +191,7 @@ class HelloWorld(ReportTemplate):
         new_opt.text = N_("true") if optval else N_("false")
         # annoying but this is where we add the remaining string
         new_opt.tail = N_(".")
+
 
         optobj = self.options.lookup_name('Hello, World!','Multi Choice Option')
         optval = optobj.get_option_value()
@@ -197,5 +205,138 @@ class HelloWorld(ReportTemplate):
         new_opt.tail = N_(".")
 
 
+        optobj = self.options.lookup_name('Hello, World!','String Option')
+        optval = optobj.get_option_value()
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The string option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = optval
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+        # interesting - the date formatting seems to be done in the report
+
+        optobj = self.options.lookup_name('Hello, World!','Just a Date Option')
+        optval = optobj.get_option_value()
+        optval = optval.strftime("%x")
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The date option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = optval
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+
+        optobj = self.options.lookup_name('Hello, World!','Time and Date Option')
+        optval = optobj.get_option_value()
+        optval = optval.strftime("%x %X")
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The date and time option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = optval
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+
+        optobj = self.options.lookup_name('Hello, World!','Relative Date Option')
+        optval = optobj.get_option_value()
+        optval = optval.strftime("%x")
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The relative date option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = optval
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+
+        optobj = self.options.lookup_name('Hello, World!','Combo Date Option')
+        optval = optobj.get_option_value()
+        optval = optval.strftime("%x")
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The combination date option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = optval
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+
+        optobj = self.options.lookup_name('Hello, World!','Number Option')
+        optval = optobj.get_option_value()
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The number option is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_opt.text = str(optval)
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("The number option formatted as currency is ")
+
+        new_opt = document.doc.SubElement(new_markup,"b")
+        new_val = gnucash.GncNumeric(optval,1)
+        new_opt.text = sw_app_utils.PrintAmount(new_val,None)
+        # annoying but this is where we add the remaining string
+        new_opt.tail = N_(".")
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("Items you selected:")
+
+
+        optobj = self.options.lookup_name('Hello Again','A list option')
+        optval = optobj.get_option_value()
+        optval = optval[0]
+
+        if len(optval) > 0:
+            new_table = document.doc.Element("table")
+            new_table.attrib['cellspacing'] = "0"
+            new_table.attrib['border'] = "0"
+            new_table.attrib['cellpadding'] = "4"
+            new_cap = document.doc.SubElement(new_table,"caption")
+            new_cap.text = "List items selected"
+            new_row = document.doc.SubElement(new_table,"tr")
+            new_col = document.doc.SubElement(new_row,"td")
+            new_col.text = optval
+        else:
+            new_markup = document.doc.Element("p")
+            new_markup.text = N_("(You selected no list items.)")
+
+
+        optobj = self.options.lookup_name('Hello Again','An account list option')
+        optval = optobj.get_option_value()
+
+        if len(optval) > 0:
+            new_markup = document.doc.Element("ul")
+            for acc in optval:
+                new_li = document.doc.SubElement(new_markup,"li")
+                new_link = document.doc.SubElement(new_li,"a")
+                # we need to use get_full_name - which maps to gnc_account_get_full_name
+                # as that gives full path to an account
+                # amazing - by using build_url and the gnucash access to webkit these
+                # links automagically work!!
+                new_link.attrib['href'] = gnc_html_ctypes.build_url(gnc_html_ctypes.URLTypes.URL_TYPE_REGISTER, "account="+acc.get_full_name(),"")
+                new_link.text = acc.GetName()
+        else:
+            new_markup = document.doc.Element("p")
+            new_markup.text = N_("You have selected no accounts.")
+
+        new_link = document.doc.Element("a")
+        new_link.attrib['href'] = gnc_html_ctypes.build_url(gnc_html_ctypes.URLTypes.URL_TYPE_HELP, "gnucash-guide","")
+        new_link.text = N_("Display help")
+
+        new_markup = document.doc.Element("p")
+        new_markup.text = N_("Have a nice day!")
 
         return document.get_xml()

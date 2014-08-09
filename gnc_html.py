@@ -1,6 +1,8 @@
 
 import sys
 
+import gc
+
 import gtk
 
 import pdb
@@ -19,11 +21,15 @@ def N_(msg):
 # OK have pinned this down to the gobject.threads_init()
 # this is called in the __init__.py for webkit - and this locks up in Python callback from menu
 # the following does not include __init__.py and does not lock up
+# UPDATE - now calling gobject.threads_init again 
 #sys.path.insert(0,"/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages/webkit")
 #webkit = __import__("webkit")
 #print >> sys.stderr, "After webview import"
 
 # try accessing through gnucash type
+# THIS WORKS AND IS THE PREFERRED METHOD FOR THE MOMENT
+# - this allows some functionality to work automagically eg account hyper links
+# opening up account register
 import gnchtmlwebkit
 
 
@@ -133,6 +139,8 @@ class HtmlView(object):
         self.load_cb_data = load_cb_data
 
     def reload (self):
+        #pdb.set_trace()
+        #gc.collect()
         # something with history
         # for the moment use the saved instance mapped to a function call via lambda
         self.show_url(None,None,None,report_cb=lambda : self.report_backup)

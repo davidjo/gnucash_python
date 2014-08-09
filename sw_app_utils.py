@@ -12,21 +12,55 @@ import ctypes
 
 from ctypes.util import find_library
 
-import pdb
-
 import gobject
 
+import pdb
+
+
 import sw_core_utils
+
+import gnucash
+
 
 
 #pdb.set_trace()
 
 
+
+#gboolean = ctypes.c_byte
+gboolean = ctypes.c_int
+gint64 = ctypes.c_longlong
+guint8 = ctypes.c_uint8
+
 class GncCommodityOpaque(ctypes.Structure):
     pass
 
-gboolean = ctypes.c_byte
-gint64 = ctypes.c_longlong
+class GncNumericOpaque(ctypes.Structure):
+    pass
+
+# dangerous because we duplicate the structure definitions
+# here but we need them as these are passed and returned by value 
+# and NOT by pointer
+
+class GncNumeric(ctypes.Structure):
+    pass
+GncNumeric._fields_ = [ ("num", ctypes.c_int64),
+                        ("num", ctypes.c_int64),
+                      ]
+
+class GncPrintAmountInfo(ctypes.Structure):
+    pass
+GncPrintAmountInfo._fields_ = [ ("commodity", ctypes.c_void_p),
+                                ("max_decimal_places", guint8),
+                                ("min_decimal_places", guint8),
+                                ("use_separators", ctypes.c_uint, 1), # /* Print thousands separators */
+                                ("use_symbol", ctypes.c_uint, 1),     # /* Print currency symbol */
+                                ("use_locale", ctypes.c_uint, 1),     # /* Use locale for some positioning */
+                                ("monetary", ctypes.c_uint, 1),       # /* Is a monetary quantity */
+                                ("force_fit", ctypes.c_uint, 1),      # /* Don't print more than max_dp places */
+                                ("round", ctypes.c_uint, 1),          # /* Round at max_dp instead of truncating */
+                              ]
+
 
 # we cant search the gnucash sublib directory with find_library
 # also to use CDLL means need to detect extension!!
@@ -58,6 +92,13 @@ libgnc_apputils.gnc_accounting_period_fiscal_end.argtypes = []
 libgnc_apputils.gnc_accounting_period_fiscal_end.restype = gint64
 
 
+libgnc_apputils.gnc_default_print_info.argtypes = [ ctypes.c_bool ]
+libgnc_apputils.gnc_default_print_info.restype = GncPrintAmountInfo
+
+libgnc_apputils.xaccPrintAmount.argtypes = [ GncNumeric, GncPrintAmountInfo ]
+libgnc_apputils.xaccPrintAmount.restype = ctypes.c_char_p
+
+
 def gnc_accounting_period_fiscal_start ():
     tmvl = libgnc_apputils.gnc_accounting_period_fiscal_start()
     return tmvl
@@ -69,9 +110,6 @@ def gnc_accounting_period_fiscal_end ():
 
 
 import _sw_app_utils
-
-
-import gnucash
 
 #pdb.set_trace()
 
@@ -225,3 +263,28 @@ def locale_default_currency ():
 
     return currency
 
+
+def PrintAmount (amnt, gnc_print_info=None):
+    # this is defined in gnc-ui-util.c
+    # should be a method of GncNumeric as first argument is a GncNumeric
+    #pdb.set_trace()
+    if gnc_print_info == None:
+        prtinfo = libgnc_apputils.gnc_default_print_info(False)
+    else:
+        prtinfo = gnc_print_info
+
+    # I still dont understand why some gnucash objects the instance is the swig object
+    # but for others the instance object has a this pointer which is the swig object
+    # seems to be associated with if the instance is labelled a proxy of a swig object
+    # ah - a swig proxy exists when swig has recognized an class object in the underlying
+    # language
+    # this is also labelled as shadow objects in the swig code
+    gncnum_ptr = ctypes.cast( amnt.instance.this.__long__(), ctypes.POINTER( GncNumeric ) )
+
+    print >> sys.stderr, "gncnum_ptr %x"%amnt.instance.this.__long__()
+    print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
+
+    # so looks like we can pass by value - and return by value!!
+    prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfo)
+
+    return prtstr

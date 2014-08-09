@@ -64,7 +64,7 @@ deltalist = [ \
 
 def get_start_cal_year ():
     newtim = datetime.datetime.now()
-    return newtim.replace(second=0,minute=0,hour=0,day=0,month=1,tzinfo=None)
+    return newtim.replace(second=0,minute=0,hour=0,day=1,month=1,tzinfo=None)
 
 def get_end_cal_year ():
     newtim = datetime.datetime.now()

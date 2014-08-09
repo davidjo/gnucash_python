@@ -30,6 +30,8 @@ import traceback
 
 import pdb
 
+import gc
+
 
 try:
     from gnc_builder import GncBuilder
@@ -37,15 +39,20 @@ try:
     from gnc_currency_edit import GncCurrencyEdit
     from gnc_general_select import GncGeneralSelect
     from gnc_commodity_edit import GncCommodityEdit
+    import gnc_tree_view_account
 except Exception, errexc:
     traceback.print_exc()
     pdb.set_trace()
+
 
 import gnucash
 
 from gnucash_log import PERR
 
 log_module = "gnc.gui.python"
+
+
+NUM_ACCOUNT_TYPES = gnucash.gnucash_core_c.NUM_ACCOUNT_TYPES
 
 
 # junky internationalization function
@@ -181,6 +188,7 @@ class GncOption(object):
 
     def changed_widget_cb (self, entry):
         print "changed_widget_cb"
+        #gc.collect()
         self.changed = True
         #self.call_widget_changed_proc()
         # ah - the widget is the dialog box the option is in
@@ -562,23 +570,28 @@ class GncOption(object):
         subtype = self.guile_option.option_data[0]
         widget_list = widget.get_children()
         if subtype == 'relative':
-            rel_date_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
+            #pdb.set_trace()
+            #rel_date_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
+            rel_date_widget = widget
             relval = rel_date_widget.get_active()
             relval = self.guile_option.lookup_index(relval)
             retval = ('relative', relval)
         elif subtype == 'absolute':
-            ab_date_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
-            #absval = rel_date_widget.get_property('time')
-            absval = rel_date_widget.get_date()
+            #pdb.set_trace()
+            #ab_date_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
+            ab_date_widget = widget
+            #absval = ab_date_widget.get_property('time')
+            absval = ab_date_widget.get_date()
             retval = ('absolute', absval)
         elif subtype == 'both':
+            #pdb.set_trace()
             ab_button = widget_list[GncDateEdit.GNC_RD_WID_AB_BUTTON_POS]
             ab_date_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
             rel_button = widget_list[GncDateEdit.GNC_RD_WID_REL_BUTTON_POS]
             rel_date_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
             if ab_button.get_active():
-                #absval = rel_date_widget.get_property('time')
-                absval = rel_date_widget.get_date()
+                #absval = ab_date_widget.get_property('time')
+                absval = ab_date_widget.get_date()
                 retval = ('absolute', absval)
             elif rel_button.get_active():
                 relval = rel_date_widget.get_active()
@@ -587,18 +600,60 @@ class GncOption(object):
         return retval
     def set_ui_widget_account_list (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_account_list"
+
+        #pdb.set_trace()
+
+        #print "collect in set_ui_widget_account_list 1"
+        #gc.collect()
+
+        enclosing = self.create_account_widget(name)
+        value = self.widget
+
+        #print "collect in set_ui_widget_account_list 2"
+        #gc.collect()
+
+        enclosing.set_tooltip_text(self.guile_option.documentation_string)
+
+        page_box.pack_start(enclosing, expand=True, fill=True, padding=5)
+        packed = True
+
+        self.set_ui_value(False)
+
+        selection = value.get_selection()
+        selection.connect("changed", self.account_cb)
+
+        #print "collect in set_ui_widget_account_list 3"
+        #gc.collect()
+
+        enclosing.show_all()
+
+        #print "collect in set_ui_widget_account_list 4"
+        #gc.collect()
+
+        # need to figure what goes on with packed - is it pass through??
+        return (value, enclosing, packed)
     def set_ui_value_account_list (self, use_default, widget, value):
         print "set_ui_value_account_list"
+        #pdb.set_trace()
+        gnc_tree_view_account.set_selected_accounts(widget,value,True)
+        return False
     def get_ui_value_account_list (self, widget):
         print "get_ui_value_account_list"
+        #pdb.set_trace()
+        acc_lst = gnc_tree_view_account.get_selected_accounts(widget)
+        return acc_lst
     def set_ui_widget_account_sel (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_account_sel"
+        pdb.set_trace()
     def set_ui_value_account_sel (self, use_default, widget, value):
         print "set_ui_value_account_sel"
+        pdb.set_trace()
     def get_ui_value_account_sel (self, widget):
         print "get_ui_value_account_sel"
+        pdb.set_trace()
     def set_ui_widget_list (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_list"
+        #gc.collect()
         colon_name = name + ":"
         label = gtk.Label(colon_name)
         label.set_alignment(1.0, 0.5)
@@ -617,11 +672,14 @@ class GncOption(object):
 
         enclosing.show_all()
 
+        #print "collect in set_ui_widget_value_list"
+        #gc.collect()
+
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, packed)
     def set_ui_value_list (self, use_default, widget, value):
         print "set_ui_value_list"
-        pdb.set_trace()
+        #pdb.set_trace()
         selection = widget.get_selection()
         if use_default:
             for rw in self.guile_option.default_value:
@@ -638,7 +696,7 @@ class GncOption(object):
         return False
     def get_ui_value_list (self, widget):
         print "get_ui_value_list"
-        pdb.set_trace()
+        #pdb.set_trace()
         # big question is whether to base from 0 or 1 - now going with 0
         # raw indexes are base 0
         selection = widget.get_selection()
@@ -832,37 +890,144 @@ class GncOption(object):
 
 
     def changed_option_cb (self, widget):
-         self.changed_widget_cb(widget)
+        self.changed_widget_cb(widget)
 
     def rd_option_ab_set_cb (self, widget):
-         self.set_select_method(True,False)
-         self.changed_option_cb(widget)
+        self.set_select_method(True,False)
+        self.changed_option_cb(widget)
 
 
     def rd_option_rel_set_cb (self, widget):
-         self.set_select_method(False,False)
-         self.changed_option_cb(widget)
+        self.set_select_method(False,False)
+        self.changed_option_cb(widget)
 
     def set_select_method (self, use_absolute, set_buttons):
-         print "set_select_method"
-         widget_list = self.widget.get_children()
-         ab_button = widget_list[GncDateEdit.GNC_RD_WID_AB_BUTTON_POS]
-         ab_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
-         rel_button = widget_list[GncDateEdit.GNC_RD_WID_REL_BUTTON_POS]
-         rel_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
+        print "set_select_method"
+        widget_list = self.widget.get_children()
+        ab_button = widget_list[GncDateEdit.GNC_RD_WID_AB_BUTTON_POS]
+        ab_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
+        rel_button = widget_list[GncDateEdit.GNC_RD_WID_REL_BUTTON_POS]
+        rel_widget = widget_list[GncDateEdit.GNC_RD_WID_REL_WIDGET_POS]
 
-         if use_absolute:
-             ab_widget.set_sensitive(True)
-             rel_widget.set_sensitive(False)
-             if set_buttons:
-                 ab_button.set_active(True)
-         else:
-             ab_widget.set_sensitive(False)
-             rel_widget.set_sensitive(True)
-             if set_buttons:
-                 rel_button.set_active(True)
+        if use_absolute:
+            ab_widget.set_sensitive(True)
+            rel_widget.set_sensitive(False)
+            if set_buttons:
+                ab_button.set_active(True)
+        else:
+            ab_widget.set_sensitive(False)
+            rel_widget.set_sensitive(True)
+            if set_buttons:
+                rel_button.set_active(True)
 
 
+    def create_account_widget (self, name):
+
+        #pdb.set_trace()
+
+        #print "collect in create_account_widget 1"
+        #gc.collect()
+
+        # is multiple account selection allowed
+        multiple_selection = self.guile_option.option_data[0]
+        acct_type_list = self.guile_option.option_data[1]
+
+        frame = gtk.Frame(label=name)
+
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
+        frame.add(vbox)
+
+        tree = gnc_tree_view_account.new(False)
+        tree.set_headers_visible(False)
+        selection = tree.get_selection()
+        if multiple_selection:
+            selection.set_mode(gtk.SELECTION_MULTIPLE)
+        else:
+            selection.set_mode(gtk.SELECTION_BROWSE)
+
+        #print "collect in create_account_widget 2"
+        #gc.collect()
+
+        if len(acct_type_list) > 0:
+            avi = tree.get_view_info()
+            for i in xrange(NUM_ACCOUNT_TYPES):
+                avi.include_type[i] = False
+            avi.show_hidden = False
+
+            for node in acct_type_list:
+                gacctyp = node.data
+                avi.include_type[gacctyp] = True
+
+            tree.set_view_info(avi)
+        else:
+            avi = tree.get_view_info()
+            for i in xrange(NUM_ACCOUNT_TYPES):
+                avi.include_type[i] = True
+            avi.show_hidden = False
+            tree.set_view_info(avi)
+
+        #print "collect in create_account_widget 3"
+        #gc.collect()
+
+        scroll_win = gtk.ScrolledWindow()
+        scroll_win.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+
+        vbox.pack_start(scroll_win,expand=True,fill=True,padding=0)
+        scroll_win.set_border_width(5)
+        scroll_win.add(tree)
+
+        bbox = gtk.HButtonBox()
+        bbox.set_layout(gtk.BUTTONBOX_SPREAD)
+        vbox.pack_start(bbox, expand=False,fill=False,padding=10)
+
+        #print "collect in create_account_widget 4"
+        #gc.collect()
+
+        if multiple_selection:
+            button = gtk.Button(label=N_("Select All"))
+            bbox.pack_start(button,expand=False,fill=False,padding=0)
+            button.set_tooltip_text(N_("Select all accounts."))
+
+            button.connect("clicked", self.account_select_all_cb)
+
+            button = gtk.Button(label=N_("Clear All"))
+            bbox.pack_start(button,expand=False,fill=False,padding=0)
+            button.set_tooltip_text(N_("Clear the selection and unselect all accounts."))
+
+            button.connect("clicked", self.account_clear_all_cb)
+
+            button = gtk.Button(label=N_("Select Children"))
+            bbox.pack_start(button,expand=False,fill=False,padding=0)
+            button.set_tooltip_text(N_("Select all descendents of selected account."))
+
+            button.connect("clicked", self.account_select_children_cb)
+
+        #print "collect in create_account_widget 5"
+        #gc.collect()
+
+        button = gtk.Button(label=N_("Select Default"))
+        bbox.pack_start(button,expand=False,fill=False,padding=0)
+        button.set_tooltip_text(N_("Select the default account selection."))
+
+        button.connect("clicked", self.default_cb)
+
+        if multiple_selection:
+            bbox = gtk.HButtonBox()
+            bbox.set_layout(gtk.BUTTONBOX_START)
+            vbox.pack_start(bbox,expand=False,fill=False,padding=0)
+
+        button = gtk.CheckButton(label=N_("Show Hidden Accounts"))
+        bbox.pack_start(button,expand=False,fill=False,padding=0)
+        button.set_tooltip_text(N_("Show accounts that have been marked hidden."))
+        button.set_active(False)
+        button.connect("toggled", self.show_hidden_toggled_cb)
+
+        #print "collect in create_account_widget 6"
+        #gc.collect()
+
+        self.widget = tree
+
+        return frame
 
     def create_list_widget (self, name):
 
@@ -921,6 +1086,52 @@ class GncOption(object):
         self.widget = view
 
         return frame
+
+
+    def account_select_all_cb (self, selection):
+        print "select_all_cb"
+        pdb.set_trace()
+        view = self.widget
+        selection = view.get_selection()
+        selection.select_all()
+        self.changed_widget_cb(view)
+
+    def account_clear_all_cb (self, selection):
+        print "clear_all_cb"
+        pdb.set_trace()
+        view = self.widget
+        selection = view.get_selection()
+        selection.unselect_all()
+        self.changed_widget_cb(view)
+
+    def account_select_children_cb (self, selection):
+        #pdb.set_trace()
+        view = self.widget
+        account = view.get_cursor_account()
+        if account == None:
+            return
+        view.select_subaccounts(account)
+
+
+    def show_hidden_toggled_cb (self, widget):
+        pdb.set_trace()
+        view = self.widget
+        avi = view.get_view_info()
+        avi.show_hidden = widget.get_active()
+        view.set_view_info(avi)
+        self.changed_widget_cb(view)
+
+
+
+    def account_cb (self, selection):
+        #pdb.set_trace()
+        print "account_cb"
+        print self
+        print selection
+        view = selection.get_tree_view()
+        self.changed_widget_cb(view)
+
+
 
     def list_changed_cb (self, selection):
         #pdb.set_trace()

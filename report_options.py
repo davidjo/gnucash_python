@@ -351,6 +351,12 @@ class StringOption(OptionBase):
         self.documentation_string = tool_tip # AKA documentation_string
         self.default_value = default_value
 
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        # this seems to be viable for strings
+        return self.getter()
+
+
 class MultiChoiceCallbackOption(OptionBase):
 
     def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,ok_values=[],setter_function_called_cb=None,option_widget_changed_cb=None):
@@ -516,30 +522,27 @@ class ListOption(OptionBase):
 
     def get_option_value (self):
         # again this is a function for returning value in the python script
+        # can we return multiple values or just one??
         optmrk = self.getter()
-        return self.option_data[optmrk][0]
+        vallst = []
+        for mrk in optmrk:
+           vallst.append(self.option_data[mrk][0])
+        return vallst
 
 
-class AccountListLimited(OptionBase):
+class AccountListLimitedOption(OptionBase):
 
-    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,value_validator=None,multiple_selection=None,acct_type_list=None,option_widget_changed_cb=None):
-        super(AccountListLimited,self).__init__()
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,value_validator=None,multiple_selection=None,acct_type_list=[],option_widget_changed_cb=None):
+        super(AccountListLimitedOption,self).__init__()
         self.section = section
         self.name = optname
         self.type = 'account-list'
         self.sort_tag = sort_tag
         self.documentation_string = tool_tip # AKA documentation_string
-        self.option_data = ok_values
-        self.option_data_fns = [ \
-                                lambda : len(self.option_data),
-                                lambda x: self.option_data[x][0],
-                                lambda x: self.option_data[x][1],
-                                lambda x: self.option_data[x][2],
-                                lambda x: self.lookup(x),
-                               ]
+        self.option_data = [multiple_selection, acct_type_list]
         # cant do this till set option_data!!
         # scheme stores the key index string - here we store the index
-        self.default_value = self.lookup_key(default_value)
+        self.default_value = default_value
 
         #self.setter = self.local_setter
 
@@ -551,7 +554,7 @@ class AccountListLimited(OptionBase):
 
         self.strings_getter = self.multichoice_strings
 
-        self.setter_function_called_cb = setter_function_called_cb
+        #self.setter_function_called_cb = setter_function_called_cb
 
     def account_list_setter (self, x):
         if self.option_value == None or len(self.option_value) == 0:
@@ -574,6 +577,7 @@ class AccountListLimited(OptionBase):
         return convert_to_account(self.default_value)
 
     def local_setter (self, x):
+        pdb.set_trace()
         if self.legal(x):
             if callable(self.setter_function_called_cb):
                 self.setter_function_called_cb(x)
@@ -611,9 +615,15 @@ class AccountListLimited(OptionBase):
 
     def get_option_value (self):
         # again this is a function for returning value in the python script
-        optmrk = self.getter()
-        return self.option_data[optmrk][0]
+        #pdb.set_trace()
+        acclst = self.getter()
+        return acclst
 
+
+class AccountListOption(AccountListLimitedOption):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,value_validator=None,multiple_selection=None):
+        super(AccountListOption,self).__init__(section, optname, sort_tag, tool_tip, default_value=default_value,value_validator=value_validator,multiple_selection=multiple_selection,acct_type_list=[])
 
 
 
@@ -635,11 +645,16 @@ class DateOption(OptionBase):
         #self.generate_restore_form = ??.restore_form_generator(self.option_value)
 
         self.option_data = (subtype, show_time, relative_date_list)
-        self.option_data_fns = (lambda : len(relative_date_list),
-                                lambda (x): relative_date_list[x],
-                                lambda (x): self.get_relative_date_string(relative_date_list[x]),
-                                lambda (x): self.get_relative_date_desc(relative_date_list[x]),
-                                lambda (x): self.relative_date_list.index(x))
+        #self.option_data_fns = (lambda : len(relative_date_list),
+        #                        lambda (x): relative_date_list[x],
+        #                        lambda (x): self.get_relative_date_string(relative_date_list[x]),
+        #                        lambda (x): self.get_relative_date_desc(relative_date_list[x]),
+        #                        lambda (x): relative_date_list.index(x))
+        self.option_data_fns = (lambda : len(self.option_data[2]),
+                                lambda (x): self.option_data[2][x],
+                                lambda (x): self.get_relative_date_string(self.option_data[2][x]),
+                                lambda (x): self.get_relative_date_desc(self.option_data[2][x]),
+                                lambda (x): self.option_data[2].index(x))
         # two False slots in addition
         self.changed_callback = None
         self.strings_getter = None
@@ -655,6 +670,7 @@ class DateOption(OptionBase):
 
 
     def default_setter (self, date):
+        pdb.set_trace()
         if self.date_legal(date):
             self.option_value = date
         else:
@@ -697,12 +713,53 @@ class DateOption(OptionBase):
     def get_option_value (self):
         # this is a function for returning suitable python values 
         # not figured a good name yet
+        # somehow in gnucash the date formats are selectable
+        # based on region
         optval = self.getter()
-        rettpl = self.lookup_string(optval[1])
-        fy_period = rettpl[2]()
-        return fy_period
-        
-
+        if self.option_data[0] == 'absolute':
+            if optval[0] == 'absolute':
+                return optval[1]
+            elif optval[0] == 'relative':
+                # is this ever possible??
+                pdb.set_trace()
+                rettpl = self.lookup_string(optval[1])
+                fy_period = rettpl[2]()
+                return fy_period
+            else:
+                pdb.set_trace()
+                print optval
+        elif self.option_data[0] == 'relative':
+            if optval[0] == 'absolute':
+                # is this ever possible??
+                pdb.set_trace()
+                return optval[1]
+            elif optval[0] == 'relative':
+                rettpl = self.lookup_string(optval[1])
+                fy_period = rettpl[2]()
+                return fy_period
+            else:
+                pdb.set_trace()
+                print optval
+        else:
+            #pdb.set_trace()
+            # still not sure how both version works
+            # do we ignore self.option_data and just check optval?
+            if self.option_data[1]:
+                print "both - absolute defined"
+            else:
+                print "both - relative defined"
+            if optval[0] == 'absolute':
+                return optval[1]
+            elif optval[0] == 'relative':
+                rettpl = self.lookup_string(optval[1])
+                fy_period = rettpl[2]()
+                return fy_period
+            else:
+                pdb.set_trace()
+                # is this ever possible??
+                rettpl = self.lookup_string(optval[1])
+                fy_period = rettpl[2]()
+                return fy_period
 
 
 class EndDateOption(DateOption):
@@ -860,6 +917,10 @@ class NumberRangeOption(OptionBase):
         if x < self.option_data[0] or x > self.option_data[1]:
             return [ False, "number-range-option: out of range" ]
         return [ True, x ]
+
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        return self.getter()
 
 
 class ColorOption(OptionBase):
