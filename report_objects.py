@@ -2,10 +2,6 @@
 # add a Report object for details of each report
 # not sure what to inherit from
 
-import pdb
-
-import traceback
-
 import gobject
 
 from report_options import OptionsDB
@@ -16,6 +12,13 @@ import dialog_options
 from gnc_html_document import HtmlDoc
 
 import xml.etree.ElementTree as ET
+
+
+import pdb
+
+import traceback
+
+import gc
 
 
 # define a function equivalent to N_ for internationalization
@@ -319,6 +322,7 @@ class Report(object):
 
     def run (self):
          print "run_report"
+         #gc.collect()
          #self.set_busy_cursor()
          try:
              htmlstr = self.render_html(headers=True)
