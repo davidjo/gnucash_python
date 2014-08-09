@@ -1,5 +1,5 @@
 
-# ctypes implementation of GncMainWindowActionData
+# ctypes implementation of GncMainWindow
 
 
 import os
@@ -25,7 +25,7 @@ from pygobjectcapi import PyGObjectCAPI
 #  address = hash(obj)
 
 
-gboolean = c_byte
+gboolean = c_int
 gpointer = c_void_p
 guint = c_uint
 gsize = c_uint
@@ -78,6 +78,8 @@ def gnc_gui_init ():
 
     # OK - this does work if I use the right restype for gnc_gui_init!!
     if True:
+        # note that the gnc_gui_init just returns main window object pointer
+        # if already called - we assume gnc_gui_init has already been called here
         main_window_ptr = libgnc_gnomeutils.gnc_gui_init()
 
         print >> sys.stderr, "main_window_ptr %x"%main_window_ptr
