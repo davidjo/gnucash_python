@@ -75,7 +75,7 @@
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c
 {'st_mtime': '1406988415', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5301'}  ;  pygobjectcapi.py
 {'st_mtime': '1400985604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4563'}  ;  python_example_plugin.py
-{'st_mtime': '1402243970', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9859'}  ;  python_only_plugin.py
+{'st_mtime': '1407430333', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9987'}  ;  python_only_plugin.py
 {'st_mtime': '1407263738', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10296'}  ;  qof_ctypes.py
 {'st_mtime': '1407264441', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16837'}  ;  report_objects.py
 {'st_mtime': '1403820414', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '35390'}  ;  report_options.py

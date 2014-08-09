@@ -2,6 +2,7 @@ import sys
 import os
 import pdb
 import traceback
+import gc
 
 
 import gobject
@@ -86,9 +87,10 @@ class GncActionEntry(object):
 
 
 
-import pythoncallback
+#import pythoncallback
 
 # this works with the pythoncallback module
+# NOTA BENE - pythoncallback module NOT used at the moment
 # pass a callback saver object for the moment
 class MyCallbacks(object):
 
@@ -132,10 +134,11 @@ class MyPlugin(gobject.GObject):
         #fdes.write(ui_xml)
         #fdes.close()
 
-        # yes - we now can add menu items in python with only some help
-        # from a gncmainwindow module wrapping GncMainWindow
-        # (could not get this to work with ctypes - conversion of the return
-        # pointer from gnc_gui_init to a proper pygobject failed)
+        # yes - we now can add menu items in python
+        # we simply need the main window object wrapped either using
+        # a gncmainwindow module or ctypes and pygobject_new from gobject module
+        # (ctypes works now got right argument and return types)
+        # currently using ctypes version
         # we apparently have to use the main window ui_merge object
 
         self.main_window = gnc_main_window.gnc_gui_init()
@@ -247,6 +250,7 @@ class MyPlugin(gobject.GObject):
             report = report_objects.Report(report_type=report_type)
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(report,window)
             gnc_plugin_page_python_report.OpenReport(report,window)
+            #gc.collect()
             print "call back done"
         except Exception, errexc:
             traceback.print_exc()
