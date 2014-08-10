@@ -52,11 +52,13 @@ static PyObject *wrap_get_swig_type(PyObject *self, PyObject *args)
 static PyObject *wrap_int_to_swig(PyObject *self, PyObject *args)
 {
     PyObject *pint;
+    PyObject *pswigtyp;
     char *swigtypstr;
     PyObject *pswig;
     void *cobject;
+    swig_type_info *stype = NULL;
 
-    if (!PyArg_ParseTuple(args, "Os:int_to_swig", &pint, &swigtypstr))
+    if (!PyArg_ParseTuple(args, "OO:int_to_swig", &pint, &pswigtyp))
         return NULL;
 
     // pass a pointer as integer
@@ -72,13 +74,29 @@ static PyObject *wrap_int_to_swig(PyObject *self, PyObject *args)
 
     fprintf(stderr,"cobject pointer %llx\n",(void *)cobject);
 
-    fprintf(stderr,"swig type string %s\n",swigtypstr);
-
-    swig_type_info *stype = SWIG_TypeQuery(swigtypstr);
-
-    if (stype == NULL)
+    // allow pass either CObject version of swig type or swig type string
+    // using CObjects very dangerous as no check if really is a swig type object
+    if (PyCObject_Check(pswigtyp))
         {
-        PyErr_SetString(PyExc_TypeError,"int_to_swig: swig type not found");
+        stype = PyCObject_AsVoidPtr(pswigtyp);
+        fprintf(stderr,"swig type cobject\n");
+        }
+    else if (PyString_Check(pswigtyp))
+        {
+        swigtypstr = PyString_AsString(pswigtyp);
+        fprintf(stderr,"swig type string %s\n",swigtypstr);
+
+        stype = SWIG_TypeQuery(swigtypstr);
+
+        if (stype == NULL)
+            {
+            PyErr_SetString(PyExc_TypeError,"int_to_swig: swig type not found");
+            return NULL;
+            }
+        }
+    else
+        {
+        PyErr_SetString(PyExc_TypeError,"int_to_swig: passed bad swig type");
         return NULL;
         }
 
