@@ -2,6 +2,7 @@
 PYTHONPREFIX=/opt/local/Library/Frameworks/Python.framework/Versions/2.6
 PYTHONLIB=${PYTHONPREFIX}/lib
 PYTHONINC=${PYTHONPREFIX}/include/python2.6
+PYTHONBIN=${PYTHONPREFIX}/bin/python2.6
 
 SWIG=/opt/local/bin/swig
 
@@ -37,13 +38,9 @@ gncpluginpage.defs: gncpluginpage-methods.defs gncpluginpage-new.defs
 	cat gncpluginpage-methods.defs gncpluginpage-new.defs >gncpluginpage.defs
 
 gncpluginpage-methods.defs:
-	${H2DEF} gnc-plugin-page.h >gncpluginpage-methods.defs
+	${H2DEF} ../../gnome-utils/gnc-plugin-page.h >gncpluginpage-methods.defs
 	#${DEFSGEN} -m gncpluginpage -l 
 	#patch -p0 -b <patch-fields.diff
-
-pygkeyfile_new.o: pygkeyfile_new.c
-	$(CC) $(CFLAGS) -c $^ -o $@
-
 
 gncmainwindow.so: gncmainwindow-methods.o gncmainwindowmodule.o
 	#$(CC) $(LDFLAGS) -shared $^ -o $@
@@ -64,7 +61,7 @@ gncmainwindow.defs: gncmainwindow-methods.defs gncmainwindow-new.defs
 	cat gncmainwindow-methods.defs gncmainwindow-new.defs >gncmainwindow.defs
 
 gncmainwindow-methods.defs:
-	${H2DEF} gnc-main-window.h >gncmainwindow-methods.defs
+	${H2DEF} ../../gnome-utils/gnc-main-window.h >gncmainwindow-methods.defs
 	#${DEFSGEN} -m gncpluginpage -l 
 	#patch -p0 -b <patch-fields.diff
 
@@ -86,7 +83,7 @@ gnchtmlwebkit.defs: gnchtmlwebkit-methods.defs gnchtmlwebkit-new.defs
 	cat gnchtmlwebkit-methods.defs gnchtmlwebkit-new.defs >gnchtmlwebkit.defs
 
 gnchtmlwebkit-methods.defs:
-	${H2DEF} gnc-html-webkit.h >gnchtmlwebkit-methods.defs
+	${H2DEF} ../../html/gnc-html-webkit.h >gnchtmlwebkit-methods.defs
 	#${DEFSGEN} -m gnchtmlwebkit -l 
 	#patch -p0 -b <patch-fields.diff
 
@@ -109,6 +106,9 @@ gnchtml.defs: gnchtml-methods.defs gnchtml-new.defs
 	cat gnchtml-methods.defs gnchtml-new.defs >gnchtml.defs
 
 gnchtml-methods.defs:
+	# remove duplicate function definitions!!
+	cp -p ../../html/gnc-html.h gnc-html.h
+	patch -p0 -b <patch-gnc-html.diff
 	${H2DEF} gnc-html.h >gnchtml-methods.defs
 	#${DEFSGEN} -m gnchtml -l 
 	#patch -p0 -b <patch-fields.diff
@@ -167,13 +167,20 @@ glib-helpers-python.so: glib-helpers-python.o
 	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
 	$(CC) $(LDFLAGS) -shared $^ -o $@
 
+
+pygkeyfile.so swighelpers.so: swig-runtime-python.h
+	#$(CC) $(CFLAGS) -c $^ -o $@
+	${PYTHONBIN} setup.py --verbose build_ext -i
+
 # dont add glib-helpers-python.o as need to include swig-runtime-python.h in module
 # and so swig functions will be defined and cant figure out how to ignore them
 swighelpers.so: swighelpers.o
 	$(CC) $(LDFLAGS) -shared $^ -o $@
 
-swighelpers.o: swighelpers.c
+swighelpers.o: swighelpers.c swig-runtime-python.h
 	$(CC) $(CFLAGS) -c swighelpers.c -o $@
+
+release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so gncmainwindow.so pygkeyfile.so
 
 # A rule to clean the generated files
 clean:

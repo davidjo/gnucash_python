@@ -34,7 +34,7 @@
 {'st_mtime': '1407502512', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1878'}  ;  local_init.py
 {'st_mtime': '1399935708', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1539'}  ;  old_gnc_python_report.py
 {'st_mtime': '1399844031', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '35929'}  ;  plugin/Makefile.generic
-{'st_mtime': '1407404194', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7840'}  ;  plugin/Makefile.wrap
+{'st_mtime': '1407679171', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8217'}  ;  plugin/Makefile.wrap
 {'st_mtime': '1407396581', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5971'}  ;  plugin/glib-helpers-python.c
 {'st_mtime': '1407356600', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2037'}  ;  plugin/glib-helpers-python.h
 {'st_mtime': '1400265799', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11369'}  ;  plugin/gnc-plugin-page-python-report.c
@@ -67,12 +67,13 @@
 {'st_mtime': '1403886587', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '570'}  ;  plugin/gnctreeviewmodule.c
 {'st_mtime': '1400783824', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1139'}  ;  plugin/gpointer-types.py
 {'st_mtime': '1400095077', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '645'}  ;  plugin/patch-fields.diff
+{'st_mtime': '1407670939', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1059'}  ;  plugin/patch-gnc-html.diff
 {'st_mtime': '1402098737', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '34951'}  ;  plugin/pygkeyfile.c
 {'st_mtime': '1400861347', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1180'}  ;  plugin/pygkeyfile.h
 {'st_mtime': '1402098781', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12095'}  ;  plugin/pythoncallback.c
 {'st_mtime': '1400019144', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7045'}  ;  plugin/pythonpage.c
 {'st_mtime': '1402098801', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '13036'}  ;  plugin/pythonplugin.c
-{'st_mtime': '1407404208', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2717'}  ;  plugin/setup.py
+{'st_mtime': '1407674135', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2714'}  ;  plugin/setup.py
 {'st_mtime': '1407357457', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '76912'}  ;  plugin/swig-runtime-python.h
 {'st_mtime': '1407433585', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6240'}  ;  plugin/swighelpers.c
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c

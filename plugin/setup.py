@@ -3,20 +3,22 @@ import distutils.sysconfig
 
 from distutils.core import setup, Extension
 
+myprefix='/opt/local/'
+
 #-I/opt/local/include/gtk-2.0 -I/opt/local/lib/gtk-2.0/include -I/opt/local/include/atk-1.0 -I/opt/local/include/cairo -I/opt/local/include/gdk-pixbuf-2.0 -I/opt/local/include/pango-1.0 -I/opt/local/include/gio-unix-2.0/ -I/opt/local/include/glib-2.0 -I/opt/local/lib/glib-2.0/include -I/opt/local/include/pixman-1 -I/opt/local/include/freetype2 -I/opt/local/include/libpng14
 
 include_list = [ \
-                '/opt/local/include',
-                '/opt/local/include/gtk-2.0',
-                '/opt/local/include/gtk-2.0/include',
-                '/opt/local/include/atk-1.0',
-                '/opt/local/include/cairo',
-                '/opt/local/include/gdk-pixbuf-2.0',
-                '/opt/local/include/pango-1.0',
-                '/opt/local/include/gio-unix-2.0',
-                '/opt/local/lib/gtk-2.0/include',
-                '/opt/local/lib/glib-2.0/include',
-                '/opt/local/include/glib-2.0',
+                myprefix,
+                myprefix+'include/gtk-2.0',
+                myprefix+'include/gtk-2.0/include',
+                myprefix+'include/atk-1.0',
+                myprefix+'include/cairo',
+                myprefix+'include/gdk-pixbuf-2.0',
+                myprefix+'include/pango-1.0',
+                myprefix+'include/gio-unix-2.0',
+                myprefix+'lib/gtk-2.0/include',
+                myprefix+'lib/glib-2.0/include',
+                myprefix+'include/glib-2.0',
                ]
 
 include_list_gnucash = [ \
@@ -27,15 +29,15 @@ include_list_gnucash = [ \
                        ]
 
 include_list_pgobject = [ \
-                          '/opt/local/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6/pygtk-2.0',
+                          myprefix+'Library/Frameworks/Python.framework/Versions/2.6/include/python2.6/pygtk-2.0',
                          ]
 
 #setup(name="pythonplugin",version="1.0",ext_modules=[Extension("pythonplugin",["pythonplugin.c"],include_dirs=include_list+include_list_pgobject+include_list_gnucash,libraries=['glib-2.0','gobject-2.0','ffi'])])
-setup(name="pythonplugin",version="1.0",ext_modules=[Extension("pythonplugin",["pythonplugin.c"],include_dirs=include_list+include_list_pgobject+include_list_gnucash)])
+#setup(name="pythonplugin",version="1.0",ext_modules=[Extension("pythonplugin",["pythonplugin.c"],include_dirs=include_list+include_list_pgobject+include_list_gnucash)])
 
-setup(name="pythoncallback",version="1.0",ext_modules=[Extension("pythoncallback",["pythoncallback.c"],include_dirs=include_list+include_list_pgobject)])
+#setup(name="pythoncallback",version="1.0",ext_modules=[Extension("pythoncallback",["pythoncallback.c"],include_dirs=include_list+include_list_pgobject)])
 
-#setup(name="swighelpers",version="1.0",ext_modules=[Extension("swighelpers",["swighelpers.c"],include_dirs=include_list+include_list_pgobject)])
+setup(name="swighelpers",version="1.0",ext_modules=[Extension("swighelpers",["swighelpers.c"],include_dirs=include_list+include_list_pgobject+['.'])])
 
 #distutils.sysconfig._config_vars['SO'] = ".dylib"
 
