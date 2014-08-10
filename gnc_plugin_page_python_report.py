@@ -39,7 +39,7 @@ except Exception, errexc:
 import gncpluginpage
 from gncpluginpage import PluginPage
 
-import gnc_plugin_page
+#import gnc_plugin_page
 
 import gnc_main_window
 

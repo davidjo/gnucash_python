@@ -17,7 +17,6 @@ import xml.etree.ElementTree as ET
 import sw_app_utils
 import sw_core_utils
 
-import gnc_jqplot
 import gnc_html_scatter
 
 import gnc_html_document

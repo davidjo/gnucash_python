@@ -16,8 +16,6 @@ import pdb
 
 from gnome_utils_ctypes import libgnc_gnomeutils
 
-import gncmainwindow
-
 from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
@@ -56,14 +54,74 @@ libgnc_gnomeutils.gnc_main_window_close_page.argtypes = [ c_void_p ]
 libgnc_gnomeutils.gnc_main_window_close_page.restype = None
 
 
-def gnc_gui_init ():
+if True:
 
-    main_window = gncmainwindow.gnc_gui_init()
+    import gncmainwindow
 
-    #pdb.set_trace()
+    def gnc_gui_init ():
 
-    print >> sys.stderr, "main window call of gnc_gui_init - probably not what you want!!"
-    print >> sys.stderr, "main_window_ptr %x"%hash(main_window)
+        # ah - get why this works - because wrapping using codegen
+        # registers the python type as the wrapper for the GType
+        # so when call pygobject_new with a gobject the GType
+        # is looked up and the appropriate python wrapper used
 
-    return main_window
+        # note that gnc_gui_init is a special function I added
+        # to the wrapper to call the gnome-utils library gnc_gui_init
+
+        main_window = gncmainwindow.gnc_gui_init()
+
+        #pdb.set_trace()
+
+        print >> sys.stderr, "main window call of gnc_gui_init - probably not what you want!!"
+        print >> sys.stderr, "main_window_ptr %x"%hash(main_window)
+
+        return main_window
+
+
+else:
+
+    # call the gnome_utils gnc_gui_init
+    # then wrap as appropriate
+    # do it this way so dont get circular imports - gnc_gui_init needs
+    # the gnc_main_window type and this module needs gnome_utils
+
+    # partial implementation as not used
+
+    import types
+
+    from pygobjectcapi import PyGObjectCAPI
+
+
+    class GtkUIManagerOpaque(Structure):
+        pass
+
+    GtkUiManagerOpaquePtr = POINTER(GtkUIManagerOpaque)
+
+    #libgnc_gnomeutils.gnc_main_window_get_uimanager.argtypes = [ GncMainWindowOpaquePtr ]
+    #libgnc_gnomeutils.gnc_main_window_get_uimanager.restype = GtkUiManagerOpaquePtr
+
+    libgnc_gnomeutils.gnc_main_window_get_uimanager.argtypes = [ c_void_p ]
+    libgnc_gnomeutils.gnc_main_window_get_uimanager.restype = c_void_p
+
+    def gnc_gui_init ():
+
+        main_window = libgnc_gnomeutils.gnc_gui_init()
+
+        # we now need to add functions to this - mainly get_uimanager
+
+        main_window.get_uimanager = types.MethodType(get_ui_manager, main_window, main_window.__class__)
+
+        return main_window
+
+    def get_uimanager (self):
+
+        mnwndw_ptr = hash(self)
+
+        ui_mgr_ptr = libgnc_gnomeutils.gnc_main_window_get_uimanager(mnwndw_ptr)
+
+        # need to wrap ui_mgr
+        Cgobject = PyGObjectCAPI()
+        ui_mgr = Cgobject.pygobject_new(ui_mgr_ptr)
+
+        return ui_mgr
 

@@ -9,7 +9,7 @@ import gobject
 import pdb
 
 
-import pythoncallback
+#import pythoncallback
 
 
 
@@ -47,8 +47,8 @@ class MyMenuAdditions(gobject.GObject):
         print "menuitem",menuitm
         print "menuitem",menuitm.ae.as_tuple()
         #pdb.set_trace()
-        pythoncallback.add_actions(self.save_callbacks, self.group, [menuitm.ae.as_tuple()], user_data=self.window)
-        #self.group.add_actions([menuitm.ae.as_tuple()],user_data=self.window)
+        #pythoncallback.add_actions(self.save_callbacks, self.group, [menuitm.ae.as_tuple()], user_data=self.window)
+        self.group.add_actions([menuitm.ae.as_tuple()],user_data=self.window)
         # so this implements the xml
         # with path giving the menu position
         #   <menuitem name="Python Reports" action="pythonreportsAction"/>

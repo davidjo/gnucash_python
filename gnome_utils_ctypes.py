@@ -60,6 +60,8 @@ libgnc_gnomeutils.gnc_gui_init.argtypes = []
 libgnc_gnomeutils.gnc_gui_init.restype = c_void_p
 
 
+# do not use this - use the function in gnc_main_window
+
 def gnc_gui_init ():
 
     # OK - this does work if I use the right restype for gnc_gui_init!!
@@ -71,14 +73,25 @@ def gnc_gui_init ():
 
     #pdb.set_trace()
 
+    # now understand what the problem is
+    # although the following converts the GType to a python gobject
+    # it ONLY covers the GType data - it does NOT appear to apply the functions
+    # that is a GType class consists of data and functions
+    # (this is because we need to register a python object type to be associated
+    # with a GType via pygobject C function pygobject_register_class)
+    # using pygobject_new wraps the data but not the functions - as they are
+    # defined as simple C functions
+    # to add the functions to the python gobject looks like we need to define
+    # new python functions which call the underlying C functions from the library
+    # using ctypes
+
     # call like this:
     Cgobject = PyGObjectCAPI()
     main_window = Cgobject.pygobject_new(main_window_ptr)
 
-    #pdb.set_trace()
+    pdb.set_trace()
 
     return main_window
-
 
 
 
