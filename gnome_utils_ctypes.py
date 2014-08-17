@@ -94,6 +94,16 @@ def gnc_gui_init ():
     return main_window
 
 
+libgnc_gnomeutils.gnc_window_set_progressbar_window.argtypes = [ c_void_p ]
+libgnc_gnomeutils.gnc_window_set_progressbar_window.restype = None
+
+libgnc_gnomeutils.gnc_window_get_progressbar_window.argtypes = []
+libgnc_gnomeutils.gnc_window_get_progressbar_window.restype = c_void_p
+
+libgnc_gnomeutils.gnc_window_show_progress.argtypes = [ c_char_p, c_double ]
+libgnc_gnomeutils.gnc_window_show_progress.restype = None
+
+
 
 libgnc_gnomeutils.gnc_tree_view_account_get_view_info.argtypes = [ c_void_p, c_void_p ]
 libgnc_gnomeutils.gnc_tree_view_account_get_view_info.restype = c_void_p

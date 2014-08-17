@@ -18,7 +18,10 @@ import datetime
 # the suggestion is to use  ElementTree rather than minidom
 # - although minidom might be closer to the Scheme implementation
 
-import xml.etree.ElementTree as ET
+# we do not use this directly in a report - this is included in the
+# html document via mapping functions - currently same name as
+# the ElementTree function names
+#import xml.etree.ElementTree as ET
 
 # this is an attempt at replicating the Hello, World scheme report
 
@@ -48,6 +51,8 @@ from report_options import *
 class HelloWorld(ReportTemplate):
 
     def __init__ (self):
+
+        super(ReportTemplate,self).__init__()
 
         # need to set the  base variables
         self.version = 1
@@ -111,11 +116,11 @@ class HelloWorld(ReportTemplate):
                                                          2.0,
                                                          0.01))
 
-        self.options.register_option(ColorOption(N_("Hello, World!"), N_("Background Option"),"f",
+        self.options.register_option(ColorOption(N_("Hello, World!"), N_("Background Color"),"f",
                                                    N_("This is a color option."),
                                                    (0xf6, 0xff, 0xdb, 0), 255, False))
 
-        self.options.register_option(ColorOption(N_("Hello, World!"), N_("Text Option"),"f",
+        self.options.register_option(ColorOption(N_("Hello, World!"), N_("Text Color"),"f",
                                                    N_("This is a color option."),
                                                    (0x00, 0x00, 0x00, 0), 255, False))
 
@@ -140,23 +145,33 @@ class HelloWorld(ReportTemplate):
         return self.options
                                              
 
-    def renderer (self):
+    def renderer (self, report):
 
         # this actually implements the report look
 
         # lots of stuff about getting option values
 
+        pdb.set_trace()
+
         # now for html creation
         # where do we actually instantiate the Html object
+
+        # in scheme created new scheme html doc
+        # in python pass the report xml document 
+        # does the possibility of having new HtmlDocument make sense??
+        document = gnc_html_document.HtmlDocument(stylesheet=report.stylesheet())
+
+        clropt = self.options.lookup_name('Hello, World!','Background Color')
+        txtopt = self.options.lookup_name('Hello, World!','Text Color')
 
         # need to set a style
         # (gnc:html-document-set-style!
         #  document "body"
         #  'attribute (list "bgcolor" (gnc:color-option->html bg-color-op))
         #  'font-color (gnc:color-option->html txt-color-op))
-
-        #document = gnc_html_document_full.HtmlDocument()
-        document = gnc_html_document.HtmlDocument()
+        # do we make eg font close to html - so font has sub-attribute color
+        # or use scheme style of specific item font-color??
+        document.add_body_style({"body" : { 'attribute' : { "bgcolor" : clropt.get_value_as_html() }, 'font' : { 'color' : txtopt.get_value_as_html() }}})
 
         document.title = N_("Hello, World")
 
@@ -171,9 +186,11 @@ class HelloWorld(ReportTemplate):
 
         base_markup = document.doc.Element("p")
         base_markup.text = new_text
+        base_markup.tail = "\n"
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The current time is ")
+        new_markup.tail = "\n"
 
         new_time = document.doc.SubElement(new_markup,"b")
         new_time.text = datetime.datetime.now().strftime("%X")
@@ -186,6 +203,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The boolean option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = N_("true") if optval else N_("false")
@@ -198,6 +216,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The multi-choice option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = optval
@@ -210,6 +229,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The string option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = optval
@@ -224,6 +244,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The date option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = optval
@@ -237,6 +258,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The date and time option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = optval
@@ -250,6 +272,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The relative date option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = optval
@@ -263,6 +286,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The combination date option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = optval
@@ -275,6 +299,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The number option is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_opt.text = str(optval)
@@ -284,6 +309,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("The number option formatted as currency is ")
+        new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
         new_val = gnucash.GncNumeric(optval,1)
@@ -293,6 +319,7 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("Items you selected:")
+        new_markup.tail = "\n"
 
 
         optobj = self.options.lookup_name('Hello Again','A list option')
@@ -312,6 +339,7 @@ class HelloWorld(ReportTemplate):
         else:
             new_markup = document.doc.Element("p")
             new_markup.text = N_("(You selected no list items.)")
+            new_markup.tail = "\n"
 
 
         optobj = self.options.lookup_name('Hello Again','An account list option')
@@ -331,6 +359,7 @@ class HelloWorld(ReportTemplate):
         else:
             new_markup = document.doc.Element("p")
             new_markup.text = N_("You have selected no accounts.")
+            new_markup.tail = "\n"
 
         new_link = document.doc.Element("a")
         new_link.attrib['href'] = gnc_html_ctypes.build_url(gnc_html_ctypes.URLTypes.URL_TYPE_HELP, "gnucash-guide","")
@@ -338,5 +367,6 @@ class HelloWorld(ReportTemplate):
 
         new_markup = document.doc.Element("p")
         new_markup.text = N_("Have a nice day!")
+        new_markup.tail = "\n"
 
-        return document.get_xml()
+        return document

@@ -10,6 +10,10 @@ from report_options import StringOption,MultiChoiceOption
 import dialog_options
 
 from gnc_html_document import HtmlDoc
+from gnc_html_document import HtmlDocument
+
+from stylesheets import Stylesheet
+import stylesheets
 
 import xml.etree.ElementTree as ET
 
@@ -65,14 +69,6 @@ class ParamsData(object):
         widget.destroy()
 
 
-class Stylesheet(object):
-    def __init__ (self):
-        pass
-    @classmethod
-    def get_html_style_sheets(cls):
-        return [ [ 'dummystyle', 'Dummy Style', 'A Dummy style sheet.' ] ]
-
-
 class ReportTemplate(object):
     def __init__ (self):
         # these are the scheme template data items
@@ -122,7 +118,7 @@ class ReportTemplate(object):
         # it then calls gnc:new-options if the generator is not defined
         # gnc:new-options creates the hash table(s) databases
         namer = StringOption("General","Report name", "0a", N_("Enter a descriptive name for this report."), self.name)
-        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), 'dummystyle', Stylesheet.get_html_style_sheets())
+        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), 'dummystyle', stylesheets.get_html_style_sheets())
         #pdb.set_trace()
         # think Ive got this - the report creates the options_generator function
         # which defines the reports options
@@ -321,119 +317,74 @@ class Report(object):
            return default_params_data.win.widget()
 
     def run (self):
-         print "run_report"
-         #gc.collect()
-         #self.set_busy_cursor()
-         try:
-             htmlstr = self.render_html(headers=True)
-         except Exception, errexc:
-             traceback.print_exc()
-             htmlstr = None
-         #self.unset_busy_cursor()
-         return htmlstr
+        # this is based on gnc:report-run in report/report-system/report.scm
+        print "run_report"
+        #gc.collect()
+        #self.set_busy_cursor()
+        try:
+            # this is the call to gnc:report-render-html in report/report-system/report.scm
+            htmlstr = self.render_html(headers=True)
+        except Exception, errexc:
+            traceback.print_exc()
+            htmlstr = None
+        #self.unset_busy_cursor()
+        return htmlstr
+
+    def set_stylesheet (self, stylesheet):
+        # this seems to update the stylesheet name only
+        #pdb.set_trace()
+        optobj = self.options.lookup_name('General','Stylesheet')
+        optobj.set_value(stylesheet)
 
     def stylesheet (self):
         # lookup stylesheet option and get stylesheet
-        pass
+        #pdb.set_trace()
+        optobj = self.options.lookup_name('General','Stylesheet')
+        optval = optobj.get_option_value()
+        # then get stylesheet instance
+        stylesheet = stylesheets.stylesheets[optval]
+        return stylesheet
 
     def render_html (self, headers=None):
         print "render_html"
+        # this is based on gnc:report-render-html in report/report-system/report.scm
         #pdb.set_trace()
         # until figure out how self.dirty is set
         #if not self.dirty:
         #    return self.ctext
 
-        # this is a very rough approximation of the C/Scheme in gnucash
-        # - this is a temporary coding so it works
+        # think Im seeing how the scheme is working
+        # - a report can generate either an html string or
+        # a list of action objects which when executed generate the html string
 
-        # now going using a python xml dom model - currently ElementTree
-        docxml = HtmlDoc()
+        # something about getting the template??
+        # for us this is the report_type object
+        # to follow scheme more closely we would do the following
 
-        if headers:
-
-            # how do we implement this
-            # where is this written out
-            # do we make a list of strings and join - as concatenating strings would be very slow
-            # we dont add this I think - will be added at string generation
-            docxml.dtd('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" \n"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
-            htmlobj = docxml.Element('html', attrib={'xmlns' : "http://www.w3.org/1999/xhtml"})
-            htmlobj.text = "\n"
-            headobj = docxml.SubElement(htmlobj,"head")
-            headobj.text = "\n"
-            metaobj = docxml.SubElement(headobj,'meta', attrib={'http-equiv' : "content-type", 'content' : "text/html; charset=utf-8"})
-            metaobj.text = "\n"
-
-            #if css:
-            #    if styletext:
-            #        doclst.push_list(['</style>', styletext, '<style type="text/css">'])
-
-            # this title seems to different from the report title
-            # this seems to be a document title
-            #title = doc.title
-            # testing title string
-            title = "This is a big test of jqplot"
-            if title:
-                titlobj = docxml.SubElement(headobj,"title")
-                titlobj.text = title
-
-            # ;; this lovely little number just makes sure that <body>
-            # ;; attributes like bgcolor get included
-            # (push ((gnc:html-markup/open-tag-only "body") doc))))
-
-            bodyobj = docxml.SubElement(htmlobj,"body")
-            bodyobj.text = "\n"
-
-        # debug text
-        #doclst.push("display this text!!\n")
-
-        renderer = self.report_type.renderer
+        #renderer = self.report_type.renderer
 
         stylesheet = self.stylesheet()
 
-        try:
-            subdocxml = renderer()
-        except Exception, errexc:
-            traceback.print_exc()
-            pdb.set_trace()
+        # this is the weird stuff - I think the scheme runs the renderer here
+        # - which returns either a string or a list of html action objects
+        # doc = renderer()
 
-        if subdocxml == None:
-            pdb.set_trace()
-            docstr = None
-            raise RuntimeError("Invalid Html subdocxml")
-        else:
-            pass
+        # then if its not a string we set the stylesheet and run the html document render
+        # which generates a final string
+        # if type(doc) == str:
+        #     htmlstr = doc
+        # else:
+        #     doc.set_stylesheet(stylesheet)
+        #     htmlstr = doc.render(headers=headers)  
 
-        #pdb.set_trace()
 
-        try:
-            bodyobj.append(subdocxml)
-        except Exception, errexc:
-            traceback.print_exc()
-            pdb.set_trace()
-
-        try:
-            # only in python 2.7
-            #docstr = ET.tostring(htmlobj, encoding="utf-8", method="html")
-            docstr = docxml.tostring(encoding="utf-8")
-        except Exception, errexc:
-            traceback.print_exc()
-            pdb.set_trace()
-
-        # debugging dump
-        if docxml != None:
-            fds = open("junk.html","w")
-            fds.write(docstr)
-            fds.close()
-
-        if docstr == None:
-            raise RuntimeError("Invalid Html doclst")
+        # in python going with using a python xml dom model - currently ElementTree
+        # create the html-document equivalent here
+        docxml = HtmlDocument()
 
         #pdb.set_trace()
-        if type(docstr) == str:
-           html_str = docstr
-        else:
-           doc.set_stylesheet(stylesheet)
-           html_str = doc.document_render(headers)
+        docxml.set_stylesheet(stylesheet)
+        html_str = docxml.render(self,headers)
 
         self.ctext = html_str
         self.dirty = False
@@ -442,7 +393,7 @@ class Report(object):
         #docstr = fds.read()
         #fds.close()
 
-        return docstr
+        return html_str
 
 
 # note these dicts store the report templates

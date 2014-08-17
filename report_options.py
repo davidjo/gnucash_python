@@ -182,9 +182,9 @@ class OptionsDB(object):
 # trying this first
 
 
-# bugger these options are more complicated
+# these options are more complicated
 # looks like they are stored in some form of hash table
-# which also stores the optons-changed callback
+# which also stores the options-changed callback
 
 # oh great there is a further underlying class for options in scheme
 
@@ -339,6 +339,12 @@ class SimpleBooleanOption(ComplexBooleanOption):
 
     def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None):
         super(SimpleBooleanOption,self).__init__(section, optname, sort_tag, tool_tip, default_value=default_value,setter_function_called_cb=None,option_widget_changed_cb=None)
+
+    def get_value_as_html (self):
+        val = self.getter()
+        if val:
+            return "true"
+        return "false"
 
 class StringOption(OptionBase):
 
@@ -953,3 +959,35 @@ class ColorOption(OptionBase):
         elif not self.values_in_range(color):
             return [ False, "color-option: bad color values" ]
         return [ True, color ]
+
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        return self.getter()
+
+    def get_value_as_html (self):
+        # again this is a function for returning value in the python script
+        # formatted as an html color string
+        clrval = self.getter()
+        clrval = [ x/float(255.0/self.option_data[0]) for x in clrval ]
+        clrval = [ min(x,255.0) for x in clrval ]
+        clrval = [ "%02x"%int(x) for x in clrval ]
+        clrstr = "#"+"".join(clrval[0:3])
+        return clrstr
+
+class FontOption(OptionBase):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value):
+        super(FontOption,self).__init__()
+        self.section = section
+        self.name = optname
+        self.type = 'font'
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+
+        # what to do about getters/setters
+
+        self.default_value = default_value
+
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        return self.getter()
