@@ -14,6 +14,7 @@ class HtmlDoc(object):
         self.docobj = None
         self.dtdstr = None
         self.engine_supports_css = True
+        self.header = None
 
     def dtd (self, dtdstr):
         self.dtdstr = dtdstr
@@ -36,6 +37,13 @@ class HtmlDoc(object):
         subobj = ET.SubElement(parent,tag, attrib, **extra)
         return subobj
 
+    def HeaderElement (self, tag, attrib={}, **extra):
+        # this identifies the header element in the style sheet
+        # to update the text
+        subobj = self.Element(tag, attrib, **extra)
+        self.header = subobj
+        return subobj
+
 
 class HtmlDocument(object):
 
@@ -46,17 +54,14 @@ class HtmlDocument(object):
         # this emulates the scheme html-document record
         # note that objects is now the doc variable
         # (style-sheet style-stack style style-text title headline objects)
-        # whats the different between style-sheet and style-text??
+        # style-text seems to be where the html CSS text is stored
         self.style_sheet = stylesheet
         self.style_stack = None
-        self.style = None
+        self.style = StyleTable()
         self.style_text = None
         self.title = None
         self.headline = None
         self.doc = HtmlDoc()
-
-        # for the moment adding the style table here
-        self.style_table = StyleTable()
 
     def get_doc (self):
         return self.doc
@@ -74,14 +79,15 @@ class HtmlDocument(object):
         else:
             return ET.tostring(self.doc.docobj, encoding=encoding)
 
+
     # new idea - use this function to add the body object with style
     def add_body_style (self, attr_dict=None):
         #pdb.set_trace()
-        if self.doc.docobj:
+        if self.doc.docobj != None:
             bodyobj = self.doc.docobj.find("body")
             if bodyobj == None:
                 htmlobj = self.doc.docobj.find("html")
-                if htmlobj:
+                if htmlobj != None:
                     bodyobj = self.doc.SubElement(htmlobj,"body")
                 else:
                     # we have elements but no body - nor html
@@ -105,17 +111,49 @@ class HtmlDocument(object):
     def set_stylesheet (self, stylesheet):
         self.style_sheet = stylesheet
 
+    def StyleElement (self, tag, parent=None):
+        newelm = self.style.make_html(tag)
+        if self.doc.docobj != None:
+            if parent != None:
+                parent.append(newelm)
+            else:
+                self.doc.docobj.append(newelm)
+        else:
+            self.doc.docobj = newelm
+        return newelm
+
+    def StyleSubElement (self, parent, tag):
+        # this simply makes report writing more consistent with Elementtree
+        newelm = self.StyleElement(tag, parent=parent)
+        return newelm
+
+
     def render (self, report, headers=None):
 
-        #pdb.set_trace()
+        pdb.set_trace()
+
+        # need to deal with fact this is called sort of recusively
+        # - if have stylesheet we go through here and call self.style_sheet.render
+        # which calls this function again
+        # need to ensure we have a fresh docxml object here
+        parent_docobj = None
+        if self.doc.docobj != None:
+           parent_docobj = self.doc
+           self.doc = HtmlDoc()
 
         # now going using a python xml dom model - currently ElementTree
         docxml = self.doc
 
+        # make sure this is defined
+        report.stylesheet_document = None
+
         # so thats how this works - the scheme does a first call to the stylesheet
         # render which then creates a new HtmlDocument object where this render
         # function is called with an undefined style_sheet - but a defined style!!
-        if self.style_sheet:
+        if self.style_sheet != None:
+            # this is weird but as self.style_sheet.render calls this function
+            # recursively which returns the document string the return here
+            # is also the document string
             docstr = self.style_sheet.render(report,self,headers)
         else:
             # do trivial render
@@ -165,6 +203,10 @@ class HtmlDocument(object):
 
             renderer = report.report_type.renderer
 
+            # we need to pass the style table (unlike scheme way)
+            # do it through the report for the moment
+            report.style = self.style
+
             try:
                 subdoc = renderer(report)
             except Exception, errexc:
@@ -178,22 +220,66 @@ class HtmlDocument(object):
 
             pdb.set_trace()
 
+            # copy in the report title
+            if hasattr(subdoc,"title"):
+                if subdoc.title != None:
+                    titlobj.text = subdoc.title
+                else:
+                    titlobj.text = "\n"
+            else:
+                titlobj.text = "\n"
+
+            # figure the headline
+            # always default to title??
+            headline = ""
+            if hasattr(subdoc,"headline"):
+                if subdoc.headline != None:
+                    headline = subdoc.headline
+                elif hasattr(subdoc,"title"):
+                    if subdoc.title != None:
+                        headline = subdoc.title
+            elif hasattr(subdoc,"title"):
+                if subdoc.title != None:
+                    headline = subdoc.title
+
+            # add header from ssdoc and update text
+            # note this assumes the only thing in parent_docobj is the header
+            hdrobj = None
+            if parent_docobj != None:
+                if parent_docobj.header != None:
+                    if headline != None and headline != "":
+                        parent_docobj.header.text = headline
+                        hdrobj = parent_docobj.header
+                        if subdoc.doc.docobj.tag == "body":
+                            subdoc.doc.docobj.insert(0,hdrobj)
+                            # bit weird but only way I can see to do this
+                            # we move the bodyobj text to the tail of the header
+                            # as header needs to come first
+                            if subdoc.doc.docobj.text != None:
+                                hdrobj.tail = "\n"+subdoc.doc.docobj.text
+                                subdoc.doc.docobj.text = None
+                        else:
+                            bodyobj.append(hdrobj)
+
             try:
-                # copy in the report title
-                titlobj.text = subdoc.title
                 # assume body not added if not first element
                 if subdoc.doc.docobj.tag == "body":
                     htmlobj.remove(bodyobj)
-                htmlobj.append(subdoc.doc.docobj)
+                    htmlobj.append(subdoc.doc.docobj)
+                else:
+                    bodyobj.append(subdoc.doc.docobj)
             except Exception, errexc:
                 traceback.print_exc()
                 pdb.set_trace()
+
+            pdb.set_trace()
 
             try:
                 # only in python 2.7
                 #docstr = ET.tostring(htmlobj, encoding="utf-8", method="html")
                 docstr = docxml.tostring(encoding="utf-8")
             except Exception, errexc:
+                ET.dump(htmlobj)
                 traceback.print_exc()
                 pdb.set_trace()
 

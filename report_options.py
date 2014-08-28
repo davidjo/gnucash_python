@@ -7,6 +7,8 @@ import os
 
 import numbers
 
+import datetime
+
 from operator import itemgetter
 
 
@@ -50,6 +52,7 @@ class OptionsDB(object):
         self.changed_hash = {}
         self.callback_hash = {}
         self.last_callback_id = 0
+        self.default_section = None
     def lookup_name (self, section, option_name):
         section_hash = self.option_hash[section]
         option = section_hash[option_name]
@@ -91,11 +94,11 @@ class OptionsDB(object):
         section = cbdata[0] 
         name = cbdata[1] 
         callback = cbdata[2] 
-        if not section:
+        if section == None:
             callback()
         else:
             section_changed_hash = self.changed_hash[section]
-            if section_changed_hash:
+            if section_changed_hash != None:
                 if name == None:
                     callback()
                 elif name in section_changed_hash:
@@ -109,13 +112,19 @@ class OptionsDB(object):
             self.option_hash[section]= {}
             self.option_hash[section][name] = new_option
         # this doesnt make sense in python
-        new_option.changed_callback = lambda : self.option_changed(section,name)
+        # oh maybe it does - we get multiple instances of the lambda each with
+        # a different section, name variables
+        new_option.changed_callback = lambda lcl_sect=section,lcl_name=name: self.option_changed(lcl_sect,lcl_name)
     def options_for_each (self):
         #pdb.set_trace()
         for section_hash in self.option_hash:
             option_hash = self.option_hash[section_hash]
             for name in option_hash:
                 yield option_hash[name]
+    def set_default_section (self, section_name):
+        self.default_section = section_name
+    def get_default_section (self):
+        return self.default_section
 
     def add_report_date (self, pagename, optname, sort_tag):
         self.register_option(EndDateOption(pagename, optname, sort_tag, N_("Select a date to report on.")))
@@ -149,6 +158,18 @@ class OptionsDB(object):
                                              N_("Select the currency to display the values of this report in."),
                                              sw_app_utils.default_report_currency()))
 
+    def add_price_source (self, pagename, optname, sort_tag, default):
+        self.register_option(MultiChoiceOption(pagename, optname, sort_tag,
+                                             N_("The source of price information."),
+                                             default,
+                                             [ \
+                                               ('average-cost', N_("Average Cost"), N_("The volume-weighted average cost of purchases.")),
+                                               ('weighted-average', N_("Weighted Average"), N_("The weighted average of all currency transactions of the past.")),
+                                               ('weighted-average', N_("Weighted Average"), N_("The weighted average of all currency transactions of the past.")),
+                                               ('pricedb-latest', N_("Most recent"), N_("The most recent recorded price.")),
+                                               ('pricedb-nearest', N_("Nearest in time"), N_("The price recorded nearest in time to the report date.")),
+                                             ]))
+
     def add_plot_size (self, pagename, name_width, name_height, sort_tag, default_width, default_height):
         self.register_option(NumberRangeOption(pagename, name_width, sort_tag+"a",
                                                  N_("Width of plot in pixels."), default_width,
@@ -171,6 +192,29 @@ class OptionsDB(object):
                                                  ('filleddiamond', N_("Filled Diamond"), N_("Diamond filled with color")),
                                                  ('filledcircle', N_("Filled circle"), N_("Circle filled with color")),
                                                  ('filledsquare', N_("Filled square"), N_("Square filled with color")),
+                                                ]))
+
+    def add_account_selection (self, pagename, name_display_depth, name_show_subaccounts, name_accounts, sort_tag, default_depth, default_accounts, default_show_subaccounts):
+        self.add_account_levels(pagename, name_display_depth, sort_tag+"a",
+                                                N_("Show accounts to this depth, overriding any other option."),
+                                                default_depth)
+        self.register_option(SimpleBooleanOption(pagename, name_show_subaccounts, sort_tag+"b",
+                                                N_("Override account-selection and show sub-accounts of all selected accounts?"), default_show_subaccounts))
+        self.register_option(AccountListOption(pagename, name_accounts, sort_tag+"c",
+                                                N_("Report on these accounts, if display depth allows."), default_accounts, False, True))
+
+    def add_account_levels (self, pagename, name_display_depth, sort_tag, help_string, default_depth):
+        self.register_option(MultiChoiceOption(pagename, name_display_depth, sort_tag,
+                                                help_string,
+                                                default_depth,
+                                                [ \
+                                                 ('all', N_("All"), N_("All accounts")),
+                                                 ('1', N_("1"), N_("Top-level.")),
+                                                 ('2', N_("2"), N_("Second-level.")),
+                                                 ('3', N_("3"), N_("Second-level.")),
+                                                 ('4', N_("4"), N_("Fourth-level.")),
+                                                 ('5', N_("5"), N_("Fifth-level.")),
+                                                 ('6', N_("6"), N_("Sixth-level.")),
                                                 ]))
 
 
@@ -238,8 +282,6 @@ class OptionBase(object):
         # ;; Function 5: giving a possible value and returning the index
         # ;; if an option doesn't use these,  this should just be a #f
         self.option_data_fns = None
-        # this seems to be an additional callback
-        self.changed_callback = None
         # ;; This function should return a list of all the strings
         # ;; in the option other than the section, name, (define
         # ;; (list-lookup list item) and documentation-string that
@@ -253,6 +295,10 @@ class OptionBase(object):
         # ;; callback shouldn't be used to make changes to the actual
         # ;; options database.
         self.widget_changed_cb = None
+        # this seems to be an additional callback
+        # ah - the make-option function defines the callback function as none
+        # so needs to be explicitly defined in a subclass
+        self.changed_callback = None
 
         # value storage for the moment
         self.option_value = None
@@ -267,6 +313,11 @@ class OptionBase(object):
 
         # unlike scheme going to make this explicit
         self.setter_function_called_cb = None
+
+    # now think these functions not defined as scheme not object oriented
+    # so all the make-option arguments have lambda functions which define
+    # these functions which are then stored in the variable which are called
+    # when the variable is accessed
 
     # havent seen where this is defined - probably in scheme somewhere
     def get_default_value (self):
@@ -290,13 +341,19 @@ class OptionBase(object):
         # punting for the moment
         # this ought to be calling the setter/getter functions
         # and the validator functions
+        # not sorted this yet - we need to allow for a subclass setter
+        # which must always call the changed_callback function
+        # we probably could use lambdas like scheme
+        # which saves the subclass setter function in the lambda function
+        # and then the lambda function is stored in the setter attribute
         self.option_value = value
 
-        if callable(self.setter_function_called_cb):
-            self.setter_function_called_cb(value)
-
-        if self.changed_callback:
+        if callable(self.changed_callback):
             self.changed_callback()
+
+    def set_changed_callback (self, callback):
+        # we need to call this function in a subclass to define the callback
+        self.changed_callback = callback
 
 
 # these only fill partial values of above
@@ -314,8 +371,14 @@ class ComplexBooleanOption(OptionBase):
         self.default_value = default_value
 
         # need to deal with setter and getter functions
-        #self.setter = self.local_setter(x)
+        # I think because these are variables containing functions
+        # we need to do this rather than use super() function
+        # need to re-evaluate this sometime and make more pythonic
+        self.supersetter = self.setter
+        self.setter = self.local_setter
 
+
+        # this is stored via a lambda in scheme
         self.widget_changed_cb = option_widget_changed_cb
 
         # this is stored via a lambda in scheme
@@ -324,7 +387,7 @@ class ComplexBooleanOption(OptionBase):
         # the setter and getter seem to store in the Kvp database
 
     def local_setter (self, x):
-        self.option_value = x
+        self.supersetter(x)
         if callable(self.setter_function_called_cb):
             self.setter_function_called_cb(x)
 
@@ -357,6 +420,13 @@ class StringOption(OptionBase):
         self.documentation_string = tool_tip # AKA documentation_string
         self.default_value = default_value
 
+    # we need to define a validator
+    def value_validator (self, x):
+        if type(x) == str:
+            return [True, x]
+        else:
+            return [False, "string-option: not a string"]
+
     def get_option_value (self):
         # again this is a function for returning value in the python script
         # this seems to be viable for strings
@@ -382,7 +452,12 @@ class MultiChoiceCallbackOption(OptionBase):
                                ]
         # cant do this till set option_data!!
         # scheme stores the key index string - here we store the index
+        # for the moment check we have a string
+        if not isinstance(default_value,str):
+            raise TypeError("wrong type for default value in multi-choice option")
         self.default_value = self.lookup_key(default_value)
+        if self.default_value < 0:
+            raise KeyError("unknown key symbol for default value in multi-choice option: %s"%default_value)
 
         #self.setter = self.local_setter
 
@@ -550,19 +625,27 @@ class AccountListLimitedOption(OptionBase):
         # scheme stores the key index string - here we store the index
         self.default_value = default_value
 
-        #self.setter = self.local_setter
+        self.getter = self.account_list_getter
+        self.setter = self.account_list_setter
+        self.default_getter = self.account_list_default_getter
 
-        # the setter and getter seem to store in the Kvp database
-
-        # 
+        #self.strings_getter = self.multichoice_strings
 
         self.widget_changed_cb = option_widget_changed_cb
 
-        self.strings_getter = self.multichoice_strings
 
-        #self.setter_function_called_cb = setter_function_called_cb
+    def account_list_getter (self):
+        # re-define to deal with lambda definitions
+        #pdb.set_trace()
+        if self.option_value == None:
+            return self.account_list_default_getter()
+        if callable(self.option_value):
+            return self.option_value()
+        else:
+            return self.option_value
 
     def account_list_setter (self, x):
+        pdb.set_trace()
         if self.option_value == None or len(self.option_value) == 0:
             self.option_value = self.default_value
         newlst = []
@@ -579,17 +662,13 @@ class AccountListLimitedOption(OptionBase):
             #gnc:error "Illegal account list value set"
             pass
 
-    def account_list_default_getter (self, x):
-        return convert_to_account(self.default_value)
-
-    def local_setter (self, x):
-        pdb.set_trace()
-        if self.legal(x):
-            if callable(self.setter_function_called_cb):
-                self.setter_function_called_cb(x)
+    def account_list_default_getter (self):
+        #pdb.set_trace()
+        if callable(self.default_value):
+            return self.default_value()
         else:
-            # gnc:error "Illegal Multichoice option set"
-            pass
+            return self.default_value
+        return convert_to_account(self.default_value)
 
     def lookup_key (self, x):
         # return the index for a key string
@@ -662,10 +741,12 @@ class DateOption(OptionBase):
                                 lambda (x): self.get_relative_date_desc(self.option_data[2][x]),
                                 lambda (x): self.option_data[2].index(x))
         # two False slots in addition
-        self.changed_callback = None
         self.strings_getter = None
-        # which means this is not set
         #self.widget_changed_cb = None
+
+        # setup local setter
+        self.supersetter = self.setter
+        self.setter = self.local_setter
 
     def get_default_value (self):
         # re-define to deal with lambda definitions
@@ -675,10 +756,10 @@ class DateOption(OptionBase):
             return self.default_value
 
 
-    def default_setter (self, date):
+    def local_setter (self, date):
         pdb.set_trace()
         if self.date_legal(date):
-            self.option_value = date
+            self.supersetter(date)
         else:
             #gnc:error "Illegal date value set:" date
             pass
@@ -693,7 +774,17 @@ class DateOption(OptionBase):
 
     def date_legal (self, date):
         pdb.set_trace()
-        return True
+        # something not sorted - an absolute date is a pair in scheme
+        # maybe because date and time??
+        # date[1] should be a symbol - whatever that is
+        # punt with str for the moment
+        if (((type(date) == tuple or type(date) == list)) and \
+            len(date) == 2) or \
+            ((date[0] == 'relative' and type(date[1]) == str) or \
+               (date[0] == 'absolute' and type(date[1]) == datetime.datetime)):
+            return True
+        pdb.set_trace()
+        return False
 
     def lookup_string (self, datestr):
         # somewhere in scheme the DateOption strings are looked up in the
@@ -750,7 +841,7 @@ class DateOption(OptionBase):
             #pdb.set_trace()
             # still not sure how both version works
             # do we ignore self.option_data and just check optval?
-            if self.option_data[1]:
+            if self.option_data[1] != None:
                 print "both - absolute defined"
             else:
                 print "both - relative defined"
@@ -851,6 +942,10 @@ class CurrencyOption(OptionBase):
         # ignoring scheme lambda
         self.super_setter(retval)
 
+    def value_validator (self, currency):
+        pdb.set_trace()
+        return [True, currency]
+
 
 class CommodityOption(OptionBase):
 
@@ -899,6 +994,10 @@ class CommodityOption(OptionBase):
         else:
             option_value = ( 'commodity-scm', commodity.get_namespace(), commodity.get_mnemonic() )
         self.super_setter(option_value)
+
+    def value_validator (self, commodity):
+        pdb.set_trace()
+        return [True, commodity]
 
 
 class NumberRangeOption(OptionBase):
@@ -987,6 +1086,36 @@ class FontOption(OptionBase):
         # what to do about getters/setters
 
         self.default_value = default_value
+
+    def value_validator (self, x):
+        if type(x) == str:
+            return [True, x]
+        else:
+            return [False, "font-option: not a string"]
+
+    def get_option_value (self):
+        # again this is a function for returning value in the python script
+        return self.getter()
+
+class PixmapOption(OptionBase):
+
+    def __init__ (self, section, optname, sort_tag, tool_tip, default_value):
+        super(PixmapOption,self).__init__()
+        self.section = section
+        self.name = optname
+        self.type = 'pixmap'
+        self.sort_tag = sort_tag
+        self.documentation_string = tool_tip # AKA documentation_string
+
+        # what to do about getters/setters
+
+        self.default_value = default_value
+
+    def value_validator (self, x):
+        if type(x) == str:
+            return [True, x]
+        else:
+            return [False, "pixmap-option: not a string"]
 
     def get_option_value (self):
         # again this is a function for returning value in the python script

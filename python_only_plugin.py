@@ -212,7 +212,10 @@ class MyPlugin(gobject.GObject):
         menuitm = GncMenuItem()
         ae = GncActionEntry()
         ae.name = rpt.report_guid
-        ae.label = rpt.menu_name
+        if rpt.menu_name:
+            ae.label = rpt.menu_name
+        else:
+            ae.label = name
         if rpt.menu_tip:
             ae.tooltip = rpt.menu_tip
         else:
@@ -221,7 +224,11 @@ class MyPlugin(gobject.GObject):
         ae.accelerator = None
         ae.callback = self.reports_cb
         menuitm.ae = ae
-        menuitm.path = "ui/menubar/Reports/OtherReports/PythonReports/PythonReportsholder/"
+        if rpt.menu_path:
+            #menuitm.path = "ui/menubar/Reports/StandardReports/"+rpt.menu_path
+            menuitm.path = "ui/menubar/Reports/OtherReports/PythonReports/PythonReportsholder/"
+        else:
+            menuitm.path = "ui/menubar/Reports/OtherReports/PythonReports/PythonReportsholder/"
         menuitm.name = ae.label
         menuitm.action = ae.name
         menuitm.type = gtk.UI_MANAGER_MENUITEM

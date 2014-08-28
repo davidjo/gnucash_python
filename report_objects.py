@@ -84,10 +84,10 @@ class ReportTemplate(object):
         self.menu_path = None
 
         # in scheme this contains a function which is defined in the actual report .scm file
-        self.options_generator = None
-
-        # in scheme this contains a function which is defined in the actual report .scm file
-        self.renderer = None
+        # do NOT define these in python as defining these as variables totally
+        # overrides any subclass function definition
+        #self.options_generator = None
+        #self.renderer = None
 
         # do not do any GUI stuff in here - we instantiate before actually needed
         # in order to get menu name to build menu
@@ -102,6 +102,16 @@ class ReportTemplate(object):
 
         self.export_types = None
         self.export_thunk = None
+
+
+    # make these functions raise error if not defined in subclass
+
+    def options_generator (self):
+        raise NotimplementedError("options_generator function not implemented")
+
+    def renderer (self):
+        raise NotimplementedError("renderer function not implemented")
+
 
     def init_gui (self):
         # this is a function to init GUI stuff if needed
@@ -118,11 +128,11 @@ class ReportTemplate(object):
         # it then calls gnc:new-options if the generator is not defined
         # gnc:new-options creates the hash table(s) databases
         namer = StringOption("General","Report name", "0a", N_("Enter a descriptive name for this report."), self.name)
-        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), 'dummystyle', stylesheets.get_html_style_sheets())
+        stylesheet = MultiChoiceOption("General","Stylesheet", "0b", N_("Select a stylesheet for the report."), 'default', stylesheets.get_html_style_sheets())
         #pdb.set_trace()
         # think Ive got this - the report creates the options_generator function
         # which defines the reports options
-        if self.options_generator:
+        if self.options_generator != None:
             options = self.options_generator()
         else:
             options = OptionsDB()
@@ -202,7 +212,7 @@ class Report(object):
         # when an option is changed
         self.dirty = value
         cb = self.report_type.options_changed_cb
-        if cb:
+        if cb != None:
             cb()
 
     def lambda_callback (self):
@@ -210,7 +220,7 @@ class Report(object):
         # but still - if this ever gets called wont this run the options_changed_cb twice
         self.set_dirty(True)
         cb = self.report_type.options_changed_cb
-        if cb:
+        if cb != None:
             cb()
 
     def report_add (self):
@@ -244,11 +254,11 @@ class Report(object):
             return self.default_params_editor
 
     def edit_options (self):
-        if self.report_editor_widget:
+        if self.report_editor_widget != None:
            print type(self.report_editor_widget)
            self.report_editor_widget.present()
         else:
-           if self.options:
+           if self.options != None:
                options_editor = self.options_editor()
                self.report_editor_widget = options_editor(self.options)
            else:
@@ -266,7 +276,7 @@ class Report(object):
     def default_params_editor (self, options):
 
        editor = self.get_editor()
-       if editor:
+       if editor != None:
            editor.present()
            # why return NULL here - doesnt make sense
            # maybe we never get here in real code
@@ -416,11 +426,27 @@ def load_python_reports ():
     python_reports_by_name = {}
     python_reports_by_guid = {}
 
-    from reports.hello_world import HelloWorld
-    python_reports_by_name['HelloWorld'] = HelloWorld()
-    python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
+    try:
+        from reports.hello_world import HelloWorld
+        python_reports_by_name['HelloWorld'] = HelloWorld()
+        python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
+    except Exception, errexc:
+        traceback.print_exc()
+        pdb.set_trace()
 
-    from reports.price_scatter import PriceScatter
-    python_reports_by_name['PriceScatter'] = PriceScatter()
-    python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
+    try:
+        from reports.price_scatter import PriceScatter
+        python_reports_by_name['PriceScatter'] = PriceScatter()
+        python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
+    except Exception, errexc:
+        traceback.print_exc()
+        pdb.set_trace()
+
+    try:
+        from reports.cash_flow import CashFlow
+        python_reports_by_name['CashFlow'] = CashFlow()
+        python_reports_by_guid[python_reports_by_name['CashFlow'].report_guid] = python_reports_by_name['CashFlow']
+    except Exception, errexc:
+        traceback.print_exc()
+        pdb.set_trace()
 

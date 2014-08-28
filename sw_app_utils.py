@@ -49,7 +49,7 @@ class GncNumericOpaque(ctypes.Structure):
 class GncNumeric(ctypes.Structure):
     pass
 GncNumeric._fields_ = [ ("num", ctypes.c_int64),
-                        ("num", ctypes.c_int64),
+                        ("denom", ctypes.c_int64),
                       ]
 
 class GncPrintAmountInfo(ctypes.Structure):
@@ -100,8 +100,8 @@ libgnc_apputils.gnc_default_report_currency.restype = ctypes.POINTER(GncCommodit
 libgnc_apputils.gnc_is_euro_currency.argtypes = [ ctypes.POINTER(GncCommodityOpaque) ]
 libgnc_apputils.gnc_is_euro_currency.restype = gboolean
 
-libgnc_apputils.gnc_is_euro_currency.argtypes = [ ctypes.POINTER(GncCommodityOpaque) ]
-libgnc_apputils.gnc_is_euro_currency.restype = gboolean
+libgnc_apputils.gnc_convert_to_euro.argtypes = [ ctypes.POINTER(GncCommodityOpaque), GncNumeric ]
+libgnc_apputils.gnc_convert_to_euro.restype = GncNumeric
 
 
 libgnc_apputils.gnc_accounting_period_fiscal_start.argtypes = []
@@ -113,6 +113,9 @@ libgnc_apputils.gnc_accounting_period_fiscal_end.restype = gint64
 
 libgnc_apputils.gnc_default_print_info.argtypes = [ ctypes.c_bool ]
 libgnc_apputils.gnc_default_print_info.restype = GncPrintAmountInfo
+
+libgnc_apputils.gnc_commodity_print_info.argtypes = [ ctypes.POINTER(GncCommodityOpaque), ctypes.c_bool ]
+libgnc_apputils.gnc_commodity_print_info.restype = GncPrintAmountInfo
 
 libgnc_apputils.xaccPrintAmount.argtypes = [ GncNumeric, GncPrintAmountInfo ]
 libgnc_apputils.xaccPrintAmount.restype = ctypes.c_char_p
@@ -158,6 +161,10 @@ def get_current_book ():
     #pdb.set_trace()
     #self.add_book(ctypes.addressof(curbook_ptr.contents))
     #self.add_book(curbook.__long__())
+
+def get_current_root_account ():
+    # re-implement in python rather can calling C function??
+    return get_current_book().get_root_account()
 
 
 # so this function is apparently "inlined" in the swig
@@ -251,8 +258,38 @@ def get_euro ():
 
     return eur
 
+def convert_to_euro (currency, value):
+
+    pdb.set_trace()
+
+    currency_ptr = ctypes.cast( currency.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
+
+    euro_val = libgnc_apputils.gnc_convert_to_euro(currency_ptr, value)
+
+    print >> sys.stderr, "euro_val %x"%euro_val
+
+    new_euro_inst = swighelpers.int_to_swig(ctypes.addressof(euro_val.value),"_p_gnc_numeric")
+    new_euro = gnucash.GncNumeric(instance=new_euro_inst)
+
+    new_euro = gnucash.GncNumeric(euro_val.num,euro_val.denom)
+
+    return new_euro
+
+def is_euro_currency (currency):
+
+    #pdb.set_trace()
+
+    currency_ptr = ctypes.cast( currency.instance.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
+
+    is_euro = libgnc_apputils.gnc_is_euro_currency(currency_ptr)
+
+    print >> sys.stderr, "is_euro %x"%is_euro
+
+    return is_euro
 
 def locale_default_currency_nodefault ():
+
+    pdb.set_trace()
 
     table = get_current_commodities()
     code = sw_core_utils.gnc_locale_default_iso_currency_code()
@@ -284,6 +321,14 @@ def locale_default_currency ():
 
     return currency
 
+def CommodityPrintInfo (commodity, use_symbol):
+    gnccmd_ptr = ctypes.cast( commodity.instance.__long__(), ctypes.POINTER(GncCommodityOpaque) )
+    prtinfo = libgnc_apputils.gnc_commodity_print_info(gnccmd_ptr,use_symbol)
+    return prtinfo
+
+def PrintInfo (use_symbol):
+    prtinfo = libgnc_apputils.gnc_default_print_info(use_symbol)
+    return prtinfo
 
 def PrintAmount (amnt, gnc_print_info=None):
     # this is defined in gnc-ui-util.c

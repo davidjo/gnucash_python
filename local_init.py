@@ -37,6 +37,10 @@ try:
     #print "done CAPI"
 
 
+    # need to load early as we extend some base gnucash classes
+    #import gnucash_ext
+
+
     # hmm - we need to instantiate the python report page module here
     # - other wise the callbacks wont exist when restoring pages saved on normal shutdown
     # however this means we need a re-factor as can now only do widget stuff later

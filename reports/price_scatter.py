@@ -90,7 +90,7 @@ class PriceScatter(ReportTemplate):
         return self.options
                                              
 
-    def renderer (self):
+    def renderer (self, report):
 
         # this actually implements the report look
 
@@ -108,7 +108,8 @@ class PriceScatter(ReportTemplate):
         #document = gnc_html_document_full.HtmlDocument()
         document = gnc_html_document.HtmlDocument()
 
-        document.title = N_("Price Scatter")
+        # this report does not set the title apparently deliberately
+        #document.title = N_("Price Scatter")
 
         chart = gnc_html_scatter.HtmlScatter()
 
@@ -211,7 +212,11 @@ class PriceScatter(ReportTemplate):
 
                 chart.add_datapoint((cnvdt,rlprc))
 
+            pdb.set_trace()
+
             docelm = chart.render()
+
+            document.doc.docobj = docelm
 
             stdelm = ET.Element('p')
             stdelm.text = "Start Date %s"%str(strtdt)
@@ -236,4 +241,6 @@ class PriceScatter(ReportTemplate):
 are identical. It doesn't make sense to show prices for identical \
 commodities.")
 
-        return docelm
+            document.doc.docobj = docelm
+
+        return document

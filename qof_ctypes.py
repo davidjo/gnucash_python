@@ -51,6 +51,11 @@ class TM(Structure):
                  ("tm_zone", c_char_p), # timezone abbreviation
                ]
 
+class Timespec(Structure):
+    _fields_ = [ ("tv_sec", c_int64),      # seconds
+                 ("tv_nsec", c_int64),     # nanoseconds
+               ]
+
 
 libgnc_qofnm = find_library("libgnc-qof")
 if libgnc_qofnm is None:
@@ -85,6 +90,17 @@ libgnc_qof.qof_date_text_format_get_string.restype = c_char_p
 
 def qof_date_text_format_get_string(date_format):
     return libgnc_qof.qof_date_format_get_string(date_format)
+
+libgnc_qof.gnc_print_date.argtypes = [Timespec]
+libgnc_qof.gnc_print_date.restype = c_char_p
+
+def gnc_print_date (dttm):
+    # stupid but no simple function to do this
+    ts_sec = int(dttm.strftime("%s"))
+    newts = Timespec()
+    newts.tv_sec = ts_sec
+    newts.tb_nsec = 0
+    return libgnc_qof.gnc_print_date(newts)
 
 libgnc_qof.qof_strftime.argtypes = [c_char_p, gint, c_char_p, POINTER(TM)]
 libgnc_qof.qof_strftime.restype = gint

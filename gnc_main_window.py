@@ -72,7 +72,8 @@ if True:
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "main window call of gnc_gui_init - probably not what you want!!"
+        # why did I add this
+        #print >> sys.stderr, "main window call of gnc_gui_init - probably not what you want!!"
         print >> sys.stderr, "main_window_ptr %x"%hash(main_window)
 
         return main_window

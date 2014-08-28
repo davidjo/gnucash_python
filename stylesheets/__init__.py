@@ -1,6 +1,9 @@
 
 import collections
 
+import xml.etree.ElementTree as ET
+
+
 import pdb
 
 
@@ -28,12 +31,65 @@ class StyleTable(collections.defaultdict):
     def __init__ (self, *args, **kwargs):
         # need to figure correct dict style arguments
         super(StyleTable,self).__init__(*args, **kwargs)
+        self.cached = {}
+
+    def __setitem__ (self, key, value):
+        if key in self.cached:
+            self.cached[key] = None
+        super(StyleTable,self).__setitem__(key, value)
+
+    def make_html (self, key):
+        #pdb.set_trace()
+        # not sure about caching now - we always need a new element
+        #if key in self.cached:
+        #    elm = ET.Element(tg,attrib=attrs)
+        #else:
+        if True:
+            if key in self:
+                val = self[key]
+            else:
+                pdb.set_trace()
+            tg = key
+            attrs = {}
+            (subtg, subattrs) = self.update_attrs(val)
+            if subtg != None: tg = subtg
+            if subattrs != None: attrs = subattrs
+            elm = ET.Element(tg,attrib=attrs)
+        return elm
+
+    def update_attrs (self, val):
+        if isinstance(val, collections.Mapping):
+            tg = None
+            attrs = {}
+            for ky,vl in val.items():
+                if ky == 'tag':
+                    tg = val['tag']
+                    # need semi-recursive system - if tag exists then update
+                    # attributes
+                    # think this works right - find lowest tag first then as
+                    # unwind the attributes with same name are overwritten with
+                    # the higher and higher tag name attributes
+                    if tg in self:
+                        #pdb.set_trace()
+                        subval = self[tg]
+                        (subtg, subattrs) = self.update_attrs(subval)
+                        attrs.update(subattrs)
+                elif ky == 'attribute':
+                    attrs = val['attribute']
+                else:
+                    # what to do about extras
+                    print val
+                    pdb.set_trace()
+                    print val
+            return (tg, attrs)
+        else:
+            return (None, None)
 
 # not quite what I thought - this is a standalone function
 def update(orig_dict, new_dict):
     for key, val in new_dict.iteritems():
         if isinstance(val, collections.Mapping):
-            tmp = update(orig_dict.get(key, { }), val)
+            tmp = update(orig_dict.get(key, StyleTable()), val)
             orig_dict[key] = tmp
         elif isinstance(val, list):
             orig_dict[key] = (orig_dict[key] + val)
@@ -52,12 +108,16 @@ class Stylesheet(object):
 
     def __init__ (self, name, template):
         # in python we make the template the class of the stylesheet
+        # save in separate variable
         self.name = name
-        self.style_type = template
+        self.style_type_class = template
+        self.style_type = None
         self.options = None
         self.renderer = None
-        self.style = None
-        #self.style = template()
+        # this is defined but is separate from the document style table
+        # stores some default styles - but not sure where copied to
+        # document style table yet
+        self.style = StyleTable()
 
     # we call this from HtmlDocument so
     # we need report as argument - now also need the doc
@@ -67,9 +127,10 @@ class Stylesheet(object):
 
         # we need to instantiate the style somewhere
         # not sure this is right place
-        if not self.style: self.style = self.style_type()
+        # why did I think this should not be done in the init
+        if self.style_type == None: self.style_type = self.style_type_class()
 
-        self.style.options_generator()
+        self.style_type.options_generator()
 
         # newdoc is new document
         # yes a new document is created which does NOT have
@@ -77,12 +138,9 @@ class Stylesheet(object):
         # which I think is the "compiled" style sheet
         # note the new document creation is done in the specific
         # stylesheet renderer
-        newdoc = self.style.renderer()
-
-        # this is probably wrong - not sure what title is defined at the moment
-        pdb.set_trace()
-        newdoc.title = doc.title
-        #newdoc.headline = doc.headline
+        # we need to pass the incoming document as well
+        # to deal with headline setting
+        newdoc = self.style_type.renderer(doc)
 
         #;; push the style sheet's default styles
         #(gnc:html-document-push-style newdoc (gnc:html-style-sheet-style sheet))
@@ -91,10 +149,15 @@ class Stylesheet(object):
         # and compiling ?? styles
         # somehow the style is not the same as the stylesheet??
         # maybe something to do with compiling the style
+        # we might want to merge the styles here - NOT assign
+        # which version should override??
+        #update(newdoc.style,doc.style)
+
         # this is the sneak!!
         # newdoc does NOT have a stylesheet defined
         # so the following render call does the trivial render
-        newdoc.style = doc.style
+
+        pdb.set_trace()
 
         return newdoc.render(report,headers)
 
@@ -275,6 +338,7 @@ class StylesheetTemplate(object):
 
 # as noted stylesheets have a template and an "instance" in scheme
 # Im still not sure if need to maintain this difference in python
+# I think Im coming to the conclusion we dont need this difference
 
 stylesheets = {}
 
@@ -284,4 +348,4 @@ stylesheets['default'] = Stylesheet('Default',Plain)
 ## for the moment instantiate 
 ## the style as a simple instance - should be instance of StyleTable
 #for shtnam in stylesheets:
-#    stylesheets[shtnam].style = stylesheets[shtnam].style_type()
+#    stylesheets[shtnam].style_type = stylesheets[shtnam].style_type_class()
