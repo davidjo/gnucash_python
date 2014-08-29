@@ -310,7 +310,7 @@ def exchange_by_euro (foreign, domestic, date):
 
 def case_exchange_fn (source_option, report_currency, to_date_tp):
 
-    pdb.set_trace()
+    #pdb.set_trace()
 
     if source_option == 'average-cost':
         exchange_fn = AverageExchangeFn()
@@ -325,7 +325,7 @@ def case_exchange_fn (source_option, report_currency, to_date_tp):
 
 def case_exchange_time_fn (source_option, report_currency, commodity_list, to_date_tp, start_percent, delta_percent):
 
-    pdb.set_trace()
+    #pdb.set_trace()
 
     if source_option == 'average-cost':
         exchange_fn = AverageExchangeTimeFn()

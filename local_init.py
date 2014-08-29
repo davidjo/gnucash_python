@@ -12,7 +12,8 @@ try:
 
     #pdb.set_trace()
 
-    gc.set_debug(gc.DEBUG_LEAK)
+    # uncomment to debug memory issues
+    #gc.set_debug(gc.DEBUG_LEAK)
 
     # see if calling this prevents the crashes
     # well the previous comments are now incorrect - we do need to do this
@@ -57,11 +58,10 @@ try:
     myplugin = python_only_plugin.MyPlugin()
 
     #pdb.set_trace()
-
-    print "junk"
+    print "local_init loaded"
 
 except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
+    print >> sys.stderr, "Failed to import in local_init!!"
     traceback.print_exc()
     pdb.set_trace()
 

@@ -250,11 +250,11 @@ class GncPluginPagePythonReport(PluginPage):
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "before access private"
+        #print >> sys.stderr, "before access private"
 
         priv = self.access_private_data()
 
-        print >> sys.stderr, "after access private"
+        #print >> sys.stderr, "after access private"
 
         # variables from the private data structure
         # do we need any of these
@@ -290,9 +290,8 @@ class GncPluginPagePythonReport(PluginPage):
 
     def class_init(self):
 
-        # this is 
-
-        # Im not seeing anyway to access the private data from python
+        # this is the class init function
+        # unfortunately Im not seeing anyway to access the private data from python
 
         #pdb.set_trace()
 
@@ -300,13 +299,14 @@ class GncPluginPagePythonReport(PluginPage):
         # we probably need to set all of these
         #gnc_plugin_page_class->plugin_name     = GNC_PLUGIN_PAGE_REPORT_NAME;
 
-        print >> sys.stderr, "before set_plugin_name"
+        #print >> sys.stderr, "before set_plugin_name"
 
         # stupid boy - this is setting the plugin_name NOT the page_name!!
+        # so define special C function in the wrappers to set the class private data
         #pdb.set_trace()
         self.set_class_init_data(plugin_name="GncPluginPagePythonReport")
 
-        print >> sys.stderr, "after plugin_name"
+        #print >> sys.stderr, "after plugin_name"
 
         #gnc_plugin_page_class->create_widget   = gnc_plugin_page_report_create_widget;
         #gnc_plugin_page_class->destroy_widget  = gnc_plugin_page_report_destroy_widget;
@@ -316,15 +316,15 @@ class GncPluginPagePythonReport(PluginPage):
         #gnc_plugin_page_class->update_edit_menu_actions = gnc_plugin_page_report_update_edit_menu;
         #gnc_plugin_page_class->finish_pending   = gnc_plugin_page_report_finish_pending;
 
-        print >> sys.stderr, "before set_callbacks"
+        #print >> sys.stderr, "before set_callbacks"
 
+        # and another special C function in the wrappers to set the callbacks
+        # in the class private data
         self.set_callbacks()
 
-        print >> sys.stderr, "after set_callbacks"
+        #print >> sys.stderr, "after set_callbacks"
 
         # need to add report-id as a property??
-
-        print "junk2"
 
 
     def constructor (self, report):
@@ -336,7 +336,7 @@ class GncPluginPagePythonReport(PluginPage):
         # (how does this work in the pygobject universe??)
         # then gets the report-id property by scanning the properties passed as an argument
         report_Id = self.get_property("report-id")
-        print "constructor report-id",report_Id
+        #print "constructor report-id",report_Id
 
         # scheme passes the report_Id - in python we will pass the report instance
         self.constr_init(report)
@@ -346,7 +346,7 @@ class GncPluginPagePythonReport(PluginPage):
         # again we are passing the instance pointer in python rather than integer report id
         # - but the report instance contains the report id
         report_id = report.id
-        print "constr_init report-id","%x"%report_id
+        #print "constr_init report-id","%x"%report_id
         #pdb.set_trace()
 
         # this sets the property in gnc_plugin_page_report
@@ -355,7 +355,7 @@ class GncPluginPagePythonReport(PluginPage):
         # I thought is where the property report-id is stored
         # so we store it, access it just to re-store it???
         self.set_property("report-id",report_id)
-        print "constr_init get report-id","%x"%self.get_property("report-id")
+        #print "constr_init get report-id","%x"%self.get_property("report-id")
 
         # do some setup - for gnc_plugin_page_report lots of scheme stuff
         #gnc_plugin_page_report_setup(self)
@@ -824,7 +824,6 @@ class GncPluginPagePythonReport(PluginPage):
             gnc_main_window.libgnc_gnomeutils.gnc_main_window_open_page(windowp,myreportp)
 
             #pdb.set_trace()
-            print "junk1"
 
         except Exception, errexc:
             traceback.print_exc()

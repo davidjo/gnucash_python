@@ -150,8 +150,8 @@ def get_current_book ():
     curbook_ptr = ctypes.cast( curbook_inst.__long__(), ctypes.POINTER( QofBookOpaque ) )
 
     #pdb.set_trace()
-    print >> sys.stderr, "curbook_ptr %x"%curbook_inst.__long__()
-    print >> sys.stderr, "curbook_ptr %x"%ctypes.addressof(curbook_ptr.contents)
+    #print >> sys.stderr, "curbook_ptr %x"%curbook_inst.__long__()
+    #print >> sys.stderr, "curbook_ptr %x"%ctypes.addressof(curbook_ptr.contents)
 
     # will this work - yes!!
     curbook = gnucash.Book(instance=curbook_inst)
@@ -283,7 +283,7 @@ def is_euro_currency (currency):
 
     is_euro = libgnc_apputils.gnc_is_euro_currency(currency_ptr)
 
-    print >> sys.stderr, "is_euro %x"%is_euro
+    #print >> sys.stderr, "is_euro %x"%is_euro
 
     return is_euro
 
@@ -300,7 +300,7 @@ def locale_default_currency_nodefault ():
 
     is_euro = libgnc_apputils.gnc_is_euro_currency(currency_ptr)
 
-    print >> sys.stderr, "is_euro %x"%is_euro
+    #print >> sys.stderr, "is_euro %x"%is_euro
 
     if is_euro:
 
@@ -347,8 +347,8 @@ def PrintAmount (amnt, gnc_print_info=None):
     # this is also labelled as shadow objects in the swig code
     gncnum_ptr = ctypes.cast( amnt.instance.this.__long__(), ctypes.POINTER( GncNumeric ) )
 
-    print >> sys.stderr, "gncnum_ptr %x"%amnt.instance.this.__long__()
-    print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
+    #print >> sys.stderr, "gncnum_ptr %x"%amnt.instance.this.__long__()
+    #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
 
     # so looks like we can pass by value - and return by value!!
     prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfo)

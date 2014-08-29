@@ -46,7 +46,7 @@ static PyObject *wrap_get_swig_type(PyObject *self, PyObject *args)
 // this function takes a python int object assuming is address of object to be wrapped
 // and converts to a wrapped SWIG object given the SWIG type string
 // the assumption is the integer is a pointer to an object of the SWIG type
-// these are highly dangerous functions as incomplete type compartibility
+// these are highly dangerous functions as incomplete type compatibility
 // tested for the moment
 
 static PyObject *wrap_int_to_swig(PyObject *self, PyObject *args)
@@ -108,7 +108,7 @@ static PyObject *wrap_int_to_swig(PyObject *self, PyObject *args)
 
 // this function takes a C object
 // and converts to a wrapped SWIG object given the SWIG type string
-// these are highly dangerous functions as incomplete type compartibility
+// these are highly dangerous functions as incomplete type compatibility
 // tested for the moment
 
 
@@ -152,7 +152,7 @@ static PyObject *wrap_cobject_to_swig(PyObject *self, PyObject *args)
 
 // this function takes a ctype object
 // and converts to a wrapped SWIG object given the SWIG type string
-// these are highly dangerous functions as incomplete type compartibility
+// these are highly dangerous functions as incomplete type compatibility
 // tested for the moment
 
 

@@ -757,7 +757,7 @@ class DateOption(OptionBase):
 
 
     def local_setter (self, date):
-        pdb.set_trace()
+        #pdb.set_trace()
         if self.date_legal(date):
             self.supersetter(date)
         else:
@@ -773,7 +773,7 @@ class DateOption(OptionBase):
             return [False, "date-option: illegal date"]
 
     def date_legal (self, date):
-        pdb.set_trace()
+        #pdb.set_trace()
         # something not sorted - an absolute date is a pair in scheme
         # maybe because date and time??
         # date[1] should be a symbol - whatever that is

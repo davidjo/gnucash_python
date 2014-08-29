@@ -71,12 +71,12 @@ _wrap_gnc_html_webkit_show_data(PyGObject *self, PyObject *args, PyObject *kwarg
     int datalen;
     GncHtmlWebkitPrivate *priv;
 
-    fprintf(stderr,"webkit show data called 1\n");
+    //fprintf(stderr,"webkit show data called 1\n");
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,"si:Gnc.HtmlWebkit.show_data", kwlist, &data, &datalen))
         return NULL;
 
-    fprintf(stderr,"webkit show data called 2\n");
+    //fprintf(stderr,"webkit show data called 2\n");
 
     // we now call the gnc-html class pointer
     //gnc_html_webkit_show_data(GNC_HTML_WEBKIT(self->obj), data, datalen);

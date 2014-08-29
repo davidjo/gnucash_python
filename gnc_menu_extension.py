@@ -43,9 +43,9 @@ class MyMenuAdditions(gobject.GObject):
         #self.menu_callbacks[menuitm.ae.name] = menuitm.ae.callback
         #menuitm.ae.callback = self.action_cb
         # although it says add actions we are actually adding one
-        print "group",self.group
-        print "menuitem",menuitm
-        print "menuitem",menuitm.ae.as_tuple()
+        #print "group",self.group
+        #print "menuitem",menuitm
+        #print "menuitem",menuitm.ae.as_tuple()
         #pdb.set_trace()
         #pythoncallback.add_actions(self.save_callbacks, self.group, [menuitm.ae.as_tuple()], user_data=self.window)
         self.group.add_actions([menuitm.ae.as_tuple()],user_data=self.window)
@@ -53,7 +53,7 @@ class MyMenuAdditions(gobject.GObject):
         # with path giving the menu position
         #   <menuitem name="Python Reports" action="pythonreportsAction"/>
         #print " preui",self.ui_manager.get_ui()
-        print "add_ui",self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type
+        #print "add_ui",self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type
         self.ui_manager.add_ui(self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type,False)
         #print "postui",self.ui_manager.get_ui()
         self.ui_manager.ensure_update()

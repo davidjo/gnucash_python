@@ -65,7 +65,7 @@ class Plain(StylesheetTemplate):
         # note these are essentially named lookups which can have a non-html tag name
         # which are replaced by html tags/attributes/text when seen in a report
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         #ssdoc = gnc_html_document_full.HtmlDocument()
         ssdoc = gnc_html_document.HtmlDocument()

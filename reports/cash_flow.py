@@ -118,7 +118,7 @@ class CashFlow(ReportTemplate):
 
     @staticmethod
     def local_filter_accountlist_type ():
-        pdb.set_trace()
+        #pdb.set_trace()
         accnts = sw_app_utils.get_current_root_account().get_descendants_sorted()
         #filter_accountlist_type([ACCT_TYPE_BANK, ACCT_TYPE_CASH, ACCT_TYPE_ASSET, ACCT_TYPE_STOCK, ACCT_TYPE_MUTUAL],get_descendants_sorted(sw_app_utils.get_current_root_account())), False)
         retacc = filter_accountlist_type([ACCT_TYPE_BANK, ACCT_TYPE_CASH, ACCT_TYPE_ASSET, ACCT_TYPE_STOCK, ACCT_TYPE_MUTUAL],accnts)
@@ -166,7 +166,7 @@ class CashFlow(ReportTemplate):
             retval = self.time_exchange_fn.run(gnc_commodity_utilities.GncMonetary(curr, amnt), report_currency, date).amount
             return retval
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         splits_to_do = accounts_count_splits(accounts)
 
@@ -206,8 +206,8 @@ class CashFlow(ReportTemplate):
                         s_acc = trnsplt.GetAccount()
                         s_val = trnsplt.GetValue()
                         s_cmd = s_acc.GetCommodity()
-                        print "split acc",s_acc.GetName(),s_val.to_string()
-                        print "split acc in",CashFlow.account_in_list(s_acc,accounts)
+                        #print "split acc",s_acc.GetName(),s_val.to_string()
+                        #print "split acc in",CashFlow.account_in_list(s_acc,accounts)
 
                         if s_acc == None:
                             print "WARNING: s-account is NULL for split: %s",trnsplt.GetGUID() 
@@ -215,7 +215,6 @@ class CashFlow(ReportTemplate):
                         if s_acc != None and \
                            not CashFlow.account_in_list(s_acc,accounts) \
                             and s_val.mul(spltval,gnucash.GNC_DENOM_AUTO,gnucash.GNC_HOW_DENOM_REDUCE).negative_p():
-                            print "got split!!"
                             if not split_in_list(trnsplt,seen_split_list):
                                 if trnval.zero_p():
                                     split_trans_ratio = gnucash.GncNumeric(1,1)
@@ -252,7 +251,7 @@ class CashFlow(ReportTemplate):
                                     self.money_out_collector.add(report_currency, s_report_value)
                                     s_acc_out_collector.add(report_currency, s_report_value)
 
-                                print "add val",s_report_value.to_string()
+                                #print "add val",s_report_value.to_string()
 
 
     def renderer (self, report):
@@ -266,7 +265,7 @@ class CashFlow(ReportTemplate):
         optobj = self.options.lookup_name('General','End Date')
         to_date_tp = optobj.get_option_value()
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         # now for html creation
         # where do we actually instantiate the Html object
@@ -448,7 +447,6 @@ class CashFlow(ReportTemplate):
             new_col = document.StyleSubElement(new_row,'text-cell')
             new_col.text = N_("Money In")
             new_col = document.StyleSubElement(new_row,'total-number-cell')
-            pdb.set_trace()
             colval = self.money_in_collector.sum(report_currency, exchange_fn)
             new_col.text = colval.to_currency_string()
 

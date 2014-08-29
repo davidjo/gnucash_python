@@ -1,0 +1,57 @@
+
+This is an alpha alpha implementation of report writing in python
+Three existing reports "functioning" - hello_world example, price_scatter and cash_flow
+
+Functioning means a report page is displayed which can be exported as html.
+Coding primarily based on scheme at the moment for testing and comparing to the scheme way
+- this is not necessarily the most "pythonic" way
+
+Requirements:
+
+swig
+python
+python bindings to gtk
+python gobject/glib bindings
+python elementtree module
+gnucash python bindings
+
+Implementation needs 6 compiled modules
+- installed in primary gnucash source under src/python in a new subdirectory called plugin
+- must be copied to ~/.gnucash/python after compilation
+
+Makefile.wrap defined which is designed to be run in an existing gnucash source
+after a full compilation step
+
+to compile: make -f Makefile.wrap release
+
+Three defines required
+- PYTHONPREFIX - path to your python installation
+- PYTHONVER - python version eg python2.6 for 2.6 version of python
+- SWIG - path to your swig binary
+
+At the moment Im using the pre-introspection gobject bindings
+(Im on OSX 10.6.8 using macports for primary gnucash installation)
+
+If you wish to modify the wrappings 3 additional utilities are needed from the gobject package
+pygobject-codegen-2.0
+h2def.py
+defsgen.py
+
+HTML output is via python wrappers access to the gnucash webkit output functions
+python elementtree module used as document model for HTML output
+
+python modules are designed to be work from a $HOME/.gnucash/python directory
+ui files need to be copied into ~/.gnucash/ui directory
+
+modified main gnucash installation share/gnucash/init.py needed which loads
+from a local_init.py file installed in ~/.gnucash/python
+- after local_init.py loaded all other python modules loaded from ~/.gnucash/python
+
+PRELIMINARY PARTIAL WORKING ONLY!!
+
+only partial implementation of report options
+only partial implementation of style tables
+
+modified option saving not working/tested
+modified report saving not working/tested
+

@@ -1327,7 +1327,6 @@ class GncOptionDB(object):
         for section in self.option_sections:
             secopts = section.options
             secopts.sort(key=attrgetter('guile_option.sort_tag'))
-        print "junk"
         #pdb.set_trace()
         #for sect_name in self.option_sections_dict:
         #    print "sect",sect_name

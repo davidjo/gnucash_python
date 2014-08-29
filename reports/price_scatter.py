@@ -212,7 +212,7 @@ class PriceScatter(ReportTemplate):
 
                 chart.add_datapoint((cnvdt,rlprc))
 
-            pdb.set_trace()
+            #pdb.set_trace()
 
             docelm = chart.render()
 

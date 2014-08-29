@@ -15,9 +15,9 @@ import _sw_core_utils
 
 import gnucash
 
-print "COREUTILS"
-print dir(_sw_core_utils)
-print "COREUTILS"
+#print "COREUTILS"
+#print dir(_sw_core_utils)
+#print "COREUTILS"
 
 
 #pdb.set_trace()
@@ -28,4 +28,4 @@ gnc_path_find_localized_html_file = _sw_core_utils.gnc_path_find_localized_html_
 
 gnc_prefs_get_bool = _sw_core_utils.gnc_prefs_get_bool
 
-print "coreutilsjunk"
+#print "coreutilsjunk"

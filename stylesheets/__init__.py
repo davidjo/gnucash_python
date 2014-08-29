@@ -157,7 +157,7 @@ class Stylesheet(object):
         # newdoc does NOT have a stylesheet defined
         # so the following render call does the trivial render
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         return newdoc.render(report,headers)
 

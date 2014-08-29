@@ -151,7 +151,7 @@ class HelloWorld(ReportTemplate):
 
         # lots of stuff about getting option values
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         # now for html creation
         # where do we actually instantiate the Html object

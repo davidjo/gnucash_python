@@ -37,12 +37,12 @@ gncmainwindowtype = gobject.type_from_name('GncMainWindow')
 
 
 # this lists the properties
-print >> sys.stderr, gobject.list_properties(gncmainwindowtype)
+#print >> sys.stderr, gobject.list_properties(gncmainwindowtype)
 
 # this lists the signal names
-print >> sys.stderr, gobject.signal_list_names(gncmainwindowtype)
+#print >> sys.stderr, gobject.signal_list_names(gncmainwindowtype)
 
-print >> sys.stderr, dir(gncmainwindowtype)
+#print >> sys.stderr, dir(gncmainwindowtype)
 
 # can we access a function in a python module via ctypes?
 # - no because it needs to be a dylib not an so
@@ -264,7 +264,6 @@ class MyPlugin(gobject.GObject):
         except Exception, errexc:
             traceback.print_exc()
             print >> sys.stderr, "error in reports_cb callback",str(errexc)
-        print  "junke"
 
     # unfortunately looks as though this wont work because of GIL issues
     # - in the python C plugin we lock the callback and plugin_finalize
@@ -285,7 +284,6 @@ class MyPlugin(gobject.GObject):
         except Exception, errexc:
             traceback.print_exc()
             print >> sys.stderr, "error in reports_cb callback",str(errexc)
-        print  "junke"
 
     def tools_cb (self,*args):
         print >> sys.stderr, "tools_cb",args

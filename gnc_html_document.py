@@ -130,7 +130,7 @@ class HtmlDocument(object):
 
     def render (self, report, headers=None):
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         # need to deal with fact this is called sort of recusively
         # - if have stylesheet we go through here and call self.style_sheet.render
@@ -218,7 +218,7 @@ class HtmlDocument(object):
                 docstr = None
                 raise RuntimeError("Invalid Html subdoc")
 
-            pdb.set_trace()
+            #pdb.set_trace()
 
             # copy in the report title
             if hasattr(subdoc,"title"):
@@ -272,7 +272,7 @@ class HtmlDocument(object):
                 traceback.print_exc()
                 pdb.set_trace()
 
-            pdb.set_trace()
+            #pdb.set_trace()
 
             try:
                 # only in python 2.7
