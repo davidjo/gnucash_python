@@ -30,6 +30,7 @@ def N_(msg):
 # THIS WORKS AND IS THE PREFERRED METHOD FOR THE MOMENT
 # - this allows some functionality to work automagically eg account hyper links
 # opening up account register
+# NOTE that this needs the gnchtml module in additions to define the GncHtml GType
 import gnchtmlwebkit
 
 

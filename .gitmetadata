@@ -2,7 +2,7 @@
 {'st_mtime': '1409321234', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2002'}  ;  README
 {'st_mtime': '1407484850', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '21673'}  ;  date_utils.py
 {'st_mtime': '1402687025', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '18480'}  ;  dialog_commodity.py
-{'st_mtime': '1409316708', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '63121'}  ;  dialog_options.py
+{'st_mtime': '1410713290', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '63211'}  ;  dialog_options.py
 {'st_mtime': '1407592616', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1695'}  ;  engine_ctypes.py
 {'st_mtime': '1407320190', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6431'}  ;  glib_ctypes.py
 {'st_mtime': '1400115091', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '52'}  ;  glib_gkeyfile.py
@@ -16,7 +16,7 @@
 {'st_mtime': '1407081016', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '19842'}  ;  gnc_date_edit_python.py
 {'st_mtime': '1403366011', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8237'}  ;  gnc_date_format.py
 {'st_mtime': '1402808705', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3416'}  ;  gnc_general_select.py
-{'st_mtime': '1407502442', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5757'}  ;  gnc_html.py
+{'st_mtime': '1409667973', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5840'}  ;  gnc_html.py
 {'st_mtime': '1407509289', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1939'}  ;  gnc_html_ctypes.py
 {'st_mtime': '1409316228', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10993'}  ;  gnc_html_document.py
 {'st_mtime': '1403822489', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4304'}  ;  gnc_html_scatter.py

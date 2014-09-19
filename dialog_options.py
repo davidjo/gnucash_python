@@ -1,6 +1,8 @@
 
 # this is a recoding of the options dialog (defined in dialog-options.c)
 # in python
+# needed because dialog-options.c has functions with SCM data
+# which need to be replaced
 
 import os
 
