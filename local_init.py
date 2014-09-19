@@ -29,6 +29,21 @@ try:
     # do we need to do this now?
     # maybe the threads_init above will fix this as well
 
+
+    # check for introspection
+    # if so add current path to girepository paths
+    try:
+        from gi.repository import GIRepository
+    except ImportError:
+        pass
+    else:
+        #pdb.set_trace()
+        rep = GIRepository.Repository.get_default()
+        addrep = os.path.join(sys.path[0],"girepository")
+        rep.prepend_search_path(addrep)
+        print "junk"
+
+
     #print "loading CAPI"
     #from pygobjectcapi import PyGObjectCAPI
 
@@ -49,7 +64,7 @@ try:
     # essentially we need to define the GType now and figure out how to set the callback
     # actually do we need the instantiation - maybe the import is enough??
     # yes - looks like the import is enough
-    import gnc_plugin_page_python_report
+    #import gnc_plugin_page_python_report
 
     #import gnc_plugin_python_example
 
