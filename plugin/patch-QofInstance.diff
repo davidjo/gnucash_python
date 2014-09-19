@@ -1,0 +1,17 @@
+--- gir/QofInstance-0.1.gir.orig	2014-09-10 15:57:04.000000000 +0100
++++ gir/QofInstance-0.1.gir	2014-09-10 17:37:00.000000000 +0100
+@@ -11,13 +11,12 @@
+   <include name="GncGUID" version="0.1"/>
+   <include name="KvpFrame" version="1.0"/>
+   <include name="QofCollection" version="0.1"/>
++  <include name="QofBook" version="0.1"/>
+   <namespace name="QofInstance"
+              version="0.1"
+              shared-library="/opt/local/lib/libgnc-qof.1.dylib"
+              c:identifier-prefixes="Qof"
+              c:symbol-prefixes="qof">
+-    <record name="Book" c:type="QofBook" disguised="1">
+-    </record>
+     <class name="Instance"
+            c:symbol-prefix="instance"
+            c:type="QofInstance"
