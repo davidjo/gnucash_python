@@ -48,7 +48,11 @@ include_list_gnucash = [ \
                        ]
 
 include_list_pgobject = [ \
-                          myprefix+'Library/Frameworks/Python.framework/Versions/2.6/include/python2.6/pygtk-2.0',
+                          myprefix+'Library/Frameworks/Python.framework/Versions/2.7/include/pygtk-2.0',
+                         ]
+
+include_list_python = [ \
+                          myprefix+'Library/Frameworks/Python.framework/Versions/2.7/include/python2.7',
                          ]
 
 gobjectpkg = pkgconfig("gobject-2.0")
@@ -58,11 +62,11 @@ gobjectpkg = pkgconfig("gobject-2.0")
 
 #setup(name="pythoncallback",version="1.0",ext_modules=[Extension("pythoncallback",["pythoncallback.c"],include_dirs=include_list+include_list_pgobject)])
 
-setup(name="swighelpers",version="1.0",ext_modules=[Extension("swighelpers",["swighelpers.c"],include_dirs=include_list+['.'])])
+setup(name="swighelpers",version="1.0",ext_modules=[Extension("swighelpers",["swighelpers.c"],include_dirs=include_list+include_list_python+['.'])])
 
 #distutils.sysconfig._config_vars['SO'] = ".dylib"
 
-setup(name="pygkeyfile",version="1.0",ext_modules=[Extension("pygkeyfile",["pygkeyfile.c"],include_dirs=include_list+include_list_pgobject+['.'],library_dirs=gobjectpkg['library_dirs'],libraries=gobjectpkg['libraries']+['ffi','/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/pyglib-2.0-python2.6'])])
+setup(name="pygkeyfile",version="1.0",ext_modules=[Extension("pygkeyfile",["pygkeyfile.c"],include_dirs=include_list+include_list_pgobject+['.'],library_dirs=gobjectpkg['library_dirs'],libraries=gobjectpkg['libraries']+['ffi','/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/pyglib-2.0-python2.7'])])
 
 #OK this doesnt work as the flags are extra and the 3 architecures are already added
 #setup(name="typcl",version="1.0",ext_modules=[Extension("typcl",["typcl.c"],extra_compile_args=['-arch', 'x86_64'],libraries=['tcl'],extra_link_args=['-arch','x86_64'])])

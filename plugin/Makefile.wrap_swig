@@ -1,14 +1,14 @@
 
-PYTHONPREFIX=/opt/local/Library/Frameworks/Python.framework/Versions/2.6
+PYTHONPREFIX=/opt/local/Library/Frameworks/Python.framework/Versions/2.7
 PYTHONLIB=${PYTHONPREFIX}/lib
-PYTHONINC=${PYTHONPREFIX}/include/python2.6
-PYTHONBIN=${PYTHONPREFIX}/bin/python2.6
+PYTHONINC=${PYTHONPREFIX}/include/python2.7
+PYTHONBIN=${PYTHONPREFIX}/bin/python2.7
 
 SWIG=/opt/local/bin/swig
 
 # Set the C flags to include the GTK+ and Python libraries
 CFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gtk+-2.0 pygtk-2.0 webkit-1.0` -I${PYTHONINC} -I../../libqof/qof -I../../gnome-utils -I../../app-utils -I../../html -I../../engine -I. -I../.. -I../../..
-LDFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs gtk+-2.0 pygtk-2.0` -L${PYTHONLIB} -lpython2.6
+LDFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs gtk+-2.0 pygtk-2.0` -L${PYTHONLIB} -lpython2.7
 
 
 #-I$(top_srcdir)/src -I$(top_srcdir)/src/engine \
@@ -142,14 +142,16 @@ glib-helpers-python.so: glib-helpers-python.o
 	$(CC) $(LDFLAGS) -shared $^ -o $@
 
 
-pygkeyfile.so swighelpers.so: swig-runtime-python.h
+#pygkeyfile.so swighelpers.so: swig-runtime-python.h
+pygkeyfile.so:
 	#$(CC) $(CFLAGS) -c $^ -o $@
 	${PYTHONBIN} setup.py --verbose build_ext -i
 
 # dont add glib-helpers-python.o as need to include swig-runtime-python.h in module
 # and so swig functions will be defined and cant figure out how to ignore them
 swighelpers.so: swighelpers.o
-	$(CC) $(LDFLAGS) -shared $^ -o $@
+	#$(CC) $(LDFLAGS) -shared $^ -o $@
+	$(CC) $(LDFLAGS) -bundle -undefined dynamic_lookup $^ -o $@
 
 swighelpers.o: swighelpers.c swig-runtime-python.h
 	$(CC) $(CFLAGS) -c swighelpers.c -o $@
