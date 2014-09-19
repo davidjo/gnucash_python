@@ -1,5 +1,5 @@
 
-#include <pygobject.h>
+//#include <pygobject.h>
 
 #include <Python.h>
 #include <swig-runtime-python.h>
@@ -223,7 +223,7 @@ initswighelpers(void)
     PyObject *modul;
 
     // to use ANY pygobject_... functions MUST have this
-    init_pygobject();
+    //init_pygobject();
 
     modul = Py_InitModule("swighelpers", methods);
     if (modul == NULL)
