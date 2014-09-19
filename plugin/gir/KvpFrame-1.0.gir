@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+- the following definition makes an opaque type
+-->
+<repository version="1.2"
+            xmlns="http://www.gtk.org/introspection/core/1.0"
+            xmlns:c="http://www.gtk.org/introspection/c/1.0">
+  <package name="KvpFrame-1.0"/>
+  <namespace name="KvpFrame" version="1.0"
+	     c:identifier-prefixes="Kvp"
+	     c:symbol-prefixes="kvp">
+    <record name="KvpFrame" c:type="KvpFrame"/>
+    <record name="KvpFrameptr" c:type="KvpFrame*"/>
+    <function name="dummy" c:identifier="dummy">
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+      </parameters>
+    </function>
+  </namespace>
+</repository>

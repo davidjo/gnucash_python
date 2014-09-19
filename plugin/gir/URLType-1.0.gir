@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<repository version="1.2"
+            xmlns="http://www.gtk.org/introspection/core/1.0"
+            xmlns:c="http://www.gtk.org/introspection/c/1.0">
+  <package name="URLType-1.0"/>
+  <namespace name="URLType" version="1.0"
+	     c:identifier-prefixes="URL"
+	     c:symbol-prefixes="URL">
+    <alias name="Type" c:type="URLType">
+      <type name="utf8" c:type="gchar*"/>
+    </alias>
+    <constant name="TYPE_FILE" value="file" c:type="URL_TYPE_FILE">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_JUMP" value="jump" c:type="URL_TYPE_JUMP">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_HTTP" value="http" c:type="URL_TYPE_HTTP">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_FTP" value="ftp" c:type="URL_TYPE_FTP">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_SECURE" value="secure" c:type="URL_TYPE_SECURE">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_REGISTER" value="register" c:type="URL_TYPE_REGISTER">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_ACCTTREE" value="accttree" c:type="URL_TYPE_ACCTTREE">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_REPORT" value="report" c:type="URL_TYPE_REPORT">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_OPTIONS" value="options" c:type="URL_TYPE_OPTIONS">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_SCHEME" value="scheme" c:type="URL_TYPE_SCHEME">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_HELP" value="help" c:type="URL_TYPE_HELP">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_XMLDATA" value="xmldata" c:type="URL_TYPE_XMLDATA">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_PRICE" value="price" c:type="URL_TYPE_PRICE">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_OTHER" value="other" c:type="URL_TYPE_OTHER">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <constant name="TYPE_BUDGET" value="budget" c:type="URL_TYPE_BUDGET">
+      <type name="utf8" c:type="gchar*"/>
+    </constant>
+    <function name="dummy" c:identifier="dummy">
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+      </parameters>
+    </function>
+  </namespace>
+</repository>
