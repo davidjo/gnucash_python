@@ -1,0 +1,163 @@
+
+PYTHONPREFIX=/opt/local/Library/Frameworks/Python.framework/Versions/2.6
+PYTHONLIB=${PYTHONPREFIX}/lib
+PYTHONINC=${PYTHONPREFIX}/include/python2.6
+PYTHONBIN=${PYTHONPREFIX}/bin/python2.6
+
+SWIG=/opt/local/bin/swig
+
+# Set the C flags to include the GTK+ and Python libraries
+CFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gtk+-2.0 pygtk-2.0 webkit-1.0` -I${PYTHONINC} -I../../libqof/qof -I../../gnome-utils -I../../app-utils -I../../html -I../../engine -I. -I../.. -I../../..
+LDFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs gtk+-2.0 pygtk-2.0` -L${PYTHONLIB} -lpython2.6
+
+
+#-I$(top_srcdir)/src -I$(top_srcdir)/src/engine \
+#-I$(top_srcdir)/src/app-utils -I${top_srcdir}/src/libqof/qof \
+
+_gnome_utils_c.c: gnome-utils.i ../../base-typemaps.i 
+	$(SWIG) -python -Wall -Werror -o $@ $<
+
+_gnome_utils_c.o: _gnome_utils_c.c
+	$(CC) $(CFLAGS) -I${PYTHONINC} -c $^ 
+
+_gnome_utils_c.so: _gnome_utils_c.o
+	$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+
+
+_html_webkit_c.c: html-webkit.i ../../base-typemaps.i 
+	cp -p ../../html/gnc-html.h gnc-html.h
+	patch -p0 -b <patch-gnc-html.diff
+	$(SWIG) -python -Wall -Werror -o $@ $<
+
+_html_webkit_c.o: _html_webkit_c.c
+	$(CC) $(CFLAGS) -I${PYTHONINC} -c $^ 
+
+_html_webkit_c.so: _html_webkit_c.o
+	$(CC) $(LDFLAGS) ../../html/.libs/libgncmod-html.dylib -shared $^ -o $@
+
+
+testing: _gnome_utils_c.so _html_webkit_c.so
+
+
+gnchtmlwebkit.so: gnchtmlwebkit-methods.o gnchtmlwebkitmodule.o
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../html/.libs/libgncmod-html.dylib -shared $^ -o $@
+
+gnchtmlwebkit-methods.c: gnchtmlwebkit.defs gnchtmlwebkit.override
+	#./runcodegen.py --prefix gnchtmlwebkit 
+	env PYTHONPATH=${PYTHONPREFIX}/share/pygobject/2.0/codegen ${CODEGEN} --prefix gnchtmlwebkit \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gnchtmlwebkit.override \
+	--load-types gnchtmlwebkit-types.py \
+	gnchtmlwebkit.defs > $@
+
+gnchtmlwebkit.defs: gnchtmlwebkit-methods.defs gnchtmlwebkit-new.defs
+	cat gnchtmlwebkit-methods.defs gnchtmlwebkit-new.defs >gnchtmlwebkit.defs
+
+gnchtmlwebkit-methods.defs:
+	${H2DEF} ../../html/gnc-html-webkit.h >gnchtmlwebkit-methods.defs
+	#${DEFSGEN} -m gnchtmlwebkit -l 
+	#patch -p0 -b <patch-fields.diff
+
+
+gnchtml.so: gnchtml-methods.o gnchtmlmodule.o
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../html/.libs/libgncmod-html.dylib -shared $^ -o $@
+
+gnchtml-methods.c: gnchtml.defs gnchtml.override
+	#./runcodegen.py --prefix gnchtml 
+	env PYTHONPATH=${PYTHONPREFIX}/share/pygobject/2.0/codegen ${CODEGEN} --prefix gnchtml \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gnchtml.override \
+	--load-types gnchtml-types.py \
+	gnchtml.defs > $@
+
+gnchtml.defs: gnchtml-methods.defs gnchtml-new.defs
+	cat gnchtml-methods.defs gnchtml-new.defs >gnchtml.defs
+
+gnchtml-methods.defs:
+	# remove duplicate function definitions!!
+	cp -p ../../html/gnc-html.h gnc-html.h
+	patch -p0 -b <patch-gnc-html.diff
+	${H2DEF} gnc-html.h >gnchtml-methods.defs
+	#${DEFSGEN} -m gnchtml -l 
+	#patch -p0 -b <patch-fields.diff
+
+gnctreeview.so: gnctreeview-methods.o gnctreeviewmodule.o
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+
+gnctreeview-methods.c: gnctreeview.defs gnctreeview.override
+	#./runcodegen.py --prefix gnctreeview 
+	env PYTHONPATH=${PYTHONPREFIX}/share/pygobject/2.0/codegen ${CODEGEN} --prefix gnctreeview \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gnctreeview.override \
+	--load-types gnctreeview-types.py \
+	gnctreeview.defs > $@
+
+gnctreeview.defs: gnctreeview-methods.defs gnctreeview-new.defs
+	cat gnctreeview-methods.defs gnctreeview-new.defs >gnctreeview.defs
+
+gnctreeview-methods.defs:
+	${H2DEF} gnc-tree-view.h >gnctreeview-methods.defs
+	#${DEFSGEN} -m gnctreeview -l 
+	#patch -p0 -b <patch-fields.diff
+
+gnctreeviewaccount.so: gnctreeviewaccount-methods.o gnctreeviewaccountmodule.o
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS)  -shared $^ -o $@
+
+gnctreeviewaccount-methods.c: gnctreeviewaccount.defs gnctreeviewaccount.override
+	#./runcodegen.py --prefix gnctreeviewaccount 
+	env PYTHONPATH=${PYTHONPREFIX}/share/pygobject/2.0/codegen ${CODEGEN} --prefix gnctreeviewaccount \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gnctreeviewaccount.override \
+	--load-types gnctreeviewaccount-types.py \
+	gnctreeviewaccount.defs > $@
+
+gnctreeviewaccount.defs: gnctreeviewaccount-methods.defs gnctreeviewaccount-new.defs
+	cat gnctreeviewaccount-methods.defs gnctreeviewaccount-new.defs >gnctreeviewaccount.defs
+
+gnctreeviewaccount-methods.defs:
+	${H2DEF} gnc-tree-view-account.h >gnctreeviewaccount-methods.defs
+	#${DEFSGEN} -m gnctreeviewaccount -l 
+	#patch -p0 -b <patch-fields.diff
+
+swig-runtime-python.h:
+	$(SWIG) -python -external-runtime $@
+
+glib-helpers-python.o: glib-helpers-python.c swig-runtime-python.h
+	$(CC) $(CFLAGS) -c glib-helpers-python.c -o $@
+
+glib-helpers-python.so: glib-helpers-python.o
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) -shared $^ -o $@
+
+
+pygkeyfile.so swighelpers.so: swig-runtime-python.h
+	#$(CC) $(CFLAGS) -c $^ -o $@
+	${PYTHONBIN} setup.py --verbose build_ext -i
+
+# dont add glib-helpers-python.o as need to include swig-runtime-python.h in module
+# and so swig functions will be defined and cant figure out how to ignore them
+swighelpers.so: swighelpers.o
+	$(CC) $(LDFLAGS) -shared $^ -o $@
+
+swighelpers.o: swighelpers.c swig-runtime-python.h
+	$(CC) $(CFLAGS) -c swighelpers.c -o $@
+
+release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so gncmainwindow.so pygkeyfile.so
+
+# A rule to clean the generated files
+clean:
+	rm -f gncpluginpage.so gncpluginpage.o gncpluginpage-methods.c
+
+.PHONY: clean
