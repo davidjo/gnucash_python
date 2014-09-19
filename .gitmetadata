@@ -43,6 +43,7 @@
 {'st_mtime': '1407679171', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8217'}  ;  plugin/Makefile.wrap
 {'st_mtime': '1407396581', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5971'}  ;  plugin/glib-helpers-python.c
 {'st_mtime': '1407356600', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2037'}  ;  plugin/glib-helpers-python.h
+{'st_mtime': '1407670939', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1059'}  ;  plugin/gnc-html-patch.diff
 {'st_mtime': '1400265799', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11369'}  ;  plugin/gnc-plugin-page-python-report.c
 {'st_mtime': '1400193765', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3010'}  ;  plugin/gnc-plugin-page-python-report.h
 {'st_mtime': '1399923178', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3524'}  ;  plugin/gnc-plugin-python-generic.c
