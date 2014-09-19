@@ -36,11 +36,6 @@ except Exception, errexc:
 
 #pdb.set_trace()
 
-import gncpluginpage
-from gncpluginpage import PluginPage
-
-#import gnc_plugin_page
-
 import gnc_main_window
 
 from pygkeyfile import GKeyFile
@@ -72,38 +67,6 @@ class QofBookOpaque(ctypes.Structure):
     pass
 
 
-
-gncpluginpagetype = gobject.type_from_name('GncPluginPage')
-
-gncpluginpagereporttype = gobject.type_from_name('GncPluginPageReport')
-
-
-# strange  - it is here where the class init function is called
-
-# this lists the properties
-#print >> sys.stderr, gobject.list_properties(gncpluginpagetype)
-
-# this lists the signal names
-#print >> sys.stderr, gobject.signal_list_names(gncpluginpagetype)
-
-
-
-
-# OK attempt to create a Python class for gnc_plugin_page
-
-#pdb.set_trace()
-
-tmppluginpage = gobject.new(gobject.type_from_name('GncPluginPage'))
-
-#print "GObject types"
-
-#print gobject.type_children(gobject.type_from_name('GncPluginPage'))
-#print gobject.type_children(gobject.type_from_name('QofBook'))
-#print gobject.type_parent(gobject.type_from_name('GncPluginPage'))
-#for gtyp in gobject.type_children(gobject.type_from_name('GObject')):
-#    print gtyp
-
-
 # define a function equivalent to N_ for internationalization
 def N_(msg):
     return msg
@@ -127,6 +90,52 @@ python_pages = {}
 # now create a new plugin for python reports
 
 STOCK_PDF_EXPORT = "gnc-pdf-export"
+
+
+if True:
+
+    import gncpluginpage
+    from gncpluginpage import PluginPage
+
+    #import gnc_plugin_page
+
+    gncpluginpagetype = gobject.type_from_name('GncPluginPage')
+
+    gncpluginpagereporttype = gobject.type_from_name('GncPluginPageReport')
+
+
+    # strange  - it is here where the class init function is called
+
+    # this lists the properties
+    #print >> sys.stderr, gobject.list_properties(gncpluginpagetype)
+
+    # this lists the signal names
+    #print >> sys.stderr, gobject.signal_list_names(gncpluginpagetype)
+
+
+
+
+    # OK attempt to create a Python class for gnc_plugin_page
+
+    #pdb.set_trace()
+
+    tmppluginpage = gobject.new(gobject.type_from_name('GncPluginPage'))
+
+    #print "GObject types"
+
+    #print gobject.type_children(gobject.type_from_name('GncPluginPage'))
+    #print gobject.type_children(gobject.type_from_name('QofBook'))
+    #print gobject.type_parent(gobject.type_from_name('GncPluginPage'))
+    #for gtyp in gobject.type_children(gobject.type_from_name('GObject')):
+    #    print gtyp
+
+else:
+
+    import gnome_utils
+    from gnome_utils import GncPluginPage
+
+    # can we do this??
+    PluginPage = GncPluginPage
 
 # this sort of worked prior to wrap of gncpluginpage using codegen
 #class GncPluginPagePythonReport(type(tmppluginpage)):
@@ -488,6 +497,19 @@ class GncPluginPagePythonReport(PluginPage):
 
 
     def create_widget (self):
+
+        # calling stack showing report page html create stack
+        #0  0x00000001001c6327 in gnc_html_init ()
+        #1  0x0000000104f6aa13 in g_type_create_instance ()
+        #2  0x0000000104f53bb8 in g_object_new_internal ()
+        #3  0x0000000104f54fad in g_object_newv ()
+        #4  0x0000000104f551ac in g_object_new ()
+        #5  0x00000001001c743a in gnc_html_webkit_new ()
+        #6  0x000000010003e6af in gnc_plugin_page_report_create_widget ()
+        #7  0x000000010021e981 in gnc_plugin_page_create_widget ()
+        #8  0x0000000100214220 in gnc_main_window_open_page ()
+        #9  0x0000000100038cce in _wrap_gnc_main_window_open_report ()
+
 
         # call stack showing how we get to report renderer function
         # gnc_run_report calls the scheme gnc:report-run function
