@@ -17,9 +17,13 @@ import pdb
 import traceback
 
 
-import gtk
-
-import gobject
+# not apparently needed
+# either
+#from gi.repository import Gtk
+#from gi.repository import GObject
+# or
+#import gtk
+#import gobject
 
 
 try:
@@ -655,6 +659,7 @@ class AccountListLimitedOption(OptionBase):
         self.option_value = newlst
         # list should be validated
         # for x in newlst: self.value_validator(x)
+        valid = True
         if valid:
             self.option_value = map(convert_to_guid(self.option_value))
             self.option_set = True

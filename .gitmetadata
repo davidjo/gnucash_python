@@ -94,7 +94,7 @@
 {'st_mtime': '1409316368', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10239'}  ;  python_only_plugin.py
 {'st_mtime': '1408566285', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10773'}  ;  qof_ctypes.py
 {'st_mtime': '1408992981', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16401'}  ;  report_objects.py
-{'st_mtime': '1409317634', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '46098'}  ;  report_options.py
+{'st_mtime': '1410790882', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '46224'}  ;  report_options.py
 {'st_mtime': '1402183307', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '0'}  ;  reports/__init__.py
 {'st_mtime': '1409317537', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '21524'}  ;  reports/cash_flow.py
 {'st_mtime': '1409317579', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16019'}  ;  reports/hello_world.py
