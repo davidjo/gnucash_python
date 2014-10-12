@@ -12,7 +12,7 @@ import bisect
 
 import numbers
 
-import time
+import datetime
 
 from operator import attrgetter
 
@@ -50,6 +50,7 @@ except Exception, errexc:
 
 import gnucash
 
+import gnucash_log
 from gnucash_log import PERR
 
 log_module = "gnc.gui.python"
@@ -118,6 +119,12 @@ class GncOption(object):
             return self.guile_option.value_validator
         else:
             return None
+
+    #def permissible_value (self, index):
+    #    pdb.set_trace()
+    #    if index < 0:
+    #        return None
+    #    return self.guile_option.index_to_value(index)
 
     def set_ui_value_internal (self, use_default):
 
@@ -190,7 +197,7 @@ class GncOption(object):
                 self.widget_changed_proc(value)
 
     def changed_widget_cb (self, entry):
-        print "changed_widget_cb"
+        gnucash_log.dbglog("changed_widget_cb")
         #gc.collect()
         self.changed = True
         #self.call_widget_changed_proc()
@@ -198,18 +205,19 @@ class GncOption(object):
         self.changed_internal(entry,True)
 
     def multichoice_cb (self, entry):
-        print "multichoice_cb"
+        gnucash_log.dbglog("multichoice_cb")
         # this just maps GtkColorButton to widget and calls changed_widget_cb
         self.changed_widget_cb(entry)
 
 
     def commit (self):
-        print "commit called"
+        gnucash_log.dbglog("commit called")
         value = self.get_ui_value()
         if value == None:
             return
         validator = self.value_validator()
         if validator != None:
+            if not callable(validator): pdb.set_trace()
             result = validator(value)
         else:
             # punt for the moment
@@ -217,11 +225,11 @@ class GncOption(object):
 
         # from scheme looks like we get a list
         if result == None or not isinstance(result,list):
-            PERR("bad validation result")
+            PERR(log_module,"bad validation result")
             return
         ok = result[0]
         if not isinstance(ok,bool):
-            PERR("bad validation result")
+            PERR(log_module,"bad validation result")
             return
         if ok:
             value = result[1]
@@ -230,7 +238,7 @@ class GncOption(object):
         else:
             oops = result[2]
             if not isinstance(oops,str):
-                PERR("bad validation result")
+                PERR(log_module,"bad validation result")
                 return
             #utf8 conversion here
             name = self.name
@@ -305,6 +313,7 @@ class GncOption(object):
             value.set_tooltip_text(documentation)
 
     def get_color_info (self, use_default):
+        # this converts to a scale of 0.0-1.0
         if use_default:
             #return self.guile_option.default_getter()
             rgba = self.guile_option.default_getter()
@@ -391,13 +400,13 @@ class GncOption(object):
         # need to check utf-8'ness here
         return newstr
     def set_ui_widget_text (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_text"
+        gnucash_log.dbglog("set_ui_widget_text")
     def set_ui_value_text (self, use_default, widget, value):
-        print "set_ui_value_text"
+        gnucash_log.dbglog("set_ui_value_text")
     def get_ui_value_text (self, widget):
-        print "get_ui_value_text"
+        gnucash_log.dbglog("get_ui_value_text")
     def set_ui_widget_currency (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_currency"
+        gnucash_log.dbglog("set_ui_widget_currency")
 
         colon_name = name + ":"
         label = gtk.Label(colon_name)
@@ -419,18 +428,18 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
     def set_ui_value_currency (self, use_default, widget, value):
-        print "set_ui_value_currency"
+        gnucash_log.dbglog("set_ui_value_currency")
         if isinstance(value,gnucash.GncCommodity):
             widget.set_currency(value)
             return False
         else:
             return True
     def get_ui_value_currency (self, widget):
-        print "get_ui_value_currency"
+        gnucash_log.dbglog("get_ui_value_currency")
         newcommod = widget.get_currency()
         return newcommod
     def set_ui_widget_commodity (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_commodity"
+        gnucash_log.dbglog("set_ui_widget_commodity")
         #pdb.set_trace()
 
         colon_name = name + ":"
@@ -463,7 +472,7 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
     def set_ui_value_commodity (self, use_default, widget, value):
-        print "set_ui_value_commodity"
+        gnucash_log.dbglog("set_ui_value_commodity")
         #pdb.set_trace()
         if isinstance(value,gnucash.GncCommodity):
             widget.set_selected(value)
@@ -471,7 +480,7 @@ class GncOption(object):
         else:
             return True
     def get_ui_value_commodity (self, widget):
-        print "get_ui_value_commodity"
+        gnucash_log.dbglog("get_ui_value_commodity")
         #pdb.set_trace()
         newcommod = widget.get_selected()
         return newcommod
@@ -494,18 +503,22 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
     def set_ui_value_multichoice (self, use_default, widget, value):
-        if value >= 0 and value < len(self.guile_option.option_data):
-            widget.set_active(value)
+        #pdb.set_trace()
+        value_index = self.guile_option.lookup_key(value)
+        if value_index >= 0 and value_index < len(self.guile_option.option_data):
+            widget.set_active(value_index)
             return False
         else:
             return True
     def get_ui_value_multichoice (self, widget):
         # big question is whether to base from 0 or 1 - now going with 0
         # raw indexes are base 0
+        #pdb.set_trace()
         newmulti = widget.get_active()
-        return newmulti
+        #return self.permissible_value(newmulti)
+        return self.guile_option.option_data[newmulti][0]
     def set_ui_widget_date (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_date"
+        gnucash_log.dbglog("set_ui_widget_date")
 
         colon_name = name + ":"
         label = gtk.Label(colon_name)
@@ -535,7 +548,7 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, packed)
     def set_ui_value_date (self, use_default, widget, value):
-        print "set_ui_value_date"
+        gnucash_log.dbglog("set_ui_value_date")
         #pdb.set_trace()
 	bad_value = False
         if use_default:
@@ -568,7 +581,7 @@ class GncOption(object):
             bad_value = True
         return bad_value
     def get_ui_value_date (self, widget):
-        print "get_ui_value_date"
+        gnucash_log.dbglog("get_ui_value_date")
         #pdb.set_trace()
         subtype = self.guile_option.option_data[0]
         widget_list = widget.get_children()
@@ -602,7 +615,7 @@ class GncOption(object):
                 retval = ('relative', relval)
         return retval
     def set_ui_widget_account_list (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_account_list"
+        gnucash_log.dbglog("set_ui_widget_account_list")
 
         #pdb.set_trace()
 
@@ -636,26 +649,26 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, packed)
     def set_ui_value_account_list (self, use_default, widget, value):
-        print "set_ui_value_account_list"
+        gnucash_log.dbglog("set_ui_value_account_list")
         #pdb.set_trace()
         gnc_tree_view_account.set_selected_accounts(widget,value,True)
         return False
     def get_ui_value_account_list (self, widget):
-        print "get_ui_value_account_list"
+        gnucash_log.dbglog("get_ui_value_account_list")
         #pdb.set_trace()
         acc_lst = gnc_tree_view_account.get_selected_accounts(widget)
         return acc_lst
     def set_ui_widget_account_sel (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_account_sel"
+        gnucash_log.dbglog("set_ui_widget_account_sel")
         pdb.set_trace()
     def set_ui_value_account_sel (self, use_default, widget, value):
-        print "set_ui_value_account_sel"
+        gnucash_log.dbglog("set_ui_value_account_sel")
         pdb.set_trace()
     def get_ui_value_account_sel (self, widget):
-        print "get_ui_value_account_sel"
+        gnucash_log.dbglog("get_ui_value_account_sel")
         pdb.set_trace()
     def set_ui_widget_list (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_list"
+        gnucash_log.dbglog("set_ui_widget_list")
         #gc.collect()
         colon_name = name + ":"
         label = gtk.Label(colon_name)
@@ -681,33 +694,35 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, packed)
     def set_ui_value_list (self, use_default, widget, value):
-        print "set_ui_value_list"
-        #pdb.set_trace()
+        gnucash_log.dbglog("set_ui_value_list")
         selection = widget.get_selection()
         if use_default:
-            for rw in self.guile_option.default_value:
+            for rwky in self.guile_option.default_value:
+                rw = self.guile_option.lookup_key(rwky)
                 if rw >= 0 and rw < len(self.guile_option.option_data):
                     selection.select_path((rw,))
                 else:
                     return True
         else:
-            for rw in value:
+            for rwky in value:
+                rw = self.guile_option.lookup_key(rwky)
                 if rw >= 0 and rw < len(self.guile_option.option_data):
                     selection.select_path((rw,))
                 else:
                     return True
         return False
     def get_ui_value_list (self, widget):
-        print "get_ui_value_list"
-        #pdb.set_trace()
+        gnucash_log.dbglog("get_ui_value_list")
         # big question is whether to base from 0 or 1 - now going with 0
         # raw indexes are base 0
         selection = widget.get_selection()
         newslc = selection.get_selected_rows()
         newlst = [ x[0] for x in newslc[1] ]
+        #newlst = [ self.permissible_value(x) for x in newlst ]
+        newlst = [ self.guile_option.option_data[x][0] for x in newlst ]
         return newlst
     def set_ui_widget_number_range (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_number_range"
+        gnucash_log.dbglog("set_ui_widget_number_range")
         colon_name = name + ":"
         label = gtk.Label(colon_name)
         label.set_alignment(1.0, 0.5)
@@ -745,7 +760,7 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
     def set_ui_value_number_range (self, use_default, widget, value):
-        print "set_ui_value_number_range"
+        gnucash_log.dbglog("set_ui_value_number_range")
         #pdb.set_trace()
         if isinstance(value, numbers.Number):
             widget.set_value(value)
@@ -753,13 +768,13 @@ class GncOption(object):
         else:
             return True
     def get_ui_value_number_range (self, widget):
-        print "get_ui_value_number_range"
+        gnucash_log.dbglog("get_ui_value_number_range")
         newnum = widget.get_value()
         #pdb.set_trace()
         # need to check utf-8'ness here
         return newnum
     def set_ui_widget_color (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_color"
+        gnucash_log.dbglog("set_ui_widget_color")
         colon_name = name + ":"
         label = gtk.Label(colon_name)
         label.set_alignment(1.0, 0.5)
@@ -784,7 +799,8 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
     def set_ui_value_color (self, use_default, widget, value):
-        print "set_ui_value_color"
+        gnucash_log.dbglog("set_ui_value_color")
+        #pdb.set_trace()
         #DEBUG("red %f, green %f, blue %f, alpha %f", red, green, blue, alpha)
         # yes in the C the value argument is totally ignored and get_color_info
         # actually gets the value from the option
@@ -796,54 +812,60 @@ class GncOption(object):
             return False
         return True
     def get_ui_value_color (self, widget):
-        print "get_ui_value_color"
+        gnucash_log.dbglog("get_ui_value_color")
+        #pdb.set_trace()
         newclr = widget.get_color()
         newalp = widget.get_alpha()
         scl = self.guile_option.option_data[0]
-        newval = [newclr[0],newclr[1],newclr[2],newalp]
-        return newclr
+        scl1 = scl/65535.0
+        newval = [newclr.red_float*scl,newclr.green_float*scl,newclr.blue_float*scl,newalp*scl1]
+        # maybe we should recode to return newclr directly here
+        # theres no need in python to do all this conversion - just save the gtk.gdk.Color
+        # object
+        return newval
     def set_ui_widget_font (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_font"
+        gnucash_log.dbglog("set_ui_widget_font")
     def set_ui_value_font (self, use_default, widget, value):
-        print "set_ui_value_font"
+        gnucash_log.dbglog("set_ui_value_font")
     def get_ui_value_font (self, widget):
-        print "get_ui_value_font"
+        gnucash_log.dbglog("get_ui_value_font")
     def set_ui_widget_pixmap (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_pixmap"
+        gnucash_log.dbglog("set_ui_widget_pixmap")
     def set_ui_value_pixmap (self, use_default, widget, value):
-        print "set_ui_value_pixmap"
+        gnucash_log.dbglog("set_ui_value_pixmap")
     def get_ui_value_pixmap (self, widget):
-        print "get_ui_value_pixmap"
+        gnucash_dbglog("get_ui_value_pixmap")
     def set_ui_widget_radiobutton (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_radiobutton"
+        gnucash_log.dbglog("set_ui_widget_radiobutton")
     def set_ui_value_radiobutton (self, use_default, widget, value):
-        print "set_ui_value_radiobutton"
+        gnucash_log.dbglog("set_ui_value_radiobutton")
     def get_ui_value_radiobutton (self, widget):
-        print "get_ui_value_radiobutton"
+        gnucash_log.dbglog("get_ui_value_radiobutton")
     def set_ui_widget_dateformat (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_dateformat"
+        gnucash_log.dbglog("set_ui_widget_dateformat")
     def set_ui_value_dateformat (self, use_default, widget, value):
-        print "set_ui_value_dateformat"
+        gnucash_log.dbglog("set_ui_value_dateformat")
     def get_ui_value_dateformat (self, widget):
-        print "get_ui_value_dateformat"
+        gnucash_log.dbglog("get_ui_value_dateformat")
     def set_ui_widget_budget (self, page_box,  name, documentation, enclosing=None, packed=None):
-        print "set_ui_widget_budget"
+        gnucash_log.dbglog("set_ui_widget_budget")
     def set_ui_value_budget (self, use_default, widget, value):
-        print "set_ui_value_budget"
+        gnucash_log.dbglog("set_ui_value_budget")
     def get_ui_value_budget (self, widget):
-        print "get_ui_value_budget"
+        gnucash_log.dbglog("get_ui_value_budget")
 
 
     def create_date_widget (self):
 
         #pdb.set_trace()
+        print "create_date_widget",self.guile_option.option_data
 
         date_type = self.guile_option.option_data[0]
         show_time = self.guile_option.option_data[1]
         use24 = sw_core_utils.gnc_prefs_get_bool('general', 'clock-24h')
 
         if date_type != 'relative':
-            ab_widget = GncDateEdit.new(time.time(), show_time, use24)
+            ab_widget = GncDateEdit.new(datetime.datetime.now(), show_time, use24)
             ab_widget.date_entry.connect("changed", self.changed_option_cb)
             if show_time:
                 ab_widget.time_entry.connect("changed", self.changed_option_cb)
@@ -905,7 +927,7 @@ class GncOption(object):
         self.changed_option_cb(widget)
 
     def set_select_method (self, use_absolute, set_buttons):
-        print "set_select_method"
+        gnucash_log.dbglog("set_select_method")
         widget_list = self.widget.get_children()
         ab_button = widget_list[GncDateEdit.GNC_RD_WID_AB_BUTTON_POS]
         ab_widget = widget_list[GncDateEdit.GNC_RD_WID_AB_WIDGET_POS]
@@ -1050,8 +1072,8 @@ class GncOption(object):
         for indx,opt in enumerate(self.guile_option.option_data):
             #label = opt.name
             #tip = opt.description
-            label = opt[0]
-            tip = opt[1]
+            label = opt[1]
+            tip = opt[2]
             store.append((label,))
 
         hbox.pack_start(view,expand=False,fill=False,padding=0)
@@ -1061,7 +1083,8 @@ class GncOption(object):
 
         selection.connect("changed",self.list_changed_cb)
 
-        for rw in self.guile_option.default_value:
+        for rwky in self.guile_option.default_value:
+            rw = self.guile_option.lookup_key(rwky)
             selection.select_path((rw,))
 
         bbox = gtk.VButtonBox()
@@ -1092,7 +1115,7 @@ class GncOption(object):
 
 
     def account_select_all_cb (self, selection):
-        print "select_all_cb"
+        gnucash_log.dbglog("select_all_cb")
         pdb.set_trace()
         view = self.widget
         selection = view.get_selection()
@@ -1100,7 +1123,7 @@ class GncOption(object):
         self.changed_widget_cb(view)
 
     def account_clear_all_cb (self, selection):
-        print "clear_all_cb"
+        gnucash_log.dbglog("clear_all_cb")
         pdb.set_trace()
         view = self.widget
         selection = view.get_selection()
@@ -1128,9 +1151,9 @@ class GncOption(object):
 
     def account_cb (self, selection):
         #pdb.set_trace()
-        print "account_cb"
-        print self
-        print selection
+        gnucash_log.dbglog("account_cb")
+        gnucash_log.dbglog(self)
+        gnucash_log.dbglog(selection)
         view = selection.get_tree_view()
         self.changed_widget_cb(view)
 
@@ -1164,20 +1187,23 @@ class GncOption(object):
 
     def create_multichoice_widget (self):
 
+        #pdb.set_trace()
+
         num_values = len(self.guile_option.option_data)
 
         store = gtk.ListStore(gobject.TYPE_STRING,gobject.TYPE_STRING)
         for indx,opt in enumerate(self.guile_option.option_data):
             #label = opt.name
             #tip = opt.description
-            label = opt[0]
-            tip = opt[1]
+            label = opt[1]
+            tip = opt[2]
             store.append((label,tip))
 
         widget = self.gnc_combott(store)
         # not seeing where this is done in scheme/C
-        # note this is making the default value the index
-        widget.set_active(self.guile_option.default_value)
+        rwky = self.guile_option.default_value
+        rw = self.guile_option.lookup_key(rwky)
+        widget.set_active(rw)
         #widget.set_model(store)
         widget.connect("changed",self.multichoice_cb)
 
@@ -1352,11 +1378,11 @@ class GncOptionDB(object):
 
 
     def register_change_callback (self, callback, section=None, name=None):
-        print "register_change_callback"
+        gnucash_log.dbglog("register_change_callback")
         return self.guile_options.register_callback(section, name, callback)
 
     def unregister_change_callback (self, callback_id):
-        print "unregister_change_callback"
+        gnucash_log.dbglog("unregister_change_callback")
         self.guile_options.unregister_callback(callback_id)
 
 
@@ -1414,7 +1440,7 @@ class GncOptionDB(object):
     def change_callbacks (self):
         #proc = gnc:options-run-callbacks
         #if proc == None:
-        #    PERR("not a procedure")
+        #    PERR(log_module,"not a procedure")
         #    return
         #proc(self.guile_options)
         self.guile_options.run_callbacks()
@@ -1493,7 +1519,7 @@ class DialogOption(object):
         self.option_db = None
 
     def response_cb (self, dialog, response):
-        print "response_cb called"
+        gnucash_log.dbglog("response_cb called")
         # traceback showing how this response callback ends up running
         # the report
         #0  0x00000001001a5bd4 in gnc_run_report ()
@@ -1643,7 +1669,7 @@ class DialogOption(object):
 
 
     def reset_cb (self, *args):
-        print "reset cb", args
+        gnucash_log.dbglog("reset cb", args)
         # args are clicked widget then dialog_option
 
 

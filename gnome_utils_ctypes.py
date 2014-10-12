@@ -138,3 +138,13 @@ libgnc_gnomeutils.gnc_tree_view_account_new.argtypes = [ c_bool ]
 libgnc_gnomeutils.gnc_tree_view_account_new.restype = c_void_p
 
 
+libgnc_gnomeutils.gnc_date_edit_get_type.argtypes = []
+libgnc_gnomeutils.gnc_date_edit_get_type.restype = GType
+
+libgnc_gnomeutils.gnc_date_edit_new.argtypes = [ time64, c_int, c_int ]
+libgnc_gnomeutils.gnc_date_edit_new.restype = c_void_p
+
+
+libgnc_gnomeutils.gnc_handle_date_accelerator.argtypes = [ c_void_p, c_void_p, c_char_p ]
+libgnc_gnomeutils.gnc_handle_date_accelerator.restype = c_bool
+

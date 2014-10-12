@@ -16,6 +16,8 @@ import gobject
 
 import pdb
 
+import traceback
+
 
 import sw_core_utils
 
@@ -28,6 +30,13 @@ import gnucash
 
 
 #pdb.set_trace()
+
+
+# this function is defined in scheme in app-utils directory
+# in python can only just print the arguments
+# oh great 2 definition of this function
+# one is gnc:error->string here and other gnc:error in main.scm in scm
+# Im really confused!!
 
 
 

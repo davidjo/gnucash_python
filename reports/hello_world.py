@@ -77,12 +77,12 @@ class HelloWorld(ReportTemplate):
         # should the list be a dict or not??
         self.options.register_option(MultiChoiceOption(N_("Hello, World!"), N_("Multi Choice Option"),"b",
                                                          N_("This is a multi choice option."),
-                                                         'Second Option',
+                                                         'second',
                                                          [ \
-                                                         [ N_("First Option"), N_("Help for first option.") ],
-                                                         [ N_("Second Option"), N_("Help for second option.") ],
-                                                         [ N_("Third Option"), N_("Help for third option.") ],
-                                                         [ N_("Fourth Option"), N_("The fourth option rules!") ],
+                                                         [ 'first', N_("First Option"), N_("Help for first option.") ],
+                                                         [ 'second', N_("Second Option"), N_("Help for second option.") ],
+                                                         [ 'third', N_("Third Option"), N_("Help for third option.") ],
+                                                         [ 'fourth', N_("Fourth Option"), N_("The fourth option rules!") ],
                                                          ]))
 
         self.options.register_option(StringOption(N_("Hello, World!"), N_("String Option"),"c",
@@ -127,16 +127,15 @@ class HelloWorld(ReportTemplate):
         self.options.register_option(AccountListOption(N_("Hello Again"), N_("An account list option"),"g",
                                                          N_("This is a account list option."),
                                                          [],
-                                                         False, True))
+                                                         None, True))
 
         self.options.register_option(ListOption(N_("Hello Again"), N_("A list option"),"h",
                                                   N_("This is a list option."),
-                                                  [0],
-                                                  # again is this a dict or simple list??
+                                                  ['good'],
                                                   [ \
-                                                  [ N_("The Good"), N_("Good option.") ],
-                                                  [ N_("The Bad"), N_("Bad option.") ],
-                                                  [ N_("The Ugly"), N_("Ugly option.") ],
+                                                  [ 'good', N_("The Good"), N_("Good option.") ],
+                                                  [ 'bad', N_("The Bad"), N_("Bad option.") ],
+                                                  [ 'ugly', N_("The Ugly"), N_("Ugly option.") ],
                                                   ]))
 
         # we need to set the default option section - the one selected

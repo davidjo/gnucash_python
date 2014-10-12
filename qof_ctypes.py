@@ -102,6 +102,27 @@ def gnc_print_date (dttm):
     newts.tb_nsec = 0
     return libgnc_qof.gnc_print_date(newts)
 
+libgnc_qof.qof_print_date.argtypes = [c_ulonglong]
+libgnc_qof.qof_print_date.restype = c_char_p
+
+def qof_print_date (mytime):
+    # print date from mytime in seconds (time64)
+    return libgnc_qof.qof_print_date(mytime)
+
+libgnc_qof.qof_scan_date.argtypes = [c_char_p, POINTER(c_int), POINTER(c_int), POINTER(c_int)]
+libgnc_qof.qof_scan_date.restype = c_bool
+
+def qof_scan_date(buff):
+
+    myday = c_int(-1)
+    mymonth = c_int(-1)
+    myyear = c_int(-1)
+
+    retcod = libgnc_qof.qof_scan_date(buff,byref(myday),byref(mymonth),byref(myyear))
+
+    return (retcod, myday.value, mymonth.value, myyear.value)
+  
+
 libgnc_qof.qof_strftime.argtypes = [c_char_p, gint, c_char_p, POINTER(TM)]
 libgnc_qof.qof_strftime.restype = gint
 

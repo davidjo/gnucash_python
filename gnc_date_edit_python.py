@@ -5,6 +5,8 @@ import time
 
 import datetime
 
+import ctypes
+
 import gobject
 
 import gtk
@@ -13,8 +15,16 @@ import gtk
 import pdb
 
 
+import gnome_utils_ctypes
+
+from qof_ctypes import TM
+from qof_ctypes import qof_scan_date
+from qof_ctypes import qof_date_format_get,qof_date_format_get_string
+
+
 def N_(msg):
     return msg
+
 
 
 class GncDateEdit(gtk.HBox):
@@ -50,7 +60,7 @@ class GncDateEdit(gtk.HBox):
                    }
 
 
-    def __init__ (self, the_time, flags):
+    def __init__ (self, the_time, flags=None):
 
         # this is equvivalent to gnc_date_edit_new_flags
 
@@ -59,24 +69,27 @@ class GncDateEdit(gtk.HBox):
         self.popup_in_progress = False
         self.lower_hour = 7
         self.upper_hour = 19
-        self.flags = GncDateEdit.GNC_DATE_EDIT_SHOW_TIME
+        if flags == None:
+            self.flags = GncDateEdit.GNC_DATE_EDIT_SHOW_TIME
+        else:
+            self.flags = flags
         self.in_selected_handler = False
 
-        self.flags = flags
         self.initial_time = -1
         self.create_children()
-        self.set_time(the_time)
+        self.set_time_dt(the_time)
 
 
     @classmethod
     def new (cls, the_time, show_time, use_24_format):
-        newobj = cls(the_time, (GncDateEdit.GNC_DATE_EDIT_SHOW_TIME if show_time else 0) | \
-                                 (GncDateEdit.GNC_DATE_EDIT_24_HR if use_24_format else 0))
+        flags = (GncDateEdit.GNC_DATE_EDIT_SHOW_TIME if show_time else 0) | \
+                                 (GncDateEdit.GNC_DATE_EDIT_24_HR if use_24_format else 0)
+        newobj = cls(the_time, flags)
         return newobj
 
     @classmethod
     def new_ts (cls, the_time, show_time, use_24_format):
-        newobj = cls(the_time, show_time, use_24_format)
+        newobj = cls.new(the_time, show_time, use_24_format)
         return newobj
 
     @classmethod
@@ -117,7 +130,7 @@ class GncDateEdit(gtk.HBox):
         self.cal_label = gtk.Label(str=N_("Calendar"))
         self.cal_label.set_alignment(0.0,0.5)
         hbox.pack_start(self.cal_label, expand=True, fill=True, padding=0)
-        if self.flags & GncDateEdit.GNC_DATE_EDIT_SHOW_TIME:
+        if (self.flags & GncDateEdit.GNC_DATE_EDIT_SHOW_TIME):
             self.cal_label.show()
 
         arrow = gtk.Arrow(arrow_type=gtk.ARROW_DOWN,shadow_type=gtk.SHADOW_NONE)
@@ -140,7 +153,12 @@ class GncDateEdit(gtk.HBox):
 
         self.connect("realize", self.fill_time_combo)
 
-        if self.flags & GncDateEdit.GNC_DATE_EDIT_SHOW_TIME:
+        # this seems to be needed in python to prevent showing time all
+        # the time - the show_all in set_ui_widget_date seems to apply
+        # fully recursively
+        self.time_entry.set_no_show_all(True)
+        self.time_combo.set_no_show_all(True)
+        if (self.flags & GncDateEdit.GNC_DATE_EDIT_SHOW_TIME):
             self.time_entry.show()
             self.time_combo.show()
 
@@ -189,7 +207,7 @@ class GncDateEdit(gtk.HBox):
             self.calendar.select_month(mydttm.month,mydttm.year)
             self.calendar.select_day(mydttm.day)
 
-        if self.flags & GncDateEdit.GNC_DATE_EDIT_24_HR:
+        if (self.flags & GncDateEdit.GNC_DATE_EDIT_24_HR):
             timstr = mydttm.strftime("%H:%M")
         else:
             timstr = mydttm.strftime("%I:%M %p")
@@ -201,23 +219,25 @@ class GncDateEdit(gtk.HBox):
 
     def set_time_dt (self, the_time):
         ts = time.mktime(the_time.timetuple())
+        print "set_time_dt",the_time
+        print "set_time_dt",ts
         self.set_time(ts)
 
     def set_time_ts (self, the_time):
-        self.set_time(the_time)
+        self.set_time(the_time.tv_sec)
 
     def set_time (self, the_time):
         # is this needed??
         # note this must be a timestamp in seconds
-        self.initial_time = the_time
-        self.set_property("time", the_time)
+        if type(the_time) != float and type(the_time) != int: pdb.set_trace()
+        self.initial_time = int(the_time)
+        self.set_property("time", int(the_time))
 
 
-    def set_time_cb (self, event):
+    def set_time_cb (self, widget):
         # this is called set_time but we also have gnc_date_edit_set_time which maps to set_time
         # renaming this as a callback - which is what it is
         #pdb.set_trace()
-
         model = self.time_combo.get_model()
         iter = self.time_combo.get_active_iter()
         timtupl = model.get(iter,0)
@@ -244,41 +264,77 @@ class GncDateEdit(gtk.HBox):
         for i in xrange(self.lower_hour,self.upper_hour+1):
 
              mtmp = mtm.replace(hour=i,minute=0)
-             if self.flags & GncDateEdit.GNC_DATE_EDIT_24_HR:
+             if (self.flags & GncDateEdit.GNC_DATE_EDIT_24_HR):
                  bufr = mtmp.strftime("%H:00")
              else:
                  bufr = mtmp.strftime("%I:00")
-             model.append((bufr,))
+             # this in C code but not needed here
+             #model.append((bufr,))
              for j in xrange(0,60,15):
                  mtmp = mtmp.replace(minute=j)
-                 if self.flags & GncDateEdit.GNC_DATE_EDIT_24_HR:
+                 if (self.flags & GncDateEdit.GNC_DATE_EDIT_24_HR):
                      bufr = mtmp.strftime("%H:%M")
                  else:
                      bufr = mtmp.strftime("%I:%M")
                  model.append((bufr,))
 
 
-    def gnc_handle_date_accelerator (self,dttm,txtstr):
-        pdb.set_trace()
+    def gnc_handle_date_accelerator (self,event,dttm,txtstr):
+        #pdb.set_trace()
+        event_ptr = hash(event)
+        tm_ctypes = TM()
+        #tm_ctypes.tm_year = dttm.year - 1900
+        #tm_ctypes.tm_mon = dttm.month - 1
+        #tm_ctypes.tm_mday = dttm.day
+        #tm_ctypes.tm_hour = dttm.hour
+        #tm_ctypes.tm_min = dttm.minute
+        #tm_ctypes.tm_sec = dttm.second
+        tm_ptr = ctypes.addressof(tm_ctypes)
+        retval = gnome_utils_ctypes.libgnc_gnomeutils.gnc_handle_date_accelerator(event_ptr,tm_ptr,txtstr)
+        print tm_ctypes
+        return (retval, dttm, tm_ctypes)
 
-    def scan_date (self, txtstr):
+    def scan_date_python (self, txtstr):
         # re-implement junkily here
         print "scan_date",txtstr
+
+        dtfmt = qof_get_date_format()
+        print "scan_date",dtfmt
 
         # bad date formats apparently give ValueError exception
         try:
             # this is format in C - why the Z - because this is the date format
             # we get in linux
             newdt = datetime.datetime.strptime(txtstr, "%Y-%m-%dT%H:%M:%SZ")
+            print "scan 1",newdt
         except ValueError:
             try:
                 newdt = datetime.datetime.strptime(txtstr, "%Y-%m-%d")
+                print "scan 2",newdt
             except ValueError:
+                print "scan date: bad date format",txtstr
                 return (False, None)
             else:
                 return (True, newdt)
         else:
             return (True, newdt)
+
+    def scan_date (self, txtstr):
+
+        #dtfmt = qof_date_format_get()
+        #dtfmtstr = qof_date_format_get_string(dtfmt)
+        #print "scan_date",dtfmt,dtfmtstr
+
+        #print "scan_date",txtstr
+
+        (retcod, myday, mymonth, myyear) = qof_scan_date(txtstr)
+
+        if retcod:
+            newdt = datetime.datetime(day=myday,month=mymonth,year=myyear)
+        else:
+            newdt = None
+
+        return (retcod, newdt)
 
     def get_date (self):
         #pdb.set_trace()
@@ -303,13 +359,13 @@ class GncDateEdit(gtk.HBox):
            timstr = self.time_entry.get_text()
            newtm = None
            try:
-               newtm = datetime.datetime.strptime(timstr, "%H:%M:%S %p")
+               newtm = datetime.datetime.strptime(timstr, "%H:%M %p")
            except ValueError:
                try:
-                   newtm = datetime.datetime.strptime(timstr, "%H:%M:%S")
+                   newtm = datetime.datetime.strptime(timstr, "%H:%M")
                except ValueError:
                    # not clear what happens if bad time given
-                   pass
+                   print "get_date_internal: bad time format",timstr
            if newtm != None:
                dttm = dttm.replace(hour=newtm.hour,minute=newtm.minute,second=newtm.second)
 
@@ -318,33 +374,40 @@ class GncDateEdit(gtk.HBox):
 
         return dttm
 
-    def date_accel_key_press (self, event):
-        txtstr = self.get_text()
+    def date_accel_key_press (self, widget, event):
+        print "date_accel_key_press", widget
+        txtstr = widget.get_text()
+        print "date_accel_key_press", txtstr
         dttm = self.get_date_internal()
-        if not self.gnc_handle_date_accelerator(dttm,txtstr):
+        (retcod, dttm, jnk) = self.gnc_handle_date_accelerator(event,dttm,txtstr)
+        print "retcod, dttm, jnk", retcod,dttm,jnk
+        if not retcod:
             return False
+        pdb.set_trace()
 
         # gnc_mktime seems to convert the dttm to seconds from epoch
         # just use python datetime functions
         #self.set_time(self.gnc_mktime(dttm))
-        self.set_time(dttm)
+        self.set_time_dt(dttm)
 
         self.emit("time_changed",0)
 
 
-    def key_press_entry (self, event):
+    def key_press_entry (self, widget, event, *args):
+        print "key_press_entry", widget, event, args
 
-        if not self.date_accel_key_press(event):
+        if not self.date_accel_key_press(widget,event):
             return False
 
         self.stop_emission_by_name("key-press-event")
         return True
 
-    def focus_out_event (self, event):
+    def focus_out_event (self, event, *args):
+        print "focus_out_event", event, args
 
         dttm = self.get_date_internal()
         #self.set_time(gnc_mktime(dttm))
-        self.set_time(dttm)
+        self.set_time_dt(dttm)
 
         dttm = self.get_date_internal()
 
@@ -472,7 +535,7 @@ class GncDateEdit(gtk.HBox):
         if event.keyval != gtk.gdk.KEY_Return and \
              event.keyval != gtk.gdk.KEY_KP_Enter and \
                 event.keyval != gtk.gdk.KEY_Escape:
-            return self.date_entry.date_accel_key_press(event)
+            return self.date_entry.date_accel_key_press(widget,event)
 
     def position_popup (self):
         req = self.cal_popup.size_request()
@@ -564,7 +627,7 @@ class GncDateEdit(gtk.HBox):
         # we could convert back to integer I guess
         #dtts = dttm.strftime("%s")
         dtts = time.mktime(dttm.timetuple())
-        self.set_time_ts(dtts)
+        self.set_time(dtts)
         self.in_selected_handler = False
 
     def day_selected_double_click (self, event):

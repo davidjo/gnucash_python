@@ -380,7 +380,7 @@ class ComplexBooleanOption(OptionBase):
         # I think because these are variables containing functions
         # we need to do this rather than use super() function
         # need to re-evaluate this sometime and make more pythonic
-        self.supersetter = self.setter
+        self.super_setter = self.setter
         self.setter = self.local_setter
 
 
@@ -393,7 +393,10 @@ class ComplexBooleanOption(OptionBase):
         # the setter and getter seem to store in the Kvp database
 
     def local_setter (self, x):
-        self.supersetter(x)
+        # this is not right - in scheme the super_setter calls
+        # the changed_callback after the setter_function_called_cb
+        # here its called before
+        self.super_setter(x)
         if callable(self.setter_function_called_cb):
             self.setter_function_called_cb(x)
 
@@ -456,16 +459,28 @@ class MultiChoiceCallbackOption(OptionBase):
                                 lambda x: self.option_data[x][2],
                                 lambda x: self.lookup(x),
                                ]
-        # cant do this till set option_data!!
-        # scheme stores the key index string - here we store the index
+        self.option_data_dict = {}
+        for indx,itm in enumerate(self.option_data):
+            kywd = itm[0]
+            self.option_data_dict[kywd] = indx
         # for the moment check we have a string
         if not isinstance(default_value,str):
             raise TypeError("wrong type for default value in multi-choice option")
-        self.default_value = self.lookup_key(default_value)
-        if self.default_value < 0:
+        if self.lookup_key(default_value) < 0:
             raise KeyError("unknown key symbol for default value in multi-choice option: %s"%default_value)
+        # we are storing the key string now not the key index
+        #self.default_value = self.lookup_key(default_value)
+        self.default_value = default_value
 
-        #self.setter = self.local_setter
+        # need to deal with setter and getter functions
+        # I think because these are variables containing functions
+        # we need to do this rather than use super() function
+        # need to re-evaluate this sometime and make more pythonic
+        self.super_setter = self.setter
+        self.setter = self.local_setter
+
+        #self.super_getter = self.getter
+        #self.getter = self.local_getter
 
         # the setter and getter seem to store in the Kvp database
 
@@ -477,19 +492,29 @@ class MultiChoiceCallbackOption(OptionBase):
 
         self.setter_function_called_cb = setter_function_called_cb
 
+    #def local_getter (self):
+    #    pdb.set_trace()
+    #    retval = self.super_getter()
+    #    return retval
+
     def local_setter (self, x):
+        # this is not right - in scheme the super_setter calls
+        # the changed_callback after the setter_function_called_cb
+        # here its called before
         if self.legal(x):
+            self.super_setter(x)
             if callable(self.setter_function_called_cb):
                 self.setter_function_called_cb(x)
         else:
-            # gnc:error "Illegal Multichoice option set"
-            pass
+            gnucash_log.gnc_error("Illegal Multichoice option set")
 
     def lookup_key (self, x):
         # return the index for a key string
-        for indx,itm in enumerate(self.option_data):
-            if itm[0] == x:
-                return indx
+        #for indx,itm in enumerate(self.option_data):
+        #    if itm[0] == x:
+        #        return indx
+        if x in self.option_data_dict:
+            return self.option_data_dict[x]
         return -1
 
     def lookup (self, x):
@@ -515,8 +540,10 @@ class MultiChoiceCallbackOption(OptionBase):
 
     def get_option_value (self):
         # again this is a function for returning value in the python script
+        # we are now returning the key value
         optmrk = self.getter()
-        return self.option_data[optmrk][0]
+        #return self.option_data[optmrk][0]
+        return optmrk
 
 
 
@@ -528,16 +555,13 @@ class MultiChoiceOption(MultiChoiceCallbackOption):
 
 class ListOption(OptionBase):
 
-    # in scheme this somehow maps to an account list option - keep as a simple list option here
-
     #  self.options.register_option(ListOption(N_("Hello, World!"), N_("A list option"),"h",
     #                                             N_("This is a list option."),
-    #                                             [0],
-    #                                             # again is this a dict or simple list??
+    #                                             ['good'],
     #                                             [ \
-    #                                             [ N_("The Good"), N_("Good option.") ],
-    #                                             [ N_("The Bad"), N_("Bad option.") ],
-    #                                             [ N_("The Ugly"), N_("Ugly option.") ],
+    #                                             [ 'good', N_("The Good"), N_("Good option.") ],
+    #                                             [ 'bad', N_("The Bad"), N_("Bad option.") ],
+    #                                             [ 'ugly', N_("The Ugly"), N_("Ugly option.") ],
     #                                             ]))
 
     def __init__ (self, section, optname, sort_tag, tool_tip, default_value=None,ok_values=None,option_widget_changed_cb=None):
@@ -555,11 +579,25 @@ class ListOption(OptionBase):
                                 lambda x: self.option_data[x][2],
                                 lambda x: self.lookup(x),
                                ]
-        # scheme stores the key index string - here we store a list
-        # of default indices
-        self.default_value = default_value
+        # create dict of values
+        # this assumes all keys unique - is this a requirement??
+        self.option_data_dict = {}
+        for indx,itm in enumerate(self.option_data):
+            kywd = itm[0]
+            self.option_data_dict[kywd] = indx
 
-        #self.setter = self.local_setter
+        # store a list of key strings as in scheme
+        # do a bit of type checking
+        self.default_value = []
+        for dfvl in default_value:
+            if not isinstance(dfvl,str):
+                raise TypeError("wrong type for default value in list option")
+            if self.lookup_key(dfvl) < 0:
+                raise KeyError("unknown key symbol for default value in list option: %s"%dfvl)
+            self.default_value.append(dfvl)
+
+        self.super_setter = self.setter
+        self.setter = self.local_setter
 
         # the setter and getter seem to store in the Kvp database
 
@@ -572,33 +610,43 @@ class ListOption(OptionBase):
         #self.setter_function_called_cb = setter_function_called_cb
 
     def local_setter (self, x):
+        # this is not right - in scheme the super_setter calls
+        # the changed_callback after the setter_function_called_cb
+        # here its called before
         if self.legal(x):
+            self.super_setter(x)
             if callable(self.setter_function_called_cb):
                 self.setter_function_called_cb(x)
         else:
-            # gnc:error "Illegal List option set"
-            pass
+            gnucash_log.gnc_error("Illegal List option set")
 
     def lookup_key (self, x):
         # return the index for a key string
-        for indx,itm in enumerate(self.option_data):
-            if itm[0] == x:
-                return indx
+        #for indx,itm in enumerate(self.option_data):
+        #    if itm[0] == x:
+        #        return indx
+        if x in self.option_data_dict:
+            return self.option_data_dict[x]
         return -1
 
     def lookup (self, x):
         # return whole sublist for a key as per scheme
-        for indx,itm in enumerate(self.option_data):
-            if itm[0] == x:
-                return itm
+        #for indx,itm in enumerate(self.option_data):
+        #    if itm[0] == x:
+        #        return itm
+        if x in self.option_data_dict:
+            return self.option_data[self.option_data_dict[x]]
         return None
 
     def legal (self, x):
         # this checks the key string (index 0) - not the displayed strings (index 1 or 2)
-        for itm in self.option_data:
-            if itm[0] == x:
-                return True
-        return False
+        #for itm in self.option_data:
+        #    if itm[0] == x:
+        #        return True
+        for itm in x:
+            if not itm in self.option_data_dict:
+                return False
+        return True
 
     def list_strings (self):
         # this returns the displayed strings - the option string and its tool tip
@@ -611,10 +659,11 @@ class ListOption(OptionBase):
         # again this is a function for returning value in the python script
         # can we return multiple values or just one??
         optmrk = self.getter()
-        vallst = []
-        for mrk in optmrk:
-           vallst.append(self.option_data[mrk][0])
-        return vallst
+        #vallst = []
+        #for mrk in optmrk:
+        #   vallst.append(self.option_data[mrk][0])
+        #return vallst
+        return optmrk
 
 
 class AccountListLimitedOption(OptionBase):
@@ -627,8 +676,6 @@ class AccountListLimitedOption(OptionBase):
         self.sort_tag = sort_tag
         self.documentation_string = tool_tip # AKA documentation_string
         self.option_data = [multiple_selection, acct_type_list]
-        # cant do this till set option_data!!
-        # scheme stores the key index string - here we store the index
         self.default_value = default_value
 
         self.getter = self.account_list_getter
@@ -639,10 +686,47 @@ class AccountListLimitedOption(OptionBase):
 
         self.widget_changed_cb = option_widget_changed_cb
 
+        # note this function must return a 2 tuple - True/False and a list
+        # we need to save the passed validator function in python
+        self.value_validator = self.local_validator
+        self.save_value_validator = value_validator
+
+        # this is a flag which is True of False depending if
+        # account items are account pointers or guids
+        self.option_set = None
+
+        #self.option_value = map(self.convert_to_guid,self.default_getter())
+
+    # in scheme the following functions apparently convert account lists
+    # into guid lists for self.option_value using the functions convert_to_guid
+    # and inverse convert_to_account
+    # for the moment ignoring this
+
+    def convert_to_guid (self, itm):
+        if type(itm) != str:
+            return itm.GetGUID()
+        return itm
+
+    def convert_to_account (self, itm):
+        # not valid!!
+        if type(itm) == str:
+             account = gnucash.GUID.AccountLookup(acc_guid,curbook)
+             account = xaccAccountLookup(gnc_get_current_book(),itm)
+             return account
+        return itm
+
 
     def account_list_getter (self):
-        # re-define to deal with lambda definitions
         #pdb.set_trace()
+        # re-define to deal with lambda definitions
+        # this seems to be the code in scheme
+        # 
+        #if option_set:
+        #    return map(self.convert_to_guid,self.account_list_default_getter())
+        #    return self.option_value
+        #else:
+        #    return self.account_list_default_getter()
+
         if self.option_value == None:
             return self.account_list_default_getter()
         if callable(self.option_value):
@@ -650,34 +734,44 @@ class AccountListLimitedOption(OptionBase):
         else:
             return self.option_value
 
-    def account_list_setter (self, x):
+    def account_list_setter (self, account_list):
         pdb.set_trace()
-        if self.option_value == None or len(self.option_value) == 0:
-            self.option_value = self.default_value
+        if account_list == None or len(account_list) == 0:
+            account_list = self.default_getter()
+        # the following maybe a translation of the scheme code
+        # the usage of filter seems to be to apply the lambda code to each element
+        # dont see how it actually filters anything
         newlst = []
-        for x in self.option_value:
-             xacc = xaccAccountLookup(gnc_get_current_book(),x)
+        for x in account_list:
+             if type(x) == str:
+                 xacc = gnucash.GUID.AccountLookup(x,curbook)
+                 xacc = xaccAccountLookup(gnc_get_current_book(),x)
+             else:
+                 xacc = x
              newlst.append(xacc)
-        self.option_value = newlst
+        account_list = newlst
         # list should be validated
-        # for x in newlst: self.value_validator(x)
-        valid = True
+        (valid, value) = self.local_validator(account_list)
         if valid:
-            self.option_value = map(convert_to_guid(self.option_value))
+            #self.option_value = map(self.convert_to_guid,value)
+            self.option_value = value
             self.option_set = True
         else:
-            #gnc:error "Illegal account list value set"
+            gnucash_log.gnc_error("Illegal account list value set")
+            pdb.set_trace()
             pass
 
     def account_list_default_getter (self):
         #pdb.set_trace()
         if callable(self.default_value):
-            return self.default_value()
+            defval = self.default_value()
         else:
-            return self.default_value
-        return convert_to_account(self.default_value)
+            defval = self.default_value
+        #return self.convert_to_account(defval)
+        return defval
 
     def lookup_key (self, x):
+        pdb.set_trace()
         # return the index for a key string
         for indx,itm in enumerate(self.option_data):
             if itm[0] == x:
@@ -685,24 +779,20 @@ class AccountListLimitedOption(OptionBase):
         return -1
 
     def lookup (self, x):
+        pdb.set_trace()
         # return whole sublist for a key as per scheme
         for indx,itm in enumerate(self.option_data):
             if itm[0] == x:
                 return itm
         return None
 
-    def legal (self, x):
-        # this checks the key string (index 0) - not the displayed strings (index 1 or 2)
-        for itm in self.option_data:
-            if itm[0] == x:
-                return True
-        return False
-
-    def multichoice_strings (self):
-        # this returns the displayed strings - the option string and its tool tip
-        if len(self.option_data) == 0:
-           return []
-        return [ (x[1],x[2]) for itm in self.option_data ]
+    def local_validator (self, account_list):
+        pdb.set_trace()
+        if self.save_value_validator == None:
+            return [True, account_list]
+        else:
+            #account_list = map(self.convert_to_account,account_list)
+            return self.save_value_validator(account_list)
 
 
     def get_option_value (self):
@@ -752,7 +842,7 @@ class DateOption(OptionBase):
         #self.widget_changed_cb = None
 
         # setup local setter
-        self.supersetter = self.setter
+        self.super_setter = self.setter
         self.setter = self.local_setter
 
     def get_default_value (self):
@@ -766,10 +856,9 @@ class DateOption(OptionBase):
     def local_setter (self, date):
         #pdb.set_trace()
         if self.date_legal(date):
-            self.supersetter(date)
+            self.super_setter(date)
         else:
-            #gnc:error "Illegal date value set:" date
-            pass
+            gnucash_log.gnc_error("Illegal date value set: %s"%date)
 
         # the setter and getter seem to store in the Kvp database
 
