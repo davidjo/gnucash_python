@@ -2,7 +2,7 @@ import sys
 import os
 import pdb
 import traceback
-print >> sys.stderr, "Imported python OK"
+#print >> sys.stderr, "Imported python OK"
 
 try:
     import _sw_app_utils
@@ -14,7 +14,7 @@ except Exception, errexc:
     pdb.set_trace()
 
 
-print >> sys.stderr, "Imported python OK 1"
+#print >> sys.stderr, "Imported python OK 1"
 
 #pdb.set_trace()
 
@@ -48,7 +48,7 @@ libgnccorenm = find_library("libgnc-core-utils")
 if libgnccorenm is None:
     raise RuntimeError("Can't find a libgnc-core-utils library to use.")
 
-print libgnccorenm
+#print libgnccorenm
 
 libpth = os.path.dirname(libgnccorenm)
 
@@ -67,9 +67,17 @@ sys.path.append(os.path.dirname(__file__))
 noisy = True
 if noisy:
     print "woop", os.path.dirname(__file__)
+# Importing the console class causes SIGTTOU to be thrown if GnuCash is
+# started in the background.  This causes a hang if it is not handled, 
+# so ignore it for the duration
+import signal
+old_sigttou = signal.signal(signal.SIGTTOU, signal.SIG_IGN)
 
 import pycons.console as cons
 import gtk
+
+# Restore the SIGTTOU handler
+signal.signal(signal.SIGTTOU, old_sigttou)
 
 if noisy:
     print "Hello from python!"
