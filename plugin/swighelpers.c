@@ -1,6 +1,4 @@
 
-//#include <pygobject.h>
-
 #include <Python.h>
 #include <swig-runtime-python.h>
 
