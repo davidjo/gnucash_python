@@ -16,6 +16,9 @@ def N_(msg):
     return msg
 
 
+import gnucash_log
+
+
 #  junk test
 import sw_app_utils
 
@@ -108,7 +111,7 @@ class MyPlugin(gobject.GObject):
         self.plugin_init()
 
     def plugin_class_init (self):
-        print >> sys.stderr, "plugin_class_init called"
+        gnucash_log.dbglog_err("plugin_class_init called")
         # try creating the ui xml file here
         ui_xml = """<ui>
   <menubar>
@@ -178,7 +181,7 @@ class MyPlugin(gobject.GObject):
 
         self.main_ui_merge.ensure_update()
 
-        print "merge_id",self.merge_id
+        gnucash_log.dbglog("merge_id",self.merge_id)
 
         # load the report classes and create instances
         # first import the report definitions
@@ -188,7 +191,7 @@ class MyPlugin(gobject.GObject):
         self.load_python_reports_menu()
 
     def plugin_init (self):
-        print >> sys.stderr, "python only plugin_init called"
+        gnucash_log.dbglog_err("python only plugin_init called")
 
 
     def load_python_reports_menu (self):
@@ -235,8 +238,8 @@ class MyPlugin(gobject.GObject):
         return menuitm
 
     def reports_cb (self, actionobj, user_data=None):
-        print >> sys.stderr, "report_cb",actionobj,user_data
-        print >> sys.stderr, "report_cb",actionobj.get_name()
+        gnucash_log.dbglog_err("report_cb",actionobj,user_data)
+        gnucash_log.dbglog_err("report_cb",actionobj.get_name())
         #(lambda (window)
         #  (let ((report (gnc:make-report
         #        (gnc:report-template-report-guid template))))
@@ -260,7 +263,7 @@ class MyPlugin(gobject.GObject):
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(report,window)
             gnc_plugin_page_python_report.OpenReport(report,window)
             #gc.collect()
-            print "call back done"
+            gnucash_log.dbglog("call back done")
         except Exception, errexc:
             traceback.print_exc()
             print >> sys.stderr, "error in reports_cb callback",str(errexc)
@@ -270,23 +273,23 @@ class MyPlugin(gobject.GObject):
     # this is crashing when we try a second call
 
     def plugin_finalize (self):
-        print >> sys.stderr, "python only plugin_finalize called"
+        gnucash_log.dbglog_err("python only plugin_finalize called")
 
     def old_reports_cb (self, actionobj, user_data=None):
-        print >> sys.stderr, "reports_cb",actionobj,user_data
+        gnucash_log.dbglog_err("reports_cb",actionobj,user_data)
         #pdb.set_trace()
         window = user_data
 
         try:
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(42,window)
             gnc_plugin_page_python_report.OpenReport(42,window)
-            print "call back done"
+            gnucash_log.dbglog("call back done")
         except Exception, errexc:
             traceback.print_exc()
             print >> sys.stderr, "error in reports_cb callback",str(errexc)
 
     def tools_cb (self,*args):
-        print >> sys.stderr, "tools_cb",args
+        gnucash_log.dbglog_err("tools_cb",args)
 
 # gdb call back for report
 #0  0x0000000100040898 in gnc_html_report_stream_cb ()

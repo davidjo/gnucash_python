@@ -33,6 +33,11 @@ ignore-glob
   *_get_type
 
 %%
+body
+
+int dbgflg = 0;
+
+%%
 override gnc_html_webkit_show_url kwargs
 
 static PyObject *
@@ -83,10 +88,10 @@ _wrap_gnc_html_webkit_show_data(PyGObject *self, PyObject *args, PyObject *kwarg
 
     GncHtmlWebkit* gself = GNC_HTML_WEBKIT(self->obj);
 
-    fprintf(stderr,"html self is %llx\n",(void *)GNC_HTML(gself));
-    fprintf(stderr,"html self is %d\n",GNC_IS_HTML(gself));
-    fprintf(stderr,"html self class is %llx\n",(void *)GNC_HTML_GET_CLASS(gself));
-    fprintf(stderr,"html self show_data is %llx\n",(void *)(GNC_HTML_GET_CLASS(gself)->show_data));
+    if (dbgflg) fprintf(stderr,"html self is %llx\n",(void *)GNC_HTML(gself));
+    if (dbgflg) fprintf(stderr,"html self is %d\n",GNC_IS_HTML(gself));
+    if (dbgflg) fprintf(stderr,"html self class is %llx\n",(void *)GNC_HTML_GET_CLASS(gself));
+    if (dbgflg) fprintf(stderr,"html self show_data is %llx\n",(void *)(GNC_HTML_GET_CLASS(gself)->show_data));
 
     // this appears to be the way we call should call it rather than
     // direct pointer call

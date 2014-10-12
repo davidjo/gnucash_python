@@ -32,6 +32,8 @@ from gnucash.gnucash_core_c import string_to_guid as gnucash_core_string_to_guid
 
 import swighelpers
 
+import gnucash_log
+
 
 def string_to_new_guid (cls, str):
     #pdb.set_trace()
@@ -139,16 +141,16 @@ def get_view_info (self):
 
     vwinfo = AccountViewInfo()
 
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo.include_type)
+    gnucash_log.dbglog_err("get_view_info: 0x%x"%ctypes.addressof(vwinfo))
+    gnucash_log.dbglog_err("get_view_info: 0x%x"%ctypes.addressof(vwinfo.include_type))
 
     vwptr = ctypes.pointer(vwinfo)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr.contents)
+    gnucash_log.dbglog_err("get_view_info: 0x%x"%ctypes.addressof(vwptr))
+    gnucash_log.dbglog_err("get_view_info: 0x%x"%ctypes.addressof(vwptr.contents))
 
     trvwptr = hash(self)
-    print >> sys.stderr, "tree view",self
-    print >> sys.stderr, "tree view 0x%x"%trvwptr
+    gnucash_log.dbglog_err("get_view_info: tree view",self)
+    gnucash_log.dbglog_err("get_view_info: tree view 0x%x"%trvwptr)
 
     gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_get_view_info(trvwptr, ctypes.cast( vwptr, ctypes.c_void_p ) )
 
@@ -160,13 +162,13 @@ def set_view_info (self, vwinfo):
     #print "set_view_info 1",self
     #gc.collect()
 
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo.include_type)
+    gnucash_log.dbglog_err("set_view_info: 0x%x"%ctypes.addressof(vwinfo))
+    gnucash_log.dbglog_err("set_view_info: 0x%x"%ctypes.addressof(vwinfo.include_type))
 
     vwptr = ctypes.pointer(vwinfo)
 
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr.contents)
+    gnucash_log.dbglog_err("set_view_info: 0x%x"%ctypes.addressof(vwptr))
+    gnucash_log.dbglog_err("set_view_info: 0x%x"%ctypes.addressof(vwptr.contents))
 
     trvwptr = hash(self)
 
@@ -179,7 +181,7 @@ def set_view_info (self, vwinfo):
 def get_cursor_account (self):
 
     #pdb.set_trace()
-    print "get_cursor_account"
+    gnucash_log.dbglog("get_cursor_account")
 
     trvwptr = hash(self)
 
@@ -203,10 +205,10 @@ def get_cursor_account (self):
 def select_subaccounts (self, account):
 
     #pdb.set_trace()
-    print "select_subaccounts"
+    gnucash_log.dbglog("select_subaccounts")
 
-    print self
-    print account
+    gnucash_log.dbglog(self)
+    gnucash_log.dbglog(account)
 
     account_ptr = ctypes.cast( account.instance.__long__(), ctypes.POINTER( AccountOpaque ) )
 
@@ -230,8 +232,8 @@ def set_selected_accounts (self, account_list, show_last):
             glst_ptr = glib_ctypes.libglib.g_list_prepend(glst_ptr,acc_ptr)
         glst_ptr = glib_ctypes.libglib.g_list_reverse(glst_ptr)
 
-        print >> sys.stderr, "0x%x"%ctypes.addressof(glst_ptr)
-        #print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr.contents)
+        gnucash_log.dbglog_err("0x%x"%ctypes.addressof(glst_ptr))
+        #gnucash_log.dbglog_err("0x%x"%ctypes.addressof(vwptr.contents))
         #pdb.set_trace()
 
         trvwptr = hash(self)
@@ -245,22 +247,22 @@ def set_selected_accounts (self, account_list, show_last):
 def get_selected_accounts (self):
 
     #pdb.set_trace()
-    #print "get_selected_accounts 1",self
+    gnucash_log.dbglog("get_selected_accounts",self)
     #gc.collect()
 
     trvwptr = hash(self)
-    print >> sys.stderr, "tree view",self
-    print >> sys.stderr, "tree view 0x%x"%trvwptr
+    gnucash_log.dbglog_err("tree view",self)
+    gnucash_log.dbglog_err("tree view 0x%x"%trvwptr)
 
     glst_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_get_selected_accounts(trvwptr)
 
-    print glst_ptr
+    gnucash_log.dbglog(glst_ptr)
     glst_ptr = ctypes.cast( glst_ptr, ctypes.POINTER( glib_ctypes.GListRaw ) )
-    print glst_ptr
+    gnucash_log.dbglog(glst_ptr)
     
     glst_len = glib_ctypes.libglib.g_list_length(glst_ptr)
-    print glst_ptr
-    print glst_len
+    gnucash_log.dbglog(glst_ptr)
+    gnucash_log.dbglog(glst_len)
 
     curbook = sw_app_utils.get_current_book()
 
@@ -276,7 +278,7 @@ def get_selected_accounts (self):
         gelm = glst_ptr.contents.data
         glst_ptr = glib_ctypes.g_list_next(glst_ptr)
         account_ptr = gelm
-        print >> sys.stderr, "account_ptr 0x%x"%account_ptr
+        gnucash_log.dbglog_err("account_ptr 0x%x"%account_ptr)
         accinst = swighelpers.int_to_swig(account_ptr,acctype);
         #accinst = swighelpers.int_to_swig(account_ptr,"_p_Account")
         #qof_ptr = ctypes.cast( account_ptr, ctypes.POINTER( qof_ctypes.QofInstanceOpaque ) )

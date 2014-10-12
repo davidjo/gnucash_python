@@ -48,6 +48,7 @@ from dialog_options import GncOptionDB
 
 from gnc_html import HtmlView
 
+import gnucash_log
 from gnucash_log import ENTER
 
 
@@ -78,7 +79,7 @@ def hash32 (inhsh):
 
 
 def close_handler (arg):
-    print >> sys.stderr, "close handler called"
+    gnucash_log.dbglog_err("close handler called")
     pdb.set_trace()
     pass
 
@@ -171,7 +172,7 @@ class GncPluginPagePythonReport(PluginPage):
         # again we are passing the instance pointer in python rather than integer report id
         # - but the report instance contains the report id
         report_id = report.id
-        print "init report_id",report_id
+        gnucash_log.dbglog("init report_id",report_id)
 
         # this property is set on the g_object_new statement
         self.set_property("report-id",report_id)
@@ -400,7 +401,7 @@ class GncPluginPagePythonReport(PluginPage):
 
         gncpluginpage.init_short_names (self.action_group, self.toolbar_labels)
 
-        print "actions added"
+        gnucash_log.dbglog("actions added")
 
 
     # note we define do_.... functions but call them as set_... or get__...
@@ -433,7 +434,7 @@ class GncPluginPagePythonReport(PluginPage):
         self.name_change_cb_id = None
 
         report_id = self.get_property('report-id')
-        print "report_setup",report_id
+        gnucash_log.dbglog("report_setup",report_id)
 
         # need to do something like this to follow scheme
         # currently do not need this - in python we pass the report instance
@@ -612,7 +613,7 @@ class GncPluginPagePythonReport(PluginPage):
 
            #pdb.set_trace()
 
-           print "finished create_widget"
+           gnucash_log.dbglog("finished create_widget")
 
         except Exception, errexc:
            traceback.print_exc()
@@ -634,7 +635,7 @@ class GncPluginPagePythonReport(PluginPage):
        #6  0x0000000104318615 in gtk_real_button_released ()
 
         global python_pages
-        print >> sys.stderr, "destroy_widget"
+        gnucash_log.dbglog_err("destroy_widget")
         try:
 
            sw_app_utils.libgnc_apputils.gnc_unregister_gui_component(self.component_manager_id)
@@ -646,7 +647,7 @@ class GncPluginPagePythonReport(PluginPage):
            pdb.set_trace()
 
     def save_page (self, key_file, group_name):
-        print >> sys.stderr, "save_page"
+        gnucash_log.dbglog_err("save_page")
         # this is a biggy - the scheme version outputs the data needed to regenerate the report
         # - it appears to be saved under .gnucash/books in the .gcm for the book
         # - where scheme options are saved - which I think is a GKeyFile entity
@@ -670,24 +671,24 @@ class GncPluginPagePythonReport(PluginPage):
         #key_file.set_value(group_name, "PythonOptions", json.dumps(report_objects.python_reports_by_guid))
 
     def window_changed (self, *args):
-        print >> sys.stderr, "window_changed",len(args)
+        gnucash_log.dbglog_err("window_changed",len(args))
         pdb.set_trace()
 
     def page_name_changed (self, *args):
-        print >> sys.stderr, "page_name_changed",len(args)
+        gnucash_log.dbglog_err("page_name_changed",len(args))
         #pdb.set_trace()
 
     def update_edit_menu_actions (self, arg1):
-        print >> sys.stderr, "update_edit_menu_actions"
+        gnucash_log.dbglog_err("update_edit_menu_actions")
         pdb.set_trace()
 
     def finish_pending (self):
-        print >> sys.stderr, "finish_pending"
+        gnucash_log.dbglog_err("finish_pending")
         return not self.reloading
 
 
     def option_change_cb (self):
-        print >> sys.stderr, "option_change_cb callback"
+        gnucash_log.dbglog_err("option_change_cb callback")
         if self.cur_report == None:
             return
         old_name = self.get_page_name()
@@ -697,10 +698,10 @@ class GncPluginPagePythonReport(PluginPage):
         self.html.reload()
 
     def history_destroy_cb (self, data):
-        print >> sys.stderr, "history_destroy_cb callback"
+        gnucash_log.dbglog_err("history_destroy_cb callback")
 
     def expose_event_cb (self, widget, event):
-        print >> sys.stderr, "expose_event_cb callback"
+        gnucash_log.dbglog_err("expose_event_cb callback")
 
         str1 = """
     priv = GNC_PLUGIN_PAGE_REPORT_GET_PRIVATE(page);
@@ -724,21 +725,21 @@ class GncPluginPagePythonReport(PluginPage):
     # in our case rep is currently this class ie GncPluginPagePythonReport
 
     def forw_cb (self, action, rep):
-        print "forw_cb called"
+        gnucash_log.dbglog("forw_cb called")
     def back_cb (self, action, rep):
-        print "back_cb called"
+        gnucash_log.dbglog("back_cb called")
     def reload_cb (self, action, rep):
-        print "reload_cb called"
+        gnucash_log.dbglog("reload_cb called")
     def stop_cb (self, action, rep):
-        print "stop_cb called"
+        gnucash_log.dbglog("stop_cb called")
     def save_cb (self, action, rep):
-        print "save_cb called"
+        gnucash_log.dbglog("save_cb called")
     def save_as_cb (self, action, rep):
-        print "save_as_cb called"
+        gnucash_log.dbglog("save_as_cb called")
     def export_cb (self, action, rep):
-        print "export_cb called"
+        gnucash_log.dbglog("export_cb called")
     def options_cb (self, action, rep):
-        print "options_cb called"
+        gnucash_log.dbglog("options_cb called")
         # not sure what class partitioning should be here yet
         # we have instance of this class for each report
         # ah - but we need separate instance for each variation of this report with
@@ -755,11 +756,11 @@ class GncPluginPagePythonReport(PluginPage):
             self.add_edited_report(self.cur_report)
             pass
     def print_cb (self, action, rep):
-        print "print_cb called"
+        gnucash_log.dbglog("print_cb called")
     def exportpdf_cb (self, action, rep):
-        print "exportpdf_cb called"
+        gnucash_log.dbglog("exportpdf_cb called")
     def copy_cb (self, action, rep):
-        print "copy_cb called"
+        gnucash_log.dbglog("copy_cb called")
 
 
     def add_edited_report (self, cur_report):
@@ -768,7 +769,7 @@ class GncPluginPagePythonReport(PluginPage):
 
     @classmethod
     def recreate_page (cls, window, key_file, page_group):
-        print >> sys.stderr, "recreate_page",window, key_file, page_group
+        gnucash_log.dbglog_err("recreate_page",window, key_file, page_group)
         # amazing - this is working - it being called if report was open on gnucash
         # close
         # now need to figure how to regenerate the report
@@ -789,7 +790,7 @@ class GncPluginPagePythonReport(PluginPage):
         # or normally gnc:restore-report-by-guid which is evaluated in the scheme version of
         # this function
         pyopts = key_file.get_value(page_group,'PythonOptions')
-        print "recreate_page",pyopts
+        gnucash_log.dbglog("recreate_page",pyopts)
         # hmm - will this only have one key??
         pydict = eval(pyopts)
         report_guid = pydict.keys()[0]
@@ -806,7 +807,7 @@ class GncPluginPagePythonReport(PluginPage):
     @classmethod
     def OpenNewReport (cls, report, window):
         global python_pages
-        print >> sys.stderr, "OpenNewReport",window
+        gnucash_log.dbglog_err("OpenNewReport",window)
         # we are currently passing the report instance rather than the integer report id
         # as scheme does - note that the report id is defined by report.id
         report_id = report.id
@@ -822,7 +823,7 @@ class GncPluginPagePythonReport(PluginPage):
             # not sure if crashes Im seeing are due to object deletion or something
             # with creating same report twice
             if report_id in python_pages:
-                print >> sys.stderr, "report already created",report_id
+                gnucash_log.dbglog_err("report already created",report_id)
                 return
 
             myreportpage = GncPluginPagePythonReport(report)
@@ -840,8 +841,8 @@ class GncPluginPagePythonReport(PluginPage):
             #pdb.set_trace()
             #print >> sys.stderr, "0x%x"%ctypes.addressof(windowp)
             #print >> sys.stderr, "0x%x"%ctypes.addressof(myreportp)
-            print >> sys.stderr, "0x%x"%windowp
-            print >> sys.stderr, "0x%x"%myreportp
+            gnucash_log.dbglog_err("0x%x"%windowp)
+            gnucash_log.dbglog_err("0x%x"%myreportp)
 
             gnc_main_window.libgnc_gnomeutils.gnc_main_window_open_page(windowp,myreportp)
 

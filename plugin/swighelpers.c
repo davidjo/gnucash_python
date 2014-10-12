@@ -2,6 +2,10 @@
 #include <Python.h>
 #include <swig-runtime-python.h>
 
+
+int dbgflg = 0;
+
+
 // dummy define the ctype types so dont include the ctypes.h and figuring out
 // where that is
 // not working cause still need to link to ctypes module
@@ -23,7 +27,7 @@ static PyObject *wrap_get_swig_type(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "s:get_swig_type", &swigtypstr))
         return NULL;
 
-    fprintf(stderr,"swig type string %s\n",swigtypstr);
+    if (dbgflg) fprintf(stderr,"swig type string %s\n",swigtypstr);
 
     swig_type_info *stype = SWIG_TypeQuery(swigtypstr);
 
@@ -70,19 +74,19 @@ static PyObject *wrap_int_to_swig(PyObject *self, PyObject *args)
         return NULL;
         }
 
-    fprintf(stderr,"cobject pointer %llx\n",(void *)cobject);
+    if (dbgflg) fprintf(stderr,"cobject pointer %llx\n",(void *)cobject);
 
     // allow pass either CObject version of swig type or swig type string
     // using CObjects very dangerous as no check if really is a swig type object
     if (PyCObject_Check(pswigtyp))
         {
         stype = PyCObject_AsVoidPtr(pswigtyp);
-        fprintf(stderr,"swig type cobject\n");
+        if (dbgflg) fprintf(stderr,"swig type cobject\n");
         }
     else if (PyString_Check(pswigtyp))
         {
         swigtypstr = PyString_AsString(pswigtyp);
-        fprintf(stderr,"swig type string %s\n",swigtypstr);
+        if (dbgflg) fprintf(stderr,"swig type string %s\n",swigtypstr);
 
         stype = SWIG_TypeQuery(swigtypstr);
 
@@ -131,9 +135,9 @@ static PyObject *wrap_cobject_to_swig(PyObject *self, PyObject *args)
         return NULL;
         }
 
-    fprintf(stderr,"cobject pointer %llx\n",(void *)cobject);
+    if (dbgflg) fprintf(stderr,"cobject pointer %llx\n",(void *)cobject);
 
-    fprintf(stderr,"swig type string %s\n",swigtypstr);
+    if (dbgflg) fprintf(stderr,"swig type string %s\n",swigtypstr);
 
     swig_type_info *stype = SWIG_TypeQuery(swigtypstr);
 
@@ -187,9 +191,9 @@ static PyObject *wrap_ctypes_to_swig(PyObject *self, PyObject *args)
         return NULL;
         }
 
-    fprintf(stderr,"cobject pointer %llx\n",(void *)cobject);
+    if (dbgflg) fprintf(stderr,"cobject pointer %llx\n",(void *)cobject);
 
-    fprintf(stderr,"swig type string %s\n",swigtypstr);
+    if (dbgflg) fprintf(stderr,"swig type string %s\n",swigtypstr);
 
     swig_type_info *stype = SWIG_TypeQuery(swigtypstr);
 

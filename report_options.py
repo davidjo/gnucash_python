@@ -38,6 +38,8 @@ except Exception, errexc:
 
 import date_utils
 
+import gnucash_log
+
 
 #pdb.set_trace()
 
@@ -72,12 +74,12 @@ class OptionsDB(object):
         self.options_changed = False
         self.changed_hash = {}
     def register_callback (self, section, name, callback):
-        print "optionsDB register_callback"
+        gnucash_log.dbglog("optionsDB register_callback")
         self.last_callback_id += 1
         self.callback_hash[self.last_callback_id] = [section, name, callback]
         return self.last_callback_id
     def unregister_callback (self, callback_id):
-        print "optionsDB unregister_callback"
+        gnucash_log.dbglog("optionsDB unregister_callback")
         if callback_id in self.callback_hash:
             del self.callback_hash[self.last_callback_id]
         else:
@@ -847,9 +849,9 @@ class DateOption(OptionBase):
             # still not sure how both version works
             # do we ignore self.option_data and just check optval?
             if self.option_data[1] != None:
-                print "both - absolute defined"
+                gnucash_log.dbglog("both - absolute defined")
             else:
-                print "both - relative defined"
+                gnucash_log.dblgog("both - relative defined")
             if optval[0] == 'absolute':
                 return optval[1]
             elif optval[0] == 'relative':

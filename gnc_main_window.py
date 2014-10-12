@@ -13,6 +13,7 @@ from ctypes import *
 
 import pdb
 
+import gnucash_log
 
 from gnome_utils_ctypes import libgnc_gnomeutils
 
@@ -96,8 +97,8 @@ elif False:
         #pdb.set_trace()
 
         # why did I add this
-        #print >> sys.stderr, "main window call of gnc_gui_init - probably not what you want!!"
-        print >> sys.stderr, "main_window_ptr %x"%hash(main_window)
+        #gnucash_log.dbglog_err("main window call of gnc_gui_init - probably not what you want!!")
+        gnucash_log.dbglog_err("gnc_gui_init: main_window_ptr %x"%hash(main_window))
 
         return main_window
 
@@ -139,13 +140,13 @@ else:
         #pdb.set_trace()
 
         main_window_ptr = libgnc_gnomeutils.gnc_gui_init()
-        print >> sys.stderr, "main_window_ptr %x"%main_window_ptr
+        gnucash_log.dbglog_err("main_window_ptr %x"%main_window_ptr)
 
         # call like this:
         #Cgobject = PyGObjectCAPI()
         main_window = Cgobject.pygobject_new(main_window_ptr)
 
-        print >> sys.stderr, "main_window ",main_window
+        gnucash_log.dbglog_err("main_window ",main_window)
 
         # we now need to add functions to the GncMainWindow object - mainly get_uimanager
         # using PyGObject/GTypes just gets storage - does not associate the functions with an object

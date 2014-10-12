@@ -19,11 +19,18 @@ from ctypes import *
 from pygobjectcapi import PyGObjectCAPI
 
 
+import gnucash_log
+
+
 #gboolean = c_byte
 gboolean = c_int
 gpointer = c_void_p
 guint = c_uint
 gsize = c_uint
+
+GType = gsize
+
+time64 = c_ulonglong
 
 
 # find core-utils then add gnucash to path to get to gnome-utuils
@@ -69,7 +76,7 @@ def gnc_gui_init ():
     # if already called - we assume gnc_gui_init has already been called here
     main_window_ptr = libgnc_gnomeutils.gnc_gui_init()
 
-    print >> sys.stderr, "main_window_ptr %x"%main_window_ptr
+    gnucash_log.dbglog_err("gnc_gui_init: main_window_ptr %x"%main_window_ptr)
 
     #pdb.set_trace()
 

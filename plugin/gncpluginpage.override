@@ -34,6 +34,8 @@ ignore-glob
 %%
 body
 
+int dbgflg = 0;
+
 QofBook *gnc_get_current_book();
 
 static PyObject *
@@ -156,7 +158,7 @@ _wrap_gnc_plugin_page_add_book(PyGObject *self, PyObject *args, PyObject *kwargs
     QofBook *book;
 
     QofBook *curbok = gnc_get_current_book ();
-    fprintf(stderr,"add_book book curr %llx\n",(unsigned long long)curbok);
+    if (dbgflg) fprintf(stderr,"add_book book curr %llx\n",(unsigned long long)curbok);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O:GncPluginPage.add_book",
                                      kwlist, &book_obj)) {
@@ -188,7 +190,7 @@ _wrap_gnc_plugin_page_add_book(PyGObject *self, PyObject *args, PyObject *kwargs
         return NULL;
         }
 
-    fprintf(stderr,"add_book book real %llx\n",(unsigned long long)book);
+    if (dbgflg) fprintf(stderr,"add_book book real %llx\n",(unsigned long long)book);
 
     gnc_plugin_page_add_book (GNC_PLUGIN_PAGE(self->obj), book);
 
@@ -257,7 +259,7 @@ _wrap_gnc_plugin_page_access_private_data(PyGObject *self, PyObject *args, PyObj
     GncPluginPage *page = (GncPluginPage *)self->obj;
     GncPluginPageClass *klass = GNC_PLUGIN_PAGE_GET_CLASS(page);
 
-    fprintf(stderr,"access plugin class is %llx\n",(unsigned long long) klass);
+    if (dbgflg) fprintf(stderr,"access plugin class is %llx\n",(unsigned long long) klass);
 
     //klass->tab_icon    = NULL;
     //klass->plugin_name = NULL;
@@ -340,7 +342,7 @@ _wrap_gnc_plugin_page_set_callbacks(PyGObject *self, PyObject *args, PyObject *k
     //    return NULL;
     //}
 
-    fprintf(stderr,"callback plugin class is %llx\n",(unsigned long long) gnc_plugin_page_class);
+    if (dbgflg) fprintf(stderr,"callback plugin class is %llx\n",(unsigned long long) gnc_plugin_page_class);
 
     //klass->tab_icon    = NULL;
     //klass->plugin_name = NULL;
@@ -400,7 +402,7 @@ _wrap_gnc_plugin_page_set_callbacks(PyGObject *self, PyObject *args, PyObject *k
     gnc_plugin_page_class->update_edit_menu_actions = gnc_plugin_page_generic_page_update_edit_menu_actions;
 
 
-    fprintf(stderr,"callback plugin class end\n");
+    if (dbgflg) fprintf(stderr,"callback plugin class end\n");
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -422,7 +424,7 @@ gnc_plugin_page_generic_create_widget(GncPluginPage *plugin_page)
     PyObject *PyRet;
     GtkWidget *widget = NULL;
 
-    fprintf(stderr,"C create widget call\n");
+    if (dbgflg) fprintf(stderr,"C create widget call\n");
 
     GQuark quark;
     PyObject *pyobj;
@@ -432,14 +434,14 @@ gnc_plugin_page_generic_create_widget(GncPluginPage *plugin_page)
     quark = g_quark_from_string("PyGObject::wrapper");
     pyobj = g_object_get_qdata((GObject *)plugin_page, quark);
 
-    fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
+    if (dbgflg) fprintf(stderr,"quark wrapper is %llx\n",(void *)pyobj);
 
     gstate = PyGILState_Ensure();
 
     if (PyObject_HasAttrString(pyobj,"create_widget"))
-        fprintf(stderr,"pyobj has attr\n");
+        if (dbgflg) fprintf(stderr,"pyobj has attr\n");
     else
-        fprintf(stderr,"pyobj does not have attr\n");
+        if (dbgflg) fprintf(stderr,"pyobj does not have attr\n");
 
     PyRet = PyObject_CallMethodObjArgs(pyobj,PyString_FromString("create_widget"),NULL);
     if (PyErr_Occurred())
@@ -579,7 +581,7 @@ gnc_plugin_page_generic_recreate_page(GtkWidget *window, GKeyFile *file, const g
         return NULL;
     }
 
-    fprintf(stderr,"generic recreate page type is %s\n",page_type);
+    if (dbgflg) fprintf(stderr,"generic recreate page type is %s\n",page_type);
 
     // we still have a problem - how to map from the GType back to python
     // we know how to get from object instance - can we do for class??
@@ -588,7 +590,7 @@ gnc_plugin_page_generic_recreate_page(GtkWidget *window, GKeyFile *file, const g
     GQuark quark = g_quark_from_string("PyGObject::class");
     PyObject *py_class = g_type_get_qdata(gtype, quark);
 
-    fprintf(stderr,"quark wrapper is %llx\n",(void *)py_class);
+    if (dbgflg) fprintf(stderr,"quark wrapper is %llx\n",(void *)py_class);
 
     PyObject *pywindow = pygobject_new((GObject*)window);
 
@@ -616,7 +618,7 @@ gnc_plugin_page_generic_recreate_page(GtkWidget *window, GKeyFile *file, const g
     // may need to extract underlying GObject object
     page = (GncPluginPage *)PyObject_Hash(PyRet);
 
-    fprintf(stderr,"page is %llx\n",(void *)page);
+    if (dbgflg) fprintf(stderr,"page is %llx\n",(void *)page);
 
     PyGILState_Release(gstate);
 
@@ -787,7 +789,7 @@ _wrap_gnc_plugin_page_set_callback(PyGObject *self, PyObject *args, PyObject *kw
         return NULL;
     }
 
-    fprintf(stderr,"callback plugin class is %llx\n",(unsigned long long) gnc_plugin_page_class);
+    if (dbgflg) fprintf(stderr,"callback plugin class is %llx\n",(unsigned long long) gnc_plugin_page_class);
 
     //klass->tab_icon    = NULL;
     //klass->plugin_name = NULL;
@@ -822,7 +824,7 @@ _wrap_gnc_plugin_page_set_recreate_callback(PyObject *self, PyObject *args, PyOb
         return NULL;
     }
 
-    fprintf(stderr,"set_recreate type %s\n",gtype_name);
+    if (dbgflg) fprintf(stderr,"set_recreate type %s\n",gtype_name);
 
     // this is a creation callback
     // once the GType has been registered we call this to setup the recreate_page callback
@@ -847,14 +849,14 @@ _wrap_gnc_plugin_page_set_recreate_callback(PyObject *self, PyObject *args, PyOb
         PyErr_SetString(PyExc_TypeError, "GType class is NULL");
         return NULL;
     }
-    fprintf(stderr,"set_recreate class 1 %llx\n",(unsigned long long)gnc_plugin_page_sub_class);
+    if (dbgflg) fprintf(stderr,"set_recreate class 1 %llx\n",(unsigned long long)gnc_plugin_page_sub_class);
 
     //GncPluginPageClass *gnc_plugin_page_class = g_type_class_peek_parent(gnc_plugin_page_sub_class);
     //if (gnc_plugin_page_class == NULL) {
     //    PyErr_SetString(PyExc_TypeError, "GncPluginPage class is NULL");
     //    return NULL;
     //}
-    //fprintf(stderr,"set_recreate class 2 %llx\n",(unsigned long long)gnc_plugin_page_class);
+    //if (dbgflg) fprintf(stderr,"set_recreate class 2 %llx\n",(unsigned long long)gnc_plugin_page_class);
 
     // OK so the two above class pointers are different - we need the GncPluginPage structure
     // that is part of the GncPluginPagePythonReport type 

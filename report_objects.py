@@ -4,6 +4,8 @@
 
 import gobject
 
+import gnucash_log
+
 from report_options import OptionsDB
 from report_options import StringOption,MultiChoiceOption
 
@@ -50,18 +52,18 @@ class ParamsData(object):
         self.cur_report = None
 
     def apply_cb (self):
-        print "paramsdata apply_cb called"
+        gnucash_log.dbglog("paramsdata apply_cb called")
         self.db.commit()
         self.cur_report.set_dirty(True)
     def help_cb (self):
-        print "paramsdata help_cb called"
+        gnucash_log.dbglog("paramsdata help_cb called")
         parent = self.win.dialog
         dialog = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,
                 gtk.MESSAGE_INFO,gtk.BUTTONS_OK,N_("Set the report options you want using this dialog."))
         dialog.connect("response", self.dialog_destroy)
         dialog.show()
     def close_cb (self):
-        print "paramsdata close_cb called"
+        gnucash_log.dbglog("paramsdata close_cb called")
         self.cur_report.report_editor_widget = None
         self.win.dialog_destroy()
         self.db.destroy()
@@ -143,7 +145,7 @@ class ReportTemplate(object):
         return options
 
     def options_changed_cb (self):
-        print "reporttemplate options_changed_cb"
+        gnucash_log.dbglog("reporttemplate options_changed_cb")
 
 
 class Report(object):
@@ -255,7 +257,7 @@ class Report(object):
 
     def edit_options (self):
         if self.report_editor_widget != None:
-           print type(self.report_editor_widget)
+           gnucash_log.dbglog(type(self.report_editor_widget))
            self.report_editor_widget.present()
         else:
            if self.options != None:
@@ -328,7 +330,7 @@ class Report(object):
 
     def run (self):
         # this is based on gnc:report-run in report/report-system/report.scm
-        print "run_report"
+        gnucash_log.dbglog("run_report")
         #gc.collect()
         #self.set_busy_cursor()
         try:
@@ -356,7 +358,7 @@ class Report(object):
         return stylesheet
 
     def render_html (self, headers=None):
-        print "render_html"
+        gnucash_log.dbglog("render_html")
         # this is based on gnc:report-render-html in report/report-system/report.scm
         #pdb.set_trace()
         # until figure out how self.dirty is set
