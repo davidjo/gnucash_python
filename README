@@ -9,13 +9,13 @@ Coding primarily based on scheme at the moment for testing and comparing to the 
 Requirements:
 
 swig
-python
+python (currently using 2.7)
 python bindings to gtk
 python gobject/glib bindings
 python elementtree module
 gnucash python bindings
 
-Implementation needs 6 compiled modules
+Implementation needs 5 compiled modules
 - installed in primary gnucash source under src/python in a new subdirectory called plugin
 - must be copied to ~/.gnucash/python after compilation
 
