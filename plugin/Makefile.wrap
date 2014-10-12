@@ -181,7 +181,8 @@ swighelpers.so: swighelpers.o
 swighelpers.o: swighelpers.c swig-runtime-python.h
 	$(CC) $(CFLAGS) -c swighelpers.c -o $@
 
-release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so gncmainwindow.so pygkeyfile.so
+#release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so gncmainwindow.so pygkeyfile.so
+release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so pygkeyfile.so
 
 # A rule to clean the generated files
 clean:

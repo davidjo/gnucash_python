@@ -9,17 +9,22 @@ Coding primarily based on scheme at the moment for testing and comparing to the 
 Requirements:
 
 swig
-python
+python (currently using 2.7)
 python bindings to gtk
 python gobject/glib bindings
 python elementtree module
 gnucash python bindings
 
-Implementation needs 6 compiled modules
-- installed in primary gnucash source under src/python in a new subdirectory called plugin
-- must be copied to ~/.gnucash/python after compilation
+The git source should be stored in a directory called python under ~/.gnucash.
+The git branch release is the minimal files needed for working, master is all
+files including implementations which failed or been superseded.
 
-Makefile.wrap defined which is designed to be run in an existing gnucash source
+Implementation needs 5 compiled modules
+The directory ~/.gnucash/python/plugin should be copied
+to the primary gnucash source under src/python as a subdirectory.
+The shared objects (.so) need to be copied back to ~/.gnucash/python after compilation
+
+Makefile.wrap is defined which is designed to be run in an existing gnucash source
 after a full compilation step
 
 to compile: make -f Makefile.wrap release
@@ -40,10 +45,10 @@ defsgen.py
 HTML output is via python wrappers access to the gnucash webkit output functions
 python elementtree module used as document model for HTML output
 
-python modules are designed to be work from a $HOME/.gnucash/python directory
-ui files need to be copied into ~/.gnucash/ui directory
+The python modules are designed to work from a ~/.gnucash/python directory
+ui files need to be copied into a ~/.gnucash/ui directory
 
-modified main gnucash installation share/gnucash/init.py needed which loads
+A modified main gnucash installation share/gnucash/init.py is needed which loads
 from a local_init.py file installed in ~/.gnucash/python
 - after local_init.py loaded all other python modules loaded from ~/.gnucash/python
 
