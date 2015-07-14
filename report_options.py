@@ -1,5 +1,12 @@
-# finally we need to create a new class
-# to run reports in python
+
+# here we implement the scheme options in python - converting to objects as much as possible
+# this file is a combination of the scheme options.scm and options-utilities.scm
+# the make functions in options.scm are converted to instantions of an options class
+# that implements the options
+# eg make-number-range-options gets converted to NumberRangeOption() instantiation
+# higher level functions such as the add functions in options-utilties.scm
+# are added as functions to the OptionsDB class
+
 
 import sys
 

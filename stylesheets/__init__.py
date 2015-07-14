@@ -38,7 +38,7 @@ class StyleTable(collections.defaultdict):
             self.cached[key] = None
         super(StyleTable,self).__setitem__(key, value)
 
-    def make_html (self, key):
+    def make_html (self, key, attrib={}):
         #pdb.set_trace()
         # not sure about caching now - we always need a new element
         #if key in self.cached:
@@ -54,6 +54,8 @@ class StyleTable(collections.defaultdict):
             (subtg, subattrs) = self.update_attrs(val)
             if subtg != None: tg = subtg
             if subattrs != None: attrs = subattrs
+            # passed attributes override everything
+            attrs.update(attrib)
             elm = ET.Element(tg,attrib=attrs)
         return elm
 
@@ -268,6 +270,8 @@ class StylesheetTemplate(object):
         return result
 
     def add_css_information_to_doc (self, doc):
+
+        #pdb.set_trace()
 
         # but need to figure what is right options variable
 

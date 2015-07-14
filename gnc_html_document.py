@@ -111,8 +111,8 @@ class HtmlDocument(object):
     def set_stylesheet (self, stylesheet):
         self.style_sheet = stylesheet
 
-    def StyleElement (self, tag, parent=None):
-        newelm = self.style.make_html(tag)
+    def StyleElement (self, tag, attrib={}, parent=None):
+        newelm = self.style.make_html(tag,attrib)
         if self.doc.docobj != None:
             if parent != None:
                 parent.append(newelm)
@@ -122,9 +122,9 @@ class HtmlDocument(object):
             self.doc.docobj = newelm
         return newelm
 
-    def StyleSubElement (self, parent, tag):
+    def StyleSubElement (self, parent, tag, attrib={}):
         # this simply makes report writing more consistent with Elementtree
-        newelm = self.StyleElement(tag, parent=parent)
+        newelm = self.StyleElement(tag, attrib=attrib, parent=parent)
         return newelm
 
 
@@ -211,7 +211,10 @@ class HtmlDocument(object):
                 subdoc = renderer(report)
             except Exception, errexc:
                 traceback.print_exc()
+                # ensure GUI reactivated
+                report.report_type.cleanup_gui()
                 pdb.set_trace()
+                subdoc = None
 
             if subdoc == None:
                 pdb.set_trace()

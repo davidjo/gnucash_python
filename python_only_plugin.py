@@ -199,7 +199,7 @@ class MyPlugin(gobject.GObject):
         # in report-gnome.scm
 
         menu_list = []
-        for rpt in report_objects.python_reports_by_name:
+        for rpt in sorted(report_objects.python_reports_by_name.keys()):
             menu_list.append(self.add_menuitems(rpt,report_objects.python_reports_by_name[rpt]))
 
         # now need to update menu

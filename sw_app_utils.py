@@ -120,6 +120,17 @@ libgnc_apputils.gnc_accounting_period_fiscal_end.argtypes = []
 libgnc_apputils.gnc_accounting_period_fiscal_end.restype = gint64
 
 
+
+# not available - static symbol
+#libgnc_apputils.gnc_default_print_info_helper.argtypes = [ ctypes.c_int ]
+#libgnc_apputils.gnc_default_print_info_helper.restype = GncPrintAmountInfo
+
+libgnc_apputils.gnc_default_share_print_info.argtypes = []
+libgnc_apputils.gnc_default_share_print_info.restype = GncPrintAmountInfo
+
+libgnc_apputils.gnc_share_print_info_places.argtypes = [ ctypes.c_int ]
+libgnc_apputils.gnc_share_print_info_places.restype = GncPrintAmountInfo
+
 libgnc_apputils.gnc_default_print_info.argtypes = [ ctypes.c_bool ]
 libgnc_apputils.gnc_default_print_info.restype = GncPrintAmountInfo
 
@@ -335,7 +346,11 @@ def CommodityPrintInfo (commodity, use_symbol):
     prtinfo = libgnc_apputils.gnc_commodity_print_info(gnccmd_ptr,use_symbol)
     return prtinfo
 
-def PrintInfo (use_symbol):
+def SharePrintInfoPlaces (dec_places):
+    prtinfo = libgnc_apputils.gnc_share_print_info_places(dec_places)
+    return prtinfo
+
+def DefaultPrintInfo (use_symbol):
     prtinfo = libgnc_apputils.gnc_default_print_info(use_symbol)
     return prtinfo
 

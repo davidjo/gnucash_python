@@ -108,7 +108,7 @@ class HtmlView(object):
                                  N_("An error occurred while running the report."))
 
             try:
-                # try an implementation closer to the C/schem
+                # try an implementation closer to the C/scheme
                 docstr = report.run()
             except Exception, errexc:
                 traceback.print_exc()

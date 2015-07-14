@@ -8,6 +8,9 @@ import os
 import ctypes
 
 from ctypes.util import find_library
+from ctypes import Structure
+from ctypes import c_int64
+from ctypes import c_long
 
 import gobject
 
@@ -16,6 +19,8 @@ import pdb
 
 import gnucash
 
+
+import glib_ctypes
 
 
 #pdb.set_trace()
@@ -60,3 +65,115 @@ libgnc_engine.gnc_commodity_get_cusip.restype = ctypes.c_char_p
 libgnc_engine.gnc_commodity_get_fraction.argtypes = []
 libgnc_engine.gnc_commodity_get_fraction.restype = ctypes.c_int
 
+# these are GncCommodity type arguments
+libgnc_engine.gnc_commodity_equiv.argtypes = [ ctypes.c_void_p, ctypes.c_void_p ]
+libgnc_engine.gnc_commodity_equiv.restype = ctypes.c_bool
+
+libgnc_engine.gnc_commodity_is_currency.argtypes = [ ctypes.c_void_p ]
+libgnc_engine.gnc_commodity_is_currency.restype = ctypes.c_bool
+
+
+# for some reason a lot of the Query.h functions are not included in the swig bindings
+# for python (but are for guile)
+
+libgnc_engine.xaccQueryAddSingleAccountMatch.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddSingleAccountMatch.restype = None
+
+libgnc_engine.xaccQueryAddDateMatch.argtypes = [ ctypes.c_void_p, ctypes.c_bool, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddDateMatch.restype = None
+
+# to pass structs by value need to define struct
+class Timespec(Structure):
+    _fields_ = [ ("tv_sec", c_int64),      # seconds
+                 ("tv_nsec", c_long),      # nanoseconds
+               ]
+
+libgnc_engine.xaccQueryAddDateMatchTS.argtypes = [ ctypes.c_void_p, ctypes.c_bool, Timespec, ctypes.c_bool, Timespec, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddDateMatchTS.restype = None
+
+# what should enums be - c_uint or c_int?
+# apparently is variable
+libgnc_engine.xaccQueryAddClearedMatch.argtypes = [ ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddClearedMatch.restype = None
+
+libgnc_engine.xaccQueryAddAccountMatch.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddAccountMatch.restype = None
+
+
+class GncCommodityOpaque(Structure):
+    pass
+
+def CommodityEquiv (a, b):
+    a_ptr = ctypes.cast( a.instance.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
+    b_ptr = ctypes.cast( b.instance.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
+    retval = libgnc_engine.gnc_commodity_equiv(a_ptr, b_ptr)
+    # this is returning a ctypes.c_bool type  - convert to basic python type??
+    return retval
+
+def CommodityIsCurrency (a):
+    a_ptr = ctypes.cast( a.instance.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
+    retval = libgnc_engine.gnc_commodity_is_currency(a_ptr)
+    # this is returning a ctypes.c_bool type  - convert to basic python type??
+    return retval
+
+
+class QofQueryOpaque(Structure):
+    pass
+
+class GNCAccountOpaque(Structure):
+    pass
+
+
+def AddSingleAccountMatch (query, account, matchop):
+    #pdb.set_trace()
+    query_ptr = ctypes.cast( query.instance.__long__(), ctypes.POINTER( QofQueryOpaque ) )
+    acc_ptr = ctypes.cast( account.instance.__long__(), ctypes.POINTER( GNCAccountOpaque ) )
+    libgnc_engine.xaccQueryAddSingleAccountMatch(query_ptr, acc_ptr, matchop)
+
+def AddDateMatchTS (query, use_from, from_date, use_to, to_date, matchop):
+    #pdb.set_trace()
+
+    query_ptr = ctypes.cast( query.instance.__long__(), ctypes.POINTER( QofQueryOpaque ) )
+
+    # stupid but no simple function to do this
+    if use_from:
+        from_sec = int(from_date.strftime("%s"))
+    else:
+        from_sec = 0
+    fromts = Timespec()
+    fromts.tv_sec = from_sec
+    fromts.tb_nsec = 0
+
+    if use_to:
+        to_sec = int(to_date.strftime("%s"))
+    else:
+        to_sec = 0
+    tots = Timespec()
+    tots.tv_sec = to_sec
+    tots.tb_nsec = 0
+
+    libgnc_engine.xaccQueryAddDateMatchTS(query_ptr, use_from, fromts, use_to, tots, matchop)
+
+def AddClearedMatch (query, cleared_flag, matchop):
+    #pdb.set_trace()
+    query_ptr = ctypes.cast( query.instance.__long__(), ctypes.POINTER( QofQueryOpaque ) )
+    libgnc_engine.xaccQueryAddClearedMatch(query_ptr, cleared_flag, matchop)
+
+def AddAccountMatch (query, accounts, howmatch, matchop):
+    pdb.set_trace()
+    # this is not simple - we have to convert the python list to a GList
+    # and is not working - if add this get every single split!!
+    query_ptr = ctypes.cast( query.instance.__long__(), ctypes.POINTER( QofQueryOpaque ) )
+    if len(accounts) > 0:
+        # construct a g_list from list of accounts
+        glst_ptr = None
+        for elm in accounts:
+            acc_ptr = ctypes.cast( elm.instance.__long__(), ctypes.POINTER( GNCAccountOpaque ) )
+            glst_ptr = glib_ctypes.libglib.g_list_prepend(glst_ptr,acc_ptr)
+        glst_ptr = glib_ctypes.libglib.g_list_reverse(glst_ptr)
+        print "glst_ptr", "0x%x"%ctypes.addressof(glst_ptr)
+        #gnucash_log.dbglog_err("0x%x"%ctypes.addressof(glst_ptr))
+        #pdb.set_trace()
+        libgnc_engine.xaccQueryAddAccountMatch(query_ptr, glst_ptr, howmatch, matchop)
+        # does removing this make it work?? 
+        #glib_ctypes.libglib.g_list_free(glst_ptr)

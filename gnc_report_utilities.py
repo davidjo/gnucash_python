@@ -1,5 +1,8 @@
 
 
+# this is implementations of functions in report-utilities.scm
+
+
 import pdb
 
 
@@ -7,12 +10,20 @@ import gnucash
 
 from gnucash import GncNumeric
 
+# we need to import this so that various classes are extended
+# still not sure I need this here - as long as done once isnt this OK? 
+import gnucash_ext 
+
+import sw_app_utils
+
 
 import gnome_utils_ctypes
 
 import gnucash_log
 
 import gnc_commodity_utilities
+
+import engine_ctypes
 
 
 # define a function equivalent to N_ for internationalization
@@ -48,12 +59,66 @@ def accounts_count_splits (accounts):
         cntsplt += lngth
     return cntsplt
 
+
+def account_get_balance_at_date (account, date, include_children=False):
+    collector = account_get_comm_balance_at_date(account, date, include_children)
+
+def account_get_comm_balance_at_date (account, date, include_children=False):
+
+    #pdb.set_trace()
+
+    balance_collector = CommodityCollector()
+
+    if include_children:
+        # gnc:account-map-descendants
+        for chld in account.GetDescendants():
+            balval = account_get_comm_balance_at_date(chld,date,False)
+            balance_collector.merge(balval)
+
+    curbook = sw_app_utils.get_current_book()
+    tmpqry = gnucash.Query.CreateFor(curbook.GNC_ID_SPLIT)
+    tmpqry.set_book(curbook)
+    #tmpqry.AddSingleAccountMatch(account,gnucash.QOF_QUERY_AND)
+    #tmpqry.AddDateMatchTS(False,date,True,date,gnucash.QOF_QUERY_AND)
+    engine_ctypes.AddSingleAccountMatch(tmpqry,account,gnucash.QOF_QUERY_AND)
+    engine_ctypes.AddDateMatchTS(tmpqry,False,date,True,date,gnucash.QOF_QUERY_AND)
+    #query.merge_in_place(invqry,gnucash.QOF_QUERY_AND)
+    tmpqry.set_sort_order([gnucash.gnucash_core_c.SPLIT_TRANS,gnucash.gnucash_core_c.TRANS_DATE_POSTED],[gnucash.gnucash_core_c.QUERY_DEFAULT_SORT],[])
+    tmpqry.set_sort_increasing(True,True,True)
+    tmpqry.set_max_results(1)
+    splitlst = tmpqry.Run(gnucash.Split)
+
+    # do we need these??
+    #invqry.destroy()
+    #tmpqry.destroy()
+
+    # by set_max_results there is only 1 split returned I think
+    if len(splitlst) > 0:
+        balance_collector.add(account.GetCommodity(),splitlst[0].GetBalance())
+
+    return balance_collector
+
+
+def get_commodities (accountlst, exclude_commodity=None):
+    #pdb.set_trace()
+    newdct = {}
+    for acc in accountlst:
+        comod = acc.GetCommodity()
+        comnm = comod.get_mnemonic()
+        if not comnm in newdct:
+            newdct[comod] = acc
+    if exclude_commodity != None:
+        if exclude_commodity in newdct:
+            del newdct[exclude_commodity]
+    return sorted(newdct.keys())
+
+
 def get_all_subaccounts (accountlst):
     # do we add incoming accounts??
-    pdb.set_trace()
+    #pdb.set_trace()
     newlst = []
-    for acc in accountlist:
-        subacc = acc.get_descendents_sorted()
+    for acc in accountlst:
+        subacc = acc.get_descendants_sorted()
         newlst.extend(subacc)
     return newlst
 
@@ -179,6 +244,11 @@ class CommodityCollector(object):
     # OK this is stupid -  the primary functions just call another function
     # (in scheme there is a switch table in a single function
 
+    # also because some functions have 2 arguments all functions in scheme have to have 2 arguments
+    # hence often see the merge function with a #f second argument - which is actually not used
+    # by the merge function
+    # - in python just have function directly so dont need 2nd argument
+
     # scheme variable is commodity - but it seems to be a collector list
     # ok - looks like different things for different functions
 
@@ -198,11 +268,33 @@ class CommodityCollector(object):
     def reset (self):
         self.commoditylist = {}
 
-
-    def sum (self, report_currency, exchange_fn): 
+    def getpair (self, commod, sign=False):
         #pdb.set_trace()
-        sumcmd = sum_collector_commodity(self, report_currency, exchange_fn)
-        return sumcmd
+        # ah - it looks up c in commoditylist
+        # (pair (assoc c commoditylist))
+        # the scheme code seems to return as second item a list of GncNumeric and empty list
+	if commod.get_unique_name() in self.commoditylist:
+            tmpcmdpr = self.commoditylist[commod.get_unique_name()]
+            if sign:
+                tmpval = tmpcmdpr[1].total().neg()
+            else:
+                tmpval = tmpcmdpr[1].total()
+            return [commod, tmpval]
+        else:
+            return [commod, GncNumeric(0,1)]
+
+
+    # these are separate definitions in scheme but would seem to be in this
+    # class as all take collector as 1st argument
+    def map (self, commodity_fn):
+        self.format(commodity_fn)
+
+    def assoc (self, commodity, sign=False):
+        return self.getmonetary(commodity,sign)
+
+    def assoc_pair (self, commodity, sign=False):
+        return self.getpair(commodity,sign)
+
 
     # Im really confused here - not sorted out what objects are what
     # - in scheme the arguments are not consistent - commodity/currency/commoditycollector
@@ -216,11 +308,10 @@ class CommodityCollector(object):
         # (pair (assoc c commoditylist))
 
         if curr.get_unique_name() in self.commoditylist:
+            tmpcmdpr = self.commoditylist[curr.get_unique_name()]
             if sign:
-                tmpcmdpr = self.commoditylist[curr.get_unique_name()]
                 tmpval = tmpcmdpr[1].total().neg()
             else:
-                tmpcmdpr = self.commoditylist[curr.get_unique_name()]
                 tmpval = tmpcmdpr[1].total()
         else:
             tmpval = GncNumeric(0,1)
@@ -228,6 +319,12 @@ class CommodityCollector(object):
         getval = gnc_commodity_utilities.GncMonetary(curr,tmpval)
 
         return getval
+
+
+    def sum (self, report_currency, exchange_fn): 
+        #pdb.set_trace()
+        sumcmd = sum_collector_commodity(self, report_currency, exchange_fn)
+        return sumcmd
 
 
 def sum_collector_commodity (foreign_commodityclctr, domestic, exchange_fn):

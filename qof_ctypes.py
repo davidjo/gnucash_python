@@ -13,6 +13,10 @@ from ctypes import *
 
 import sw_app_utils
 
+import swighelpers
+
+import gnucash
+
 
 import pdb
 
@@ -51,9 +55,15 @@ class TM(Structure):
                  ("tm_zone", c_char_p), # timezone abbreviation
                ]
 
+# I had this - but actually the tv_nsec is just 32 bits - although is
+# likely passed in 32 but register
+#class Timespec(Structure):
+#    _fields_ = [ ("tv_sec", c_int64),      # seconds
+#                 ("tv_nsec", c_int64),     # nanoseconds
+#               ]
 class Timespec(Structure):
     _fields_ = [ ("tv_sec", c_int64),      # seconds
-                 ("tv_nsec", c_int64),     # nanoseconds
+                 ("tv_nsec", c_long),      # nanoseconds
                ]
 
 
@@ -166,6 +176,9 @@ class GncGUIDRaw(Structure):
                ]
 
 
+class QofEntityOpaque(Structure):
+    pass
+
 class QofInstanceOpaque(Structure):
     pass
 
@@ -183,6 +196,12 @@ libgnc_qof.qof_instance_get_slots.restype = POINTER(KvpFrameOpaque)
 
 libgnc_qof.qof_instance_get_guid.argtypes = [POINTER(QofInstanceOpaque)]
 libgnc_qof.qof_instance_get_guid.restype = POINTER(GncGUIDRaw)
+
+# whats the difference to above??
+# apparently very little - in fact should be using qof_instance_get_guid
+# this is deprecated
+libgnc_qof.qof_entity_get_guid.argtypes = [POINTER(QofEntityOpaque)]
+libgnc_qof.qof_entity_get_guid.restype = POINTER(GncGUIDRaw)
 
 
 # ah - I think I understand the kvp system - this is a hash/python dict
@@ -368,4 +387,24 @@ def GetGainAcctGUIDString (self, slotnm, currencynm):
         #pdb.set_trace()
         return "".join([ "%02x"%x for x in kvguid.contents.data ])
 
+
+def QofInstanceGetGUID (qofinst):
+
+    #pdb.set_trace()
+
+    if hasattr(qofinst,'instance'):
+        if hasattr(qofinst.instance,'this'):
+            qofinst_ptr = cast( qofinst.instance.this.__long__(), POINTER( QofInstanceOpaque ) )
+        else:
+            qofinst_ptr = cast( qofinst.instance.__long__(), POINTER( QofInstanceOpaque ) )
+        guidptr = libgnc_qof.qof_instance_get_guid(qofinst_ptr)
+    else:
+        raise TypeError("Appears not to be a SWIG instance %s"%str(qofinst))
+
+    guid_inst = swighelpers.int_to_swig(addressof(guidptr.contents),"_p_GNC_INTERNAL_GUID")
+
+    # would be nice to do ths somewhere else so dont get the gnucash include
+    guid = gnucash.GUID(instance=guid_inst)
+
+    return guid
 

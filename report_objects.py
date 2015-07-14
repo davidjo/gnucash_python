@@ -14,8 +14,11 @@ import dialog_options
 from gnc_html_document import HtmlDoc
 from gnc_html_document import HtmlDocument
 
+from gnc_report_utilities import report_finished
+
 from stylesheets import Stylesheet
 import stylesheets
+
 
 import xml.etree.ElementTree as ET
 
@@ -45,6 +48,7 @@ def N_(msg):
 
 
 class ParamsData(object):
+
     def __init__ (self):
         self.win = None
         self.db = None
@@ -72,6 +76,7 @@ class ParamsData(object):
 
 
 class ReportTemplate(object):
+
     def __init__ (self):
         # these are the scheme template data items
 
@@ -117,7 +122,14 @@ class ReportTemplate(object):
 
     def init_gui (self):
         # this is a function to init GUI stuff if needed
+        # not in scheme
         pass
+
+    def cleanup_gui (self):
+        # this is a function to cleanup GUI stuff if report exits
+        # not in scheme
+        # this ensures GUI made sensitive again
+        report_finished()
 
     def get_template_name (self):
         return self.name
@@ -448,6 +460,23 @@ def load_python_reports ():
         from reports.cash_flow import CashFlow
         python_reports_by_name['CashFlow'] = CashFlow()
         python_reports_by_guid[python_reports_by_name['CashFlow'].report_guid] = python_reports_by_name['CashFlow']
+    except Exception, errexc:
+        traceback.print_exc()
+        pdb.set_trace()
+
+
+    try:
+        from reports.portfolio import Portfolio
+        python_reports_by_name['Portfolio'] = Portfolio()
+        python_reports_by_guid[python_reports_by_name['Portfolio'].report_guid] = python_reports_by_name['Portfolio']
+    except Exception, errexc:
+        traceback.print_exc()
+        pdb.set_trace()
+
+    try:
+        from reports.advanced_portfolio import AdvancedPortfolio
+        python_reports_by_name['AdvancedPortfolio'] = AdvancedPortfolio()
+        python_reports_by_guid[python_reports_by_name['AdvancedPortfolio'].report_guid] = python_reports_by_name['AdvancedPortfolio']
     except Exception, errexc:
         traceback.print_exc()
         pdb.set_trace()
