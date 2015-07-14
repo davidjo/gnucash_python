@@ -96,8 +96,10 @@
 {'st_mtime': '1436899621', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '17475'}  ;  report_objects.py
 {'st_mtime': '1436604311', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '50389'}  ;  report_options.py
 {'st_mtime': '1402183307', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '0'}  ;  reports/__init__.py
+{'st_mtime': '1436899136', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '70121'}  ;  reports/advanced_portfolio.py
 {'st_mtime': '1409317537', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '21524'}  ;  reports/cash_flow.py
 {'st_mtime': '1412677008', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15987'}  ;  reports/hello_world.py
+{'st_mtime': '1436862274', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16343'}  ;  reports/portfolio.py
 {'st_mtime': '1409317725', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9016'}  ;  reports/price_scatter.py
 {'st_mtime': '1436769135', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '14520'}  ;  stylesheets/__init__.py
 {'st_mtime': '1409316809', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8152'}  ;  stylesheets/plain.py
