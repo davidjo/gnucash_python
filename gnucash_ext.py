@@ -33,6 +33,10 @@ from gnucash.gnucash_core_c import string_to_guid as gnucash_core_string_to_guid
 
 from gnucash import Query
 
+from gnucash import GncPriceDB,GncPrice
+
+from gnucash import GncCommodity
+
 
 
 import pdb
@@ -185,15 +189,15 @@ GncBudget.add_methods_with_prefix('gnc_budget_')
 # - strings/ints etc dont need to be defined??
 # get_book removed now
 GncBudget_dict =  {
-#                'get_guid' : GUID,
+                'get_guid' : GUID,
 #                'get_book' : Book,
-#                'get_recurrence' : Recurrence,
-#                'get_account_period_value' : GncNumeric,
+                'get_recurrence' : Recurrence,
+                'get_account_period_value' : GncNumeric,
                 }
 methods_return_instance(GncBudget,GncBudget_dict)
 
 # and this is how to add property associated with functions
-#GncBudget.name = property( GncBudget.get_name, GncBudget.set_name )
+GncBudget.name = property( GncBudget.get_name, GncBudget.set_name )
 
 
 # so this function needs to be added to the GUID class as a guid object is the first
@@ -248,6 +252,33 @@ def Run (self, instance_class):
 
 Query.Run = Run
 
+def CreateFor (cls,  qofid):
+   if qofid == None:
+       return None
+   newinst = cls()
+   newinst.search_for(qofid)
+   return newinst
+
+# and this function needs to be added to the query class
+# we need a different name because has already been added as create_for
+Query.CreateFor = classmethod(CreateFor)
+
+# add these flags to Query class - as dont appear to be defined in swig
+Query.CLEARED_NONE       = 0x0000
+Query.CLEARED_NO         = 0x0001
+Query.CLEARED_CLEARED    = 0x0002
+Query.CLEARED_RECONCILED = 0x0004
+Query.CLEARED_FROZEN     = 0x0008
+Query.CLEARED_VOIDED     = 0x0010
+Query.CLEARED_ALL        = 0x001F
+
+Query.QOF_GUID_MATCH_ANY  = 1
+Query.QOF_GUID_MATCH_NONE = 2
+Query.QOF_GUID_MATCH_NULL = 3
+Query.QOF_GUID_MATCH_ALL  = 4
+Query.QOF_GUID_MATCH_ANY  = 5
+
+
 
 # and this function needs to be added to the book class
 Book.add_method('gnc_budget_get_default', 'DefaultBudget')
@@ -259,6 +290,7 @@ Book.DefaultBudget = method_function_returns_instance(Book.DefaultBudget,GncBudg
 
 # want to extend the Book class
 Book.GNC_ID_BUDGET = "Budget"
+Book.GNC_ID_SPLIT = "Split"
 
 def BudgetLookup (self, budget_name):
 
@@ -377,6 +409,29 @@ class GNCAccountType(GnuCashCoreClass):
     pass
 GNCAccountType.add_methods_with_prefix('xaccAccountType')
 GNCAccountType.add_methods_with_prefix('xaccAccountTypes')
+
+# extend GncPriceDB - some functions return a PriceList
+# which are not mapped in gnucash.py
+GncPriceDB.lookup_latest_any_currency = method_function_returns_instance_list(
+    GncPriceDB.lookup_latest_any_currency, GncPrice )
+GncPriceDB.lookup_at_time = method_function_returns_instance_list(
+    GncPriceDB.lookup_at_time, GncPrice )
+GncPriceDB.lookup_nearest_in_time_any_currency = method_function_returns_instance_list(
+    GncPriceDB.lookup_nearest_in_time_any_currency, GncPrice )
+GncPriceDB.lookup_latest_before_any_currency = method_function_returns_instance_list(
+    GncPriceDB.lookup_nearest_in_time_any_currency, GncPrice )
+
+# gnc_price_lookup needs fixing - first arg is GncGUID so should be removed from GncPrice
+# probably should be a Book function
+#GncPrice.lookup = args(guid,book)
+
+# this is annoying - NO GncPrice functions are mapped for returning objects!!
+GncPrice.get_commodity = method_function_returns_instance( GncPrice.get_commodity, GncCommodity )
+# dont know if this is handled to return python date - might be
+#GncPrice.get_time = method_function_returns_instance( GncPrice.get_commodity, Timespec )
+GncPrice.get_value = method_function_returns_instance( GncPrice.get_value, GncNumeric )
+GncPrice.get_currency = method_function_returns_instance( GncPrice.get_currency, GncCommodity )
+
 
 # and this does not return Entry objects but the SWIG proxy - fix it to return Entry objects
 Invoice.GetEntries = method_function_returns_instance_list(Invoice.GetEntries, Entry)
