@@ -185,15 +185,15 @@ GncBudget.add_methods_with_prefix('gnc_budget_')
 # - strings/ints etc dont need to be defined??
 # get_book removed now
 GncBudget_dict =  {
-                'get_guid' : GUID,
+#                'get_guid' : GUID,
 #                'get_book' : Book,
-                'get_recurrence' : Recurrence,
-                'get_account_period_value' : GncNumeric,
+#                'get_recurrence' : Recurrence,
+#                'get_account_period_value' : GncNumeric,
                 }
 methods_return_instance(GncBudget,GncBudget_dict)
 
 # and this is how to add property associated with functions
-GncBudget.name = property( GncBudget.get_name, GncBudget.set_name )
+#GncBudget.name = property( GncBudget.get_name, GncBudget.set_name )
 
 
 # so this function needs to be added to the GUID class as a guid object is the first
