@@ -75,14 +75,21 @@ def account_get_comm_balance_at_date (account, date, include_children=False):
             balval = account_get_comm_balance_at_date(chld,date,False)
             balance_collector.merge(balval)
 
+    # think I understand this
+    # this whole mess is sorting the splits for the required day so we
+    # end up (presumably) with the latest split of that day
+    # Im assuming setting the max results and sorting in increasing order
+    # means the last split of split list is returned (not first!!)
+
     curbook = sw_app_utils.get_current_book()
     tmpqry = gnucash.Query.CreateFor(curbook.GNC_ID_SPLIT)
     tmpqry.set_book(curbook)
+    # apparently the python bindings only wrap the core query functions in libqof/qof
+    # not the additional functions in eg engine/Query.c
     #tmpqry.AddSingleAccountMatch(account,gnucash.QOF_QUERY_AND)
     #tmpqry.AddDateMatchTS(False,date,True,date,gnucash.QOF_QUERY_AND)
     engine_ctypes.AddSingleAccountMatch(tmpqry,account,gnucash.QOF_QUERY_AND)
     engine_ctypes.AddDateMatchTS(tmpqry,False,date,True,date,gnucash.QOF_QUERY_AND)
-    #query.merge_in_place(invqry,gnucash.QOF_QUERY_AND)
     tmpqry.set_sort_order([gnucash.gnucash_core_c.SPLIT_TRANS,gnucash.gnucash_core_c.TRANS_DATE_POSTED],[gnucash.gnucash_core_c.QUERY_DEFAULT_SORT],[])
     tmpqry.set_sort_increasing(True,True,True)
     tmpqry.set_max_results(1)

@@ -481,3 +481,11 @@ def load_python_reports ():
         traceback.print_exc()
         pdb.set_trace()
 
+    try:
+        from reports.gains import CapitalGains
+        python_reports_by_name['CapitalGains'] = CapitalGains()
+        python_reports_by_guid[python_reports_by_name['CapitalGains'].report_guid] = python_reports_by_name['CapitalGains']
+    except Exception, errexc:
+        traceback.print_exc()
+        pdb.set_trace()
+

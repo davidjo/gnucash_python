@@ -25,7 +25,6 @@ import datetime
 # the ElementTree function names
 #import xml.etree.ElementTree as ET
 
-# this is an attempt at replicating the Investment Advanced Portfolio scheme report
 
 import sw_app_utils
 
@@ -78,16 +77,16 @@ units_denom = 100000000
 price_denom = 100000000
 
 
-class AdvancedPortfolio(ReportTemplate):
+class CapitalGains(ReportTemplate):
 
     def __init__ (self):
 
-        super(AdvancedPortfolio,self).__init__()
+        super(CapitalGains,self).__init__()
 
         # need to set the  base variables
         self.version = 1
-        self.name = N_("Advanced Portfolio")
-        self.report_guid = "68b8ab5b9524466a89840b9076876a6e"
+        self.name = N_("Capital Gains")
+        self.report_guid = "c9c3dd7052a8470e8757297a1d7a11c2"
         self.menu_path = N_("_Assets & Liabilities")
 
 
@@ -98,7 +97,9 @@ class AdvancedPortfolio(ReportTemplate):
         # need to instantiate the options database
         self.options = OptionsDB()
 
-        self.options.add_report_date('General', N_("Date"), "a")
+        #self.options.add_report_date('General', N_("Date"), "a")
+
+        self.options.add_date_interval('General', N_("Start Date"), N_("End Date"), "a")
 
         self.options.add_currency('General', N_("Report's currency"), "c")
 
@@ -150,6 +151,9 @@ class AdvancedPortfolio(ReportTemplate):
 
         self.options.register_option(SimpleBooleanOption(N_("Display"), N_("Show prices"),"e",
                                                            N_("Display share prices."), True))
+
+        self.options.register_option(SimpleBooleanOption(N_("Display"), N_("Show all transactions"),"f",
+                                                           N_("Display all transactions."), False))
 
 
         self.options.register_option(AccountListOption(N_("Accounts"), N_("Accounts"), "b",
@@ -473,11 +477,162 @@ class AdvancedPortfolio(ReportTemplate):
         return False
 
 
+    def table_add_gain_row (self, row, curacc, to_date_tp, from_date_tp, report_currency,
+         price_source, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
+         prefer_pricelist, handle_brokerage_fees,
+         use_txn, pricing_txn, share_print_info, currency_frac,
+         basis_amt,
+         ticker_symbol, listing, txn_date, units, price, value, moneyin, moneyout, income, brokerage, gain, gain_report):
+
+        # note that this function does not apply any currency conversions
+        # I dont think I want this - I want to see the gain in native currency
+        # plus a final conversion at transaction date to report currency
+
+        if (row % 2) == 0:
+            new_row = self.document.StyleSubElement(self.new_table,'normal-row')
+        else:
+            new_row = self.document.StyleSubElement(self.new_table,'alternate-row')
+        new_row.text = "\n"
+        new_row.tail = "\n"
+
+
+        # need to figure new way to do this
+        # original created a list
+        # not clear how to do this
+        # could try makeing elements then adding them later?
+        # still dont know if can change/add parent to ET elements
+        # do I need to - essentially the ET document is creating the
+        # equivalent of the activecols list
+
+        # the following does gnc:html-account-anchor
+        accurl = gnc_html_utilities.account_anchor_text(curacc)
+
+        new_col = self.document.doc.SubElement(new_row,"td")
+
+        anchor_markup = self.document.doc.SubElement(new_col,"a")
+        anchor_markup.attrib['href'] = accurl
+        anchor_markup.text = N_(curacc.GetName()) + "\n"
+        anchor_markup.tail = "\n"
+
+        #activecols = [anchor_markup]
+
+        # ;; build a list for the row  based on user selections
+
+        if show_symbol:
+            new_col = self.document.StyleSubElement(new_row,'text-cell')
+            new_col.text = ticker_symbol
+            new_col.tail = "\n"
+            #activecols.append(new_col)
+
+        if show_listing:
+            new_col = self.document.StyleSubElement(new_row,'text-cell')
+            new_col.text = listing
+            new_col.tail = "\n"
+            #activecols.append(new_col)
+
+        new_col = self.document.StyleSubElement(new_row,'text-cell')
+        new_col.text = str(txn_date)
+        new_col.tail = "\n"
+        #activecols.append(new_col)
+
+        if show_shares:
+            new_col = self.document.StyleSubElement(new_row,'number-cell')
+            new_col.text = sw_app_utils.PrintAmount(units,share_print_info)
+            new_col.tail = "\n"
+            #activecols.append(new_col)
+        if show_price:
+            new_col = self.document.StyleSubElement(new_row,'number-cell')
+            new_col.tail = "\n"
+
+            #pdb.set_trace()
+
+            if use_txn:
+                if pricing_txn:
+                    # this does gnc:html-transaction-anchor
+                    prcurl = gnc_html_utilities.transaction_anchor_text(pricing_txn)
+                    #pdb.set_trace()
+                    # is this always going to be a GncMonetary??
+                    # yes!!
+                    prcstr = price.to_currency_string()
+                else:
+                    #pdb.set_trace()
+                    # what type is this??
+                    print "price type is",price
+                    prcurl = None
+                    if isinstance(price,gnc_commodity_utilities.GncMonetary):
+                        prcstr = price.to_currency_string()
+                    else:
+                        prcstr = price.to_string()
+            else:
+                # this does gnc:html-price-anchor
+                # note price here MUST be a GncPrice
+                prcurl = gnc_html_utilities.price_anchor_text(price)
+                prcstr = gnc_commodity_utilities.GncMonetary(price.get_currency(), price.get_value()).to_currency_string()
+
+            if prcurl != None:
+                anchor_markup = self.document.doc.SubElement(new_col,"a")
+                anchor_markup.attrib['href'] = prcurl
+                anchor_markup.text = prcstr
+                anchor_markup.tail = "\n"
+            else:
+                # this appears to be what code says
+                new_col.text = prcstr
+
+            #activecols.append(new_col)
+
+
+        # now add lots more
+        if use_txn:
+            if pricing_txn:
+               txtstr = "*"
+            else:
+               txtstr = "**"
+        else:
+           txtstr = " "
+
+        new_col = self.document.StyleSubElement(new_row,'text-cell')
+        new_col.text = txtstr
+        new_col.tail = "\n"
+
+        new_col = self.document.StyleSubElement(new_row,'number-cell')
+        new_col.text = basis_amt.to_currency_string()
+        new_col.tail = "\n"
+
+        new_col = self.document.StyleSubElement(new_row,'number-cell')
+        new_col.text = value.to_currency_string()
+        new_col.tail = "\n"
+
+        new_col = self.document.StyleSubElement(new_row,'number-cell')
+        new_col.text = moneyin.to_currency_string()
+        new_col.tail = "\n"
+
+        new_col = self.document.StyleSubElement(new_row,'number-cell')
+        new_col.text = moneyout.to_currency_string()
+        new_col.tail = "\n"
+
+        new_col = self.document.StyleSubElement(new_row,'number-cell')
+        new_col.text = income.to_currency_string()
+        new_col.tail = "\n"
+
+        if handle_brokerage_fees != 'ignore-brokerage':
+
+            new_col = self.document.StyleSubElement(new_row,'number-cell')
+            new_col.text = brokerage.to_currency_string()
+            new_col.tail = "\n"
+
+        new_col = self.document.StyleSubElement(new_row,'number-cell')
+        new_col.text = gain.to_currency_string()
+        new_col.tail = "\n"
+
+        new_col = self.document.StyleSubElement(new_row,'number-cell')
+        new_col.text = gain_report.to_currency_string()
+        new_col.tail = "\n"
+
 
     def table_add_stock_rows (self, accounts, to_date_tp, from_date_tp, report_currency, exchange_fn, price_fn,
-         price_source, include_empty, show_symbol, show_listing, show_shares, show_price, basis_method,
+         price_source, include_empty, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
          prefer_pricelist, handle_brokerage_fees,
-         total_basis, total_value, total_moneyin, total_moneyout, total_income, total_gain, total_ugain, total_brokerage):
+         total_basis, total_value, total_moneyin, total_moneyout, total_income, total_gain, total_ugain, total_brokerage, total_gain_report):
 
         optobj = self.options.lookup_name('Display','Share decimal places')
         num_places = optobj.get_option_value()
@@ -488,14 +643,32 @@ class AdvancedPortfolio(ReportTemplate):
 
         for row,curacc in enumerate(accounts):
 
-            print "account",curacc.GetName(),curacc
+            # I dont see any reason to process any account which does not
+            # have sale in required period
 
-            if (row % 2) == 0:
-                new_row = self.document.StyleSubElement(self.new_table,'normal-row')
-            else:
-                new_row = self.document.StyleSubElement(self.new_table,'alternate-row')
-            new_row.text = "\n"
-            new_row.tail = "\n"
+            # to date limit gains need a pre-scan of splits to find sales within
+            # the date range - if no sales within date range we dont list all transactions
+            # I hope a sale must involve negative units
+            # this is going to FAIL for short selling where the the sale is first
+            # and the buy is where we need to compute the gain
+            check_do_all = False
+            can_skip_account = True
+            for split_acc in curacc.GetSplitList():
+                parent = split_acc.GetParent()
+                txn_date = parent.RetDatePostedTS()
+                if txn_date >= from_date_tp.date() and txn_date < to_date_tp.date():
+                    for split in parent.GetSplitList():
+                        if self.is_same_account(curacc,split.GetAccount()):
+                            split_units = split.GetAmount()
+                            if split_units.negative_p():
+                                can_skip_account = False
+                                if show_all:
+                                    check_do_all = True
+
+            if can_skip_account:
+                continue
+
+            print "account",curacc.GetName(),curacc
 
             commod = curacc.GetCommodity()
 
@@ -515,6 +688,7 @@ class AdvancedPortfolio(ReportTemplate):
             moneyincoll   = CommodityCollector()
             moneyoutcoll  = CommodityCollector()
             gaincoll      = CommodityCollector()
+            gaincoll_report = CommodityCollector()
 
 
             # ;; the price of the commodity at the time of the report
@@ -573,6 +747,7 @@ class AdvancedPortfolio(ReportTemplate):
                 if tmpprc.amount.zero_p():
                     price = None
 
+
             # ;; If we are told to use a pricing transaction, or if we don't have a price
             # ;; from the price DB, find a good transaction to use.
             if not use_txn and (price == None or not prefer_pricelist):
@@ -591,7 +766,7 @@ class AdvancedPortfolio(ReportTemplate):
 
                 # ;; Find the first (most recent) one that can be converted to report currency
                 spltindx = 0
-                while not use_txn and len(split_list) > 0:
+                while not use_txn and spltindx < len(split_list):
 
                     split =  split_list[spltindx]
 
@@ -644,6 +819,8 @@ class AdvancedPortfolio(ReportTemplate):
                 commod_currency = parent.GetCurrency()
                 commod_currency_frac = commod_currency.get_fraction()
 
+                print "Analyzing transaction for stock", ticker_symbol, "on date", str(txn_date)
+
                 if txn_date <= to_date_tp.date() and \
                      not parent.GetGUID() in seen_trans:
 
@@ -651,17 +828,23 @@ class AdvancedPortfolio(ReportTemplate):
                     trans_brokerage = GncNumeric(0,1)
                     trans_shares = GncNumeric(0,1)
                     shares_bought = GncNumeric(0,1)
+                    shares_sold = GncNumeric(0,1)
                     trans_sold = GncNumeric(0,1)
                     trans_bought = GncNumeric(0,1)
                     trans_spinoff = GncNumeric(0,1)
                     trans_drp_residual = GncNumeric(0,1)
                     trans_drp_account = None
 
+                    gain = GncNumeric(0,1)
+
                     # ;; Add this transaction to the list of processed transactions so we don't
                     # ;; do it again if there is another split in it for this account
                     seen_trans[parent.GetGUID()] = 1
 
                     #pdb.set_trace()
+
+                    check_sale = False
+                    check_buy = False
 
                     # ;; Go through all the splits in the transaction to get an overall idea of
                     # ;; what it does in terms of income, money in or out, shares bought or sold, etc.
@@ -714,8 +897,12 @@ class AdvancedPortfolio(ReportTemplate):
                                 if split_value.positive_p():
                                     trans_bought = trans_bought.add(split_value,commod_currency_frac, GNC_HOW_RND_ROUND)
                                     shares_bought = shares_bought.add(split_units,units_denom, GNC_HOW_RND_ROUND)
+                                    check_buy = True
                                 else:
+                                    # for sale we have negative value
                                     trans_sold = trans_sold.sub(split_value,commod_currency_frac, GNC_HOW_RND_ROUND)
+                                    shares_sold = shares_sold.add(split_units,units_denom, GNC_HOW_RND_ROUND)
+                                    check_sale = True
                         elif self.is_split_account_type(split, ACCT_TYPE_ASSET):
                             # ;; If all the asset accounts mentioned in the transaction are siblings of each other
                             # ;; keep track of the money transfered to them if it is in the correct currency
@@ -732,11 +919,11 @@ class AdvancedPortfolio(ReportTemplate):
                                    else:
                                        trans_drp_account = None
 
-
                     print "Income: ", trans_income.to_string()
                     print " Brokerage: ", trans_brokerage.to_string()
                     print " Shares traded: ", trans_shares.to_string()
                     print " Shares bought: ", shares_bought.to_string()
+                    print " Shares sold: ", shares_sold.to_string()
                     print " Value sold: ", trans_sold.to_string()
                     print " Value purchased: ", trans_bought.to_string()
                     print " Spinoff value ", trans_spinoff.to_string()
@@ -813,6 +1000,11 @@ class AdvancedPortfolio(ReportTemplate):
                     moneyoutcoll.add(commod_currency, trans_sold)
                     moneyoutcoll.add(commod_currency, trans_spinoff)
 
+                    # when we sell the basis is reduced - we need to save
+                    # the basis amount before the basis is updated
+                    orig_basis = GncNumeric(0,1)
+                    new_basis = GncNumeric(0,1)
+
                     # ;; Look at splits again to handle changes in basis and realized gains
 
                     for split in parent.GetSplitList():
@@ -828,6 +1020,12 @@ class AdvancedPortfolio(ReportTemplate):
                         if not split_units.zero_p() and self.is_same_account(curacc,split.GetAccount()):
                             # ;; Split into subject account with non-zero amount.  This is a purchase
                             # ;; or a sale, adjust the basis
+                            # why is this converting to report_currency here??
+                            # why not just do it at end??
+                            # maybe we bought with differing currencies??
+                            # and the basis needs to be done in a single currency
+                            # and I think this is wrong - as far as I can tell its converting using the
+                            # price at to_date_tp - surely it should be using the transaction date exchange rate
                             split_value_currency = my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod_currency, split_value), report_currency).amount
                             orig_basis = self.sum_basis(basis_list, currency_frac)
                             # ;; proportion of the fees attributable to this split
@@ -836,12 +1034,15 @@ class AdvancedPortfolio(ReportTemplate):
                             fees_currency = my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod_currency, fee_ratio.mul(trans_brokerage, commod_currency_frac, GNC_HOW_RND_ROUND)), report_currency).amount
                             if handle_brokerage_fees == 'include-in-basis':
                                 # ;; Include brokerage fees in basis
-                                split_value_with_fees = split_value_currency.add(fees_currency, currency_frac, GNC_HOW_RND_ROUND)
+                                split_value_with_fees = split_value.add(trans_brokerage, currency_frac, GNC_HOW_RND_ROUND)
+                                split_value_with_fees_currency = split_value_currency.add(fees_currency, currency_frac, GNC_HOW_RND_ROUND)
                             else:
-                                split_value_with_fees = split_value_currency
+                                split_value_with_fees = split_value
+                                split_value_with_fees_currency = split_value_currency
 
-                            print "going in to basis list ", basis_list, " ", split_units.to_string(), " ", \
-                                    split_value_with_fees.to_string()
+                            print "going in to basis list ", basis_list, " ", split_units.to_string(), " "
+                            print "                       ", split_value_with_fees.to_string()
+                            print "                       ", split_value_with_fees_currency.to_string()
 
                             # ;; adjust the basis
                             basis_list = self.basis_builder(basis_list, split_units, split_value_with_fees, basis_method, currency_frac)
@@ -861,8 +1062,8 @@ class AdvancedPortfolio(ReportTemplate):
                                     print "Old basis=", orig_basis.to_string()
                                     print " New basis=", new_basis.to_string()
                                     print " Gain=", gain.to_string()
-                                    gaincoll.add(report_currency,gain)
-
+                                    #gaincoll.add(report_currency,gain)
+                                    gaincoll.add(commod_currency,gain)
 
                         # ;; here is where we handle a spin-off txn. This will be a no-units
                         # ;; split with only one other split. xaccSplitGetOtherSplit only
@@ -874,6 +1075,100 @@ class AdvancedPortfolio(ReportTemplate):
                                                    my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod_currency, split_value),report_currency).amount,
                                                    basis_method, currency_frac)
                             print "after spin-off basis list ", basis_list
+
+
+                    # WE HAVE A BIG PROBLEM
+                    # THIS SCRIPT DOES NOT HANDLE short selling
+                    # - where the gain is not at the sale but at the buy!!
+
+                    # interesting - for exercised call options (when your shares are sold)
+                    # Schwab combines the share gain and option gain into single share gain
+                    # - maybe because was short term for both??
+
+
+                    # we have seen a sale
+                    # now check within the bounds
+                    #if check_sale and \
+                    #    (txn_date >= from_date_tp.date() and txn_date < to_date_tp.date()):
+                    #if not trans_shares.zero_p() and txn_date < to_date_tp.date():
+                    if check_do_all or (check_sale and \
+                        (txn_date >= from_date_tp.date() and txn_date < to_date_tp.date())):
+
+                        #pdb.set_trace()
+
+                        #if ticker_symbol == 'JNJ': pdb.set_trace()
+
+                        moneyin = gnc_commodity_utilities.GncMonetary(commod_currency, trans_bought)
+                        moneyout = gnc_commodity_utilities.GncMonetary(commod_currency, trans_sold)
+                        capgain = gnc_commodity_utilities.GncMonetary(commod_currency, gain)
+                        curincome = gnc_commodity_utilities.GncMonetary(commod_currency, trans_income)
+                        curfees = gnc_commodity_utilities.GncMonetary(commod_currency, trans_brokerage)
+
+                        # we need a price for the transaction
+                        # I dont get this - the anchor function for price seems to require a GncPrice object
+                        # NOT a GncMonetary object
+                        # ah - now get it - the price of the commodity can either be from the database (GncPrice)
+                        # or computed from the transaction when it is a GncMonetary
+                        # my_exchange_fn handles this assuming use_txn and pricing_txn
+                        # so need to set use_txn and pricing_txn here
+                        if check_sale or check_buy:
+                            if check_buy:
+                                trans_value = trans_bought.sub(trans_brokerage,currency_frac,GNC_HOW_RND_ROUND)
+                                shares_change = shares_bought
+                            else:
+                                moneyout = trans_sold.sub(trans_brokerage,currency_frac,GNC_HOW_RND_ROUND)
+                                moneyout = gnc_commodity_utilities.GncMonetary(commod_currency, moneyout)
+                                trans_value = trans_sold
+                                shares_change = shares_sold
+                            # apparently trans_shares is always positive - Im confused
+                            trans_price = trans_value.div(trans_shares.abs(),currency_frac,GNC_HOW_RND_ROUND)
+                            trans_value = gnc_commodity_utilities.GncMonetary(commod_currency, trans_value)
+                            trans_price = gnc_commodity_utilities.GncMonetary(commod_currency, trans_price)
+                            new_use_txn = True
+                            new_pricing_txn = parent
+                        else:
+                            trans_value = GncNumeric(0,1)
+                            trans_price = GncNumeric(0,1)
+                            trans_value = gnc_commodity_utilities.GncMonetary(commod_currency, trans_value)
+                            trans_price = gnc_commodity_utilities.GncMonetary(commod_currency, trans_price)
+                            new_use_txn = True
+                            new_pricing_txn = False
+
+                        print "price", type(price)
+                        #pdb.set_trace()
+
+                        if check_sale:
+                            basis_amt = gnc_commodity_utilities.GncMonetary(commod_currency, orig_basis.sub(new_basis, currency_frac,GNC_HOW_RND_ROUND))
+                        elif check_buy:
+                            # - no for a buy the basis doesnt change - basis only affects sales
+                            # well it does change the basis for the sale - leave for now
+                            # this is wrong - we need the basis component for this transaction
+                            # - which should simply be the value of the buy!!
+                            basis_amt = gnc_commodity_utilities.GncMonetary(commod_currency, trans_bought)
+                            #basis_amt = GncNumeric(0,1)
+                        else:
+                            # these are likely gain/loss splits so far
+                            print "junk"
+                            #pdb.set_trace()
+                            basis_amt = gnc_commodity_utilities.GncMonetary(commod_currency, GncNumeric(0,1))
+
+                        # finally convert gain to report currency
+                        if engine_ctypes.CommodityEquiv(capgain.commodity,report_currency):
+                            capgain_report = capgain
+                        else:
+                            # this relies on having a price database for the currencies involved!!!
+                            # if not it seems to return a 0 value
+                            capgain_report = gnc_commodity_utilities.exchange_by_pricedb_nearest(capgain,report_currency,txn_date)
+                            if capgain_report.amount.zero_p():
+                                capgain_report = capgain
+                        gaincoll_report.add(report_currency,capgain_report.amount)
+
+                        self.table_add_gain_row(row, curacc, to_date_tp, from_date_tp, report_currency,
+                                    price_source, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
+                                    prefer_pricelist, handle_brokerage_fees,
+                                    new_use_txn, new_pricing_txn, share_print_info, currency_frac,
+                                    basis_amt,
+                                    ticker_symbol, listing, txn_date, shares_change, trans_price, trans_value, moneyin, moneyout, curincome, curfees, capgain, capgain_report)
 
 
             # ;; Look for income and expense transactions that don't have a split in the
@@ -940,22 +1235,67 @@ class AdvancedPortfolio(ReportTemplate):
             print "basis we're using to build rows is ", self.sum_basis(basis_list,currency_frac).to_string()
             print "but the actual basis list is ", basis_list
 
+            # wierd - I think this is removing the brokerage fees???
             if handle_brokerage_fees == 'include-in-gain':
                 gaincoll.minusmerge(brokeragecoll, False)
 
+            # was in middle of table row creation
+            # - this is more reasonable
 
-            if include_empty or not units.zero_p():
+            # not so fast - need to check what currency conversion factors are being used
+            # yes - that doesnt seem to be included in the CommodityCollector
+            # the sum function takes an exchange function with a preset date
+            # (unless Im wrong which I could easily be - my scheme translation is not good)
+            # I want to convert with exchange rate of date of each transaction
+            # relatively simple addition - include date parameter on add
 
-                moneyin = moneyincoll.sum(report_currency, my_exchange_fn)
-                moneyout = moneyoutcoll.sum(report_currency, my_exchange_fn)
-                brokerage = brokeragecoll.sum(report_currency, my_exchange_fn)
-                income = dividendcoll.sum(report_currency, my_exchange_fn)
-                # ;; just so you know, gain == realized gain, ugain == un-realized gain, bothgain, well..
-                gain = gaincoll.sum(report_currency, my_exchange_fn)
-                ugain = gnc_commodity_utilities.GncMonetary(report_currency,
-                          my_exchange_fn(value, report_currency).amount.sub(self.sum_basis(basis_list,report_currency.get_fraction()),currency_frac, GNC_HOW_RND_ROUND))
-                bothgain = gnc_commodity_utilities.GncMonetary(report_currency, gain.amount.add(ugain.amount,currency_frac,GNC_HOW_RND_ROUND))
-                totalreturn = gnc_commodity_utilities.GncMonetary(report_currency, bothgain.amount.add(income.amount,currency_frac,GNC_HOW_RND_ROUND))
+            moneyin = moneyincoll.sum(report_currency, my_exchange_fn)
+            moneyout = moneyoutcoll.sum(report_currency, my_exchange_fn)
+            brokerage = brokeragecoll.sum(report_currency, my_exchange_fn)
+            income = dividendcoll.sum(report_currency, my_exchange_fn)
+            # ;; just so you know, gain == realized gain, ugain == un-realized gain, bothgain, well..
+            gain = gaincoll.sum(report_currency, my_exchange_fn)
+            ugain = gnc_commodity_utilities.GncMonetary(report_currency,
+                      my_exchange_fn(value, report_currency).amount.sub(self.sum_basis(basis_list,report_currency.get_fraction()),currency_frac, GNC_HOW_RND_ROUND))
+            bothgain = gnc_commodity_utilities.GncMonetary(report_currency, gain.amount.add(ugain.amount,currency_frac,GNC_HOW_RND_ROUND))
+
+            total_value.add(value.commodity, value.amount)
+            total_moneyin.merge(moneyincoll)
+            total_moneyout.merge(moneyoutcoll)
+            total_brokerage.merge(brokeragecoll)
+            total_income.merge(dividendcoll)
+            total_gain.merge(gaincoll)
+            total_gain_report.merge(gaincoll_report)
+            total_ugain.add(ugain.commodity, ugain.amount)
+
+
+            # maybe this is why basis is done in report currency
+            # - but why not just sum and convert here??
+            curbasissum = self.sum_basis(basis_list, currency_frac)
+            prccmd = price.commodity if use_txn else price.get_currency()
+            curbasissum = gnc_commodity_utilities.GncMonetary(prccmd,curbasissum)
+            curbasissum_report = gnc_commodity_utilities.exchange_by_pricedb_nearest(curbasissum,report_currency,txn_date)
+            total_basis.add(report_currency,  curbasissum_report)
+
+
+            # this is total gain line - as per original
+            # ie if sold multiple times in date range we sum those here
+            # to get total gain for a stock in the date range
+
+            dont_include = True
+
+            if not dont_include and (include_empty or not units.zero_p()):
+
+                pdb.set_trace()
+
+                # moved to here - must be after the individual split rows
+
+                if (row % 2) == 0:
+                    new_row = self.document.StyleSubElement(self.new_table,'normal-row')
+                else:
+                    new_row = self.document.StyleSubElement(self.new_table,'alternate-row')
+                new_row.text = "\n"
+                new_row.tail = "\n"
 
                 # the following does gnc:html-account-anchor
                 accurl = gnc_html_utilities.account_anchor_text(curacc)
@@ -963,7 +1303,7 @@ class AdvancedPortfolio(ReportTemplate):
                 # need to figure new way to do this
                 # original created a list
                 # not clear how to do this
-                # could try makeing elements then adding them later?
+                # could try making elements then adding them later?
                 # still dont know if can change/add parent to ET elements
                 # do I need to - essentially the ET document is creating the
                 # equivalent of the activecols list
@@ -984,15 +1324,6 @@ class AdvancedPortfolio(ReportTemplate):
                     else:
                         self.warn_no_price = True
 
-                total_value.add(value.commodity, value.amount)
-                total_moneyin.merge(moneyincoll)
-                total_moneyout.merge(moneyoutcoll)
-                total_brokerage.merge(brokeragecoll)
-                total_income.merge(dividendcoll)
-                total_gain.merge(gaincoll)
-                total_ugain.add(ugain.commodity, ugain.amount)
-                total_basis.add(report_currency, self.sum_basis(basis_list, currency_frac))
-
                 # ;; build a list for the row  based on user selections
 
                 if show_symbol:
@@ -1006,6 +1337,12 @@ class AdvancedPortfolio(ReportTemplate):
                     new_col.text = listing
                     new_col.tail = "\n"
                     #activecols.append(new_col)
+
+                new_col = self.document.StyleSubElement(new_row,'text-cell')
+                new_col.text = str(txn_date)
+                new_col.tail = "\n"
+                #activecols.append(new_col)
+
                 if show_shares:
                     new_col = self.document.StyleSubElement(new_row,'number-cell')
                     new_col.text = sw_app_utils.PrintAmount(units,share_print_info)
@@ -1072,29 +1409,6 @@ class AdvancedPortfolio(ReportTemplate):
                 new_col.tail = "\n"
 
                 new_col = self.document.StyleSubElement(new_row,'number-cell')
-                new_col.text = gain.to_currency_string()
-                new_col.tail = "\n"
-
-                new_col = self.document.StyleSubElement(new_row,'number-cell')
-                new_col.text = ugain.to_currency_string()
-                new_col.tail = "\n"
-
-                new_col = self.document.StyleSubElement(new_row,'number-cell')
-                new_col.text = bothgain.to_currency_string()
-                new_col.tail = "\n"
-
-                moneyinvalue = moneyin.amount.to_double()
-                bothgainvalue = bothgain.amount.to_double()
-                if moneyinvalue == 0.0:
-                   prcntstr = ""
-                else:
-                   prcntstr = "%.2f%%"%((bothgainvalue/moneyinvalue)*100)
-
-                new_col = self.document.StyleSubElement(new_row,'number-cell')
-                new_col.text = prcntstr
-                new_col.tail = "\n"
-
-                new_col = self.document.StyleSubElement(new_row,'number-cell')
                 new_col.text = income.to_currency_string()
                 new_col.tail = "\n"
 
@@ -1105,20 +1419,12 @@ class AdvancedPortfolio(ReportTemplate):
                     new_col.tail = "\n"
 
                 new_col = self.document.StyleSubElement(new_row,'number-cell')
-                new_col.text = totalreturn.to_currency_string()
+                new_col.text = gain.to_currency_string()
                 new_col.tail = "\n"
-
-                moneyinvalue = moneyin.amount.to_double()
-                totalreturnvalue = totalreturn.amount.to_double()
-                if moneyinvalue == 0.0:
-                   prcntstr = ""
-                else:
-                   prcntstr = "%.2f%%"%((totalreturnvalue/moneyinvalue)*100)
 
                 new_col = self.document.StyleSubElement(new_row,'number-cell')
-                new_col.text = prcntstr
+                new_col.text = gain.to_currency_string()
                 new_col.tail = "\n"
-
 
             #pdb.set_trace()
 
@@ -1161,15 +1467,15 @@ class AdvancedPortfolio(ReportTemplate):
 
         # get local values for options
 
-        optobj = self.options.lookup_name('General','Date')
-        to_date_tp = optobj.get_option_value()
-
-        #optobj = self.options.lookup_name('General','Start Date')
-        #from_date_tp = optobj.get_option_value()
-        #optobj = self.options.lookup_name('General','End Date')
+        #optobj = self.options.lookup_name('General','Date')
         #to_date_tp = optobj.get_option_value()
 
         from_date_tp = None
+
+        optobj = self.options.lookup_name('General','Start Date')
+        from_date_tp = optobj.get_option_value()
+        optobj = self.options.lookup_name('General','End Date')
+        to_date_tp = optobj.get_option_value()
 
         accobj = self.options.lookup_name('Accounts','Accounts')
         accounts = accobj.get_option_value()
@@ -1197,6 +1503,9 @@ class AdvancedPortfolio(ReportTemplate):
 
         optobj = self.options.lookup_name('Display','Show prices')
         show_price = optobj.get_value()
+
+        optobj = self.options.lookup_name('Display','Show all transactions')
+        show_all = optobj.get_value()
 
         optobj = self.options.lookup_name('General','Basis calculation method')
         basis_method = optobj.get_value()
@@ -1229,6 +1538,7 @@ class AdvancedPortfolio(ReportTemplate):
         total_moneyout = CommodityCollector()
         total_income   = CommodityCollector()
         total_gain     = CommodityCollector() # ;; realized gain
+        total_gain_report = CommodityCollector() # ;; realized gain - in report currency
         total_ugain    = CommodityCollector() # ;; unrealized gain
         total_brokerage = CommodityCollector()
 
@@ -1247,8 +1557,7 @@ class AdvancedPortfolio(ReportTemplate):
         # or at least not the right one
         self.document.style = report.style
 
-        #self.document.title = rptttl + " - " + N_("%s to %s"%(gnc_print_date(from_date_tp),gnc_print_date(to_date_tp)))
-        self.document.title = rptttl + " " + N_("%s"%(gnc_print_date(to_date_tp)))
+        self.document.title = rptttl + " - " + N_("%s to %s"%(gnc_print_date(from_date_tp),gnc_print_date(to_date_tp)))
 
 
         self.warn_price_dirty = False
@@ -1268,6 +1577,9 @@ class AdvancedPortfolio(ReportTemplate):
 
             book = sw_app_utils.get_current_book()
 
+            # the primary purpose of this is to store the to_date_tp so when called
+            # it converts at exchange rate of to_date_tp - well thats my current analysis
+            # not really what we want
             self.exchange_fn = gnc_commodity_utilities.case_exchange_fn(price_source, report_currency, to_date_tp)
             self.pricedb = book.get_price_db()
 
@@ -1291,9 +1603,9 @@ class AdvancedPortfolio(ReportTemplate):
             sum_total_income = GncNumeric(0,1)
             sum_total_both_gains = GncNumeric(0,1)
             sum_total_gain = GncNumeric(0,1)
+            sum_total_gain_report = GncNumeric(0,1)
             sum_total_ugain = GncNumeric(0,1)
             sum_total_brokerage = GncNumeric(0,1)
-            sum_total_totalreturn = GncNumeric(0,1)
 
             # ;;begin building lists for which columns to display
             if show_symbol:
@@ -1303,6 +1615,10 @@ class AdvancedPortfolio(ReportTemplate):
             if show_listing:
                 headercols.append(N_("Listing"))
                 totalscols.append(N_(" "))
+
+            # add a transaction date column
+            headercols.append(N_("Date"))
+            totalscols.append(N_(" "))
 
             if show_shares:
                 headercols.append(N_("Shares"))
@@ -1317,18 +1633,15 @@ class AdvancedPortfolio(ReportTemplate):
                                N_("Value"),
                                N_("Money In"),
                                N_("Money Out"),
-                               N_("Realized Gain"),
-                               N_("Unrealized Gain"),
-                               N_("Total Gain"),
-                               N_("Rate of Gain"),
                                N_("Income"),
                               ])
 
             if handle_brokerage_fees != 'ignore-brokerage':
                 headercols.append(N_("Brokerage Fees"))
 
-            headercols.append(N_("Total Return"))
-            headercols.append(N_("Rate of Return"))
+            headercols.append(N_("Realized Gain"))
+
+            headercols.append(N_("Gain Report Currency"))
 
             totalscols.append(N_(" "))
 
@@ -1338,7 +1651,7 @@ class AdvancedPortfolio(ReportTemplate):
 
             # this is essentially doing gnc:html-table-set-col-headers
             for colhdr in headercols:
-	        new_hdr = self.document.doc.SubElement(new_row,"th",attrib={'rowspan' : "1", 'colspan' : "1" })
+                new_hdr = self.document.doc.SubElement(new_row,"th",attrib={'rowspan' : "1", 'colspan' : "1" })
                 new_hdr.text = colhdr
                 new_hdr.tail = "\n"
 
@@ -1346,29 +1659,24 @@ class AdvancedPortfolio(ReportTemplate):
 
 
             self.table_add_stock_rows(accounts, to_date_tp, from_date_tp, report_currency, self.exchange_fn, price_fn,
-                 price_source, include_empty, show_symbol, show_listing, show_shares, show_price, basis_method,
+                 price_source, include_empty, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
                  prefer_pricelist, handle_brokerage_fees,
-                 total_basis, total_value, total_moneyin, total_moneyout, total_income, total_gain, total_ugain, total_brokerage)
+                 total_basis, total_value, total_moneyin, total_moneyout, total_income, total_gain, total_ugain, total_brokerage, total_gain_report)
 
             #pdb.set_trace()
 
-            sum_total_moneyin = total_moneyin.sum(report_currency, self.exchange_fn)
-            sum_total_income = total_income.sum(report_currency, self.exchange_fn)
-            sum_total_gain = total_gain.sum(report_currency, self.exchange_fn)
-            sum_total_ugain = total_ugain.sum(report_currency, self.exchange_fn)
-            sum_total_both_gains = gnc_commodity_utilities.GncMonetary(report_currency, 
-                                        sum_total_gain.amount.add(sum_total_ugain.amount,  report_currency.get_fraction(), GNC_HOW_RND_ROUND))
-            sum_total_brokerage = total_brokerage.sum(report_currency, self.exchange_fn)
-            sum_total_totalreturn = gnc_commodity_utilities.GncMonetary(report_currency, 
-                                        sum_total_both_gains.amount.add(sum_total_income.amount, report_currency.get_fraction(), GNC_HOW_RND_ROUND))
-
+            sum_total_moneyin = total_moneyin.sum(report_currency, self.exchange_fn.run)
+            sum_total_income = total_income.sum(report_currency, self.exchange_fn.run)
+            sum_total_gain = total_gain.sum(report_currency, self.exchange_fn.run)
+            sum_total_gain_report = total_gain_report.sum(report_currency, self.exchange_fn.run)
+            sum_total_brokerage = total_brokerage.sum(report_currency, self.exchange_fn.run)
 
 
             #(gnc:make-html-table-cell/size 1 17 (gnc:make-html-text (gnc:html-markup-hr)))
             # this is labelled grand-total for some reason - just draws a line
             new_row = self.document.doc.SubElement(self.new_table,"tr")
             new_row.tail = "\n"
-	    new_data = self.document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "17" })
+            new_data = self.document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "17" })
             new_ruler = self.document.doc.SubElement(new_data,"hr")
 
 
@@ -1390,11 +1698,11 @@ class AdvancedPortfolio(ReportTemplate):
             #pdb.set_trace()
 
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = total_basis.sum(report_currency, self.exchange_fn).to_currency_string()
+            new_col.text = total_basis.sum(report_currency, self.exchange_fn.run).to_currency_string()
             new_col.tail = "\n"
 
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = total_value.sum(report_currency, self.exchange_fn).to_currency_string()
+            new_col.text = total_value.sum(report_currency, self.exchange_fn.run).to_currency_string()
             new_col.tail = "\n"
 
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
@@ -1402,30 +1710,7 @@ class AdvancedPortfolio(ReportTemplate):
             new_col.tail = "\n"
 
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = total_moneyout.sum(report_currency, self.exchange_fn).to_currency_string()
-            new_col.tail = "\n"
-
-            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = sum_total_gain.to_currency_string()
-            new_col.tail = "\n"
-
-            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = sum_total_ugain.to_currency_string()
-            new_col.tail = "\n"
-
-            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = sum_total_both_gains.to_currency_string()
-            new_col.tail = "\n"
-
-            totalinvalue = sum_total_moneyin.amount.to_double()
-            totalgainvalue = sum_total_both_gains.amount.to_double()
-            if totalinvalue == 0.0:
-               prcntstr = ""
-            else:
-               prcntstr = "%.2f%%"%((totalgainvalue/totalinvalue)*100)
-
-            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = prcntstr
+            new_col.text = total_moneyout.sum(report_currency, self.exchange_fn.run).to_currency_string()
             new_col.tail = "\n"
 
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
@@ -1439,18 +1724,11 @@ class AdvancedPortfolio(ReportTemplate):
                new_col.tail = "\n"
 
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = sum_total_totalreturn.to_currency_string()
+            new_col.text = sum_total_gain.to_currency_string()
             new_col.tail = "\n"
 
-            totalinvalue = sum_total_moneyin.amount.to_double()
-            totalreturnvalue = sum_total_totalreturn.amount.to_double()
-            if totalinvalue == 0.0:
-               prcntstr = ""
-            else:
-               prcntstr = "%.2f%%"%((totalreturnvalue/totalinvalue)*100)
-
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
-            new_col.text = prcntstr
+            new_col.text = sum_total_gain_report.to_currency_string()
             new_col.tail = "\n"
 
 
@@ -1483,7 +1761,7 @@ class AdvancedPortfolio(ReportTemplate):
 
             pdb.set_trace()
 
-            self.make_no_account_warning(rpttl, self.report_guid)
+            self.make_no_account_warning(rptttl, self.report_guid)
 
 
         report_finished()

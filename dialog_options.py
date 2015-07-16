@@ -224,7 +224,7 @@ class GncOption(object):
             result = [True, value, None]
 
         # from scheme looks like we get a list
-        if result == None or not isinstance(result,list):
+        if result == None or not (isinstance(result,list) or isinstance(result,tuple)):
             PERR(log_module,"bad validation result")
             return
         ok = result[0]
@@ -253,6 +253,8 @@ class GncOption(object):
 
 
     def set_ui_widget (self, page_box):
+
+        #pdb.set_trace()
 
         packed = False
 
@@ -336,10 +338,6 @@ class GncOption(object):
     # load of set callback functions
     def set_ui_widget_boolean (self, page_box, name, documentation):
 
-        colon_name = name + ":"
-        label = gtk.Label(colon_name)
-        label.set_alignment(1.0, 0.5)
-
         enclosing = gtk.HBox(homogeneous=False, spacing=0)
 
         value = gtk.CheckButton(label=name)
@@ -349,7 +347,6 @@ class GncOption(object):
 
         value.connect("toggled",self.changed_widget_cb)
 
-        enclosing.pack_start(label, expand=False, fill=False, padding=0)
         enclosing.pack_start(value, expand=False, fill=False, padding=0)
         enclosing.show_all()
 
@@ -1116,7 +1113,7 @@ class GncOption(object):
 
     def account_select_all_cb (self, selection):
         gnucash_log.dbglog("select_all_cb")
-        pdb.set_trace()
+        #pdb.set_trace()
         view = self.widget
         selection = view.get_selection()
         selection.select_all()
@@ -1124,7 +1121,7 @@ class GncOption(object):
 
     def account_clear_all_cb (self, selection):
         gnucash_log.dbglog("clear_all_cb")
-        pdb.set_trace()
+        #pdb.set_trace()
         view = self.widget
         selection = view.get_selection()
         selection.unselect_all()
@@ -1487,6 +1484,9 @@ MAX_TAB_COUNT = 4
 
 class DialogOption(object):
 
+    # this is the primary class creating the Option window when the Options button is clicked
+    # and then running the report when the OK or Apply button is clicked
+
     # note this class wraps the GncOptionWin struct of C gnucash
 
     # NOTA BENE - switched order so can default modal
@@ -1713,9 +1713,16 @@ class DialogOption(object):
         page_content_box = gtk.VBox(homogeneous=False, spacing=2)
         page_content_box.set_border_width(12)
 
+        options_scrolled_win = gtk.ScrolledWindow(hadjustment=None, vadjustment=None)
+        page_content_box.pack_start(options_scrolled_win, expand=True, fill=True, padding=0)
+
+
         options_box = gtk.VBox(homogeneous=False, spacing=5)
         options_box.set_border_width(0)
-        page_content_box.pack_start(options_box, expand=True, fill=True, padding=0)
+        #page_content_box.pack_start(options_box, expand=True, fill=True, padding=0)
+        options_scrolled_win.add_with_viewport(options_box)
+        options_scrolled_win.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+
 
         for option in section.options:
             self.add_option(options_box, option)

@@ -133,7 +133,7 @@ class Portfolio(ReportTemplate):
     def local_account_validator (accounts):
         pdb.set_trace()
         retacc = filter_accountlist_type([ACCT_TYPE_STOCK, ACCT_TYPE_MUTUAL],accounts)
-        return (True, retacc)
+        return [True, retacc]
 
 
     @staticmethod

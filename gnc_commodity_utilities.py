@@ -251,6 +251,7 @@ def exchange_by_pricedb_latest (foreign, domestic):
             dommon = exchange_if_same(foreign, domestic)
             if dommon == None:
                 #pdb.set_trace()
+                # it appears this may return a 0 price if doesnt find one
                 prcdb = sw_app_utils.get_current_book().get_price_db()
                 nrval = prcdb.convert_balance_latest_price( \
                     foreign.amount,foreign.commodity,domestic)
@@ -283,6 +284,7 @@ def exchange_by_pricedb_nearest (foreign, domestic, date):
             dommon = exchange_if_same(foreign, domestic)
             if dommon == None:
                 #pdb.set_trace()
+                # it appears this may return a 0 price if doesnt find one
                 prcdb = sw_app_utils.get_current_book().get_price_db()
                 nrval = prcdb.convert_balance_nearest_price( \
                     foreign.amount,foreign.commodity,domestic,date)

@@ -621,10 +621,12 @@ class GncDateEdit(gtk.HBox):
     def day_selected (self, event):
         self.in_selected_handler = True
         dttupl = self.calendar.get_date()
-        dttm = datetime.datetime(year=dttupl[0],month=dttupl[1],day=dttupl[2])
+        # big miss here - the month is 0 based but day is 1 based!!
+        dttm = datetime.datetime(year=dttupl[0],month=dttupl[1]+1,day=dttupl[2])
         # where to convert to seconds - which is what the C does - and it stores seconds
         # this is no good - this is a string!!
         # we could convert back to integer I guess
+        print "day_selected",dttupl
         #dtts = dttm.strftime("%s")
         dtts = time.mktime(dttm.timetuple())
         self.set_time(dtts)

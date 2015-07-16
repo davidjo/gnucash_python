@@ -742,7 +742,7 @@ class AccountListLimitedOption(OptionBase):
             return self.option_value
 
     def account_list_setter (self, account_list):
-        pdb.set_trace()
+        #pdb.set_trace()
         if account_list == None or len(account_list) == 0:
             account_list = self.default_getter()
         # the following maybe a translation of the scheme code
@@ -794,7 +794,7 @@ class AccountListLimitedOption(OptionBase):
         return None
 
     def local_validator (self, account_list):
-        pdb.set_trace()
+        #pdb.set_trace()
         if self.save_value_validator == None:
             return [True, account_list]
         else:
@@ -1036,12 +1036,27 @@ class CurrencyOption(OptionBase):
             cmd_cur = currency
         return cmd_cur
 
+    # I dont get this the following is literal scheme translation
+    # however we seem to be getting/setting GncCommodity currency objects
+    #def local_setter (self, currency):
+    #    pdb.set_trace()
+    #    if isinstance(currency,str):
+    #        retval = currency
+    #    else:
+    #        retval = currency.get_mnemonic()
+    #    # ignoring scheme lambda
+    #    self.super_setter(retval)
+
+    # so this is the code we need - actually probably dont need to worry about
+    # string type at all - maybe in scheme the string is stored and some automagic
+    # occurs to convert to GncCommodity - here we get/set them directly as GncCommodity
     def local_setter (self, currency):
-        pdb.set_trace()
-        if isinstance(currency,str):
+        #pdb.set_trace()
+        if not isinstance(currency,str):
             retval = currency
         else:
-            retval = currency.get_mnemonic()
+            cmd_tbl = sw_app_utils.get_current_book().get_table()
+            cmd_cur = cmd_tbl.lookup("CURRENCY",currency)
         # ignoring scheme lambda
         self.super_setter(retval)
 
