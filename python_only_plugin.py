@@ -1,3 +1,29 @@
+
+# this implements an gnucash plugin using only python
+# ie this is a recoding of gnc-plugin.c in python
+# this is not a subclass of GncPlugin
+# this is a subclass of GObject
+# remember GncPlugin objects are used to add functionality
+# eg add new menu items
+# they are not associated with creating report pages
+
+# the main feature missing is because these are not GncPlugin
+# types they are not added to the plugin manager so not
+# added to new windows
+
+# gnucash is really convoluted
+# first we have modules, plugins and plugin pages
+# these are 3 entirely separate ways of doing "plugins"
+# modules seem to be loaded shared libraries for basic functionality - generally not associated with GUI actions
+# plugins seem to be also shared libraries but generally do have associated GUI actions
+# plugin pages create new display pages in a "main" window (there can be multiple main windows)
+# then there is scheme
+
+# apparently the modules (gncmod) are loaded from scheme!!
+# because after the initial loading window displayed we the drop into scheme
+# which then calls inner_main - so everything else is done under the scheme interpreter
+
+
 import sys
 import os
 import pdb
@@ -105,6 +131,8 @@ class MyCallbacks(object):
 
 
 class MyPlugin(gobject.GObject):
+
+    # python class which emulates the GncPlugin object
 
     def __init__(self):
         self.plugin_class_init()
@@ -217,6 +245,8 @@ class MyPlugin(gobject.GObject):
         ae.name = rpt.report_guid
         if rpt.menu_name:
             ae.label = rpt.menu_name
+        elif rpt.name:
+            ae.label = rpt.name
         else:
             ae.label = name
         if rpt.menu_tip:
