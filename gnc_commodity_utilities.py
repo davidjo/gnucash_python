@@ -257,6 +257,10 @@ def exchange_by_pricedb_latest (foreign, domestic):
                     foreign.amount,foreign.commodity,domestic)
                 dommon = GncMonetary(domestic,nrval)
 
+    else:
+        # I think we need to fail here - dont know what scheme does not fail
+        raise TypeError("Needed GncMonetary type - provided type %s"%type(foreign))
+
     return dommon
 
 def exchange_by_pricedb_nearest (foreign, domestic, date):
@@ -289,6 +293,10 @@ def exchange_by_pricedb_nearest (foreign, domestic, date):
                 nrval = prcdb.convert_balance_nearest_price( \
                     foreign.amount,foreign.commodity,domestic,date)
                 dommon = GncMonetary(domestic,nrval)
+
+    else:
+        # I think we need to fail here - dont know what scheme does not fail
+        raise TypeError("Needed GncMonetary type - provided type %s"%type(foreign))
 
     return dommon
 

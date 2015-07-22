@@ -9,7 +9,7 @@
 {'st_mtime': '1407263689', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1565'}  ;  glib_glog.py
 {'st_mtime': '1402355807', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '915'}  ;  gnc_builder.py
 {'st_mtime': '1402629803', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1175'}  ;  gnc_commodity_edit.py
-{'st_mtime': '1437030506', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15682'}  ;  gnc_commodity_utilities.py
+{'st_mtime': '1437149637', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16026'}  ;  gnc_commodity_utilities.py
 {'st_mtime': '1402594232', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4478'}  ;  gnc_currency_edit.py
 {'st_mtime': '1412712575', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '468'}  ;  gnc_date_edit.py
 {'st_mtime': '1412769557', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2645'}  ;  gnc_date_edit_gnc.py
