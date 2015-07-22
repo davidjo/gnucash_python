@@ -1,144 +1,221 @@
+# finally we need to create a new class
+# to run plugins in python
+
 import sys
+
 import os
+
+import json
+
 import pdb
+
+import traceback
+
+
+import gtk
+
+import gobject
+
+
+#pdb.set_trace()
 
 
 import ctypes
 
-#pdb.set_trace()
 
-print >> sys.stderr, "importing gnc_main_window"
-
-import gnc_main_window
-
-print >> sys.stderr, "importing gnc_plugin_page_report"
-
-import gnc_plugin_page_report
-
-print >> sys.stderr, "importing gnc_plugin_page_python_report"
-
-import gnc_plugin_page_python_report
+import gnucash_log
+from gnucash_log import ENTER
 
 
-try:
-    #import _sw_app_utils
-    #from gnucash import *
-    #from _sw_core_utils import gnc_prefs_is_extra_enabled
-    import gtk
-    pass
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
+import gnc_plugin
+
+from gnc_plugin import GncPluginPython
+
+
+
+# define a function equivalent to N_ for internationalization
+def N_(msg):
+    return msg
+
+
+# define a simple function to convert the 64 bit hash to 32 bit
+def hash32 (inhsh):
+    return (inhsh - (inhsh >> 32)) & (2**32 - 1) 
+
+
+def close_handler (arg):
+    gnucash_log.dbglog_err("close handler called")
     pdb.set_trace()
-
-print >> sys.stderr, "before pythonplugin"
-
-import pythonplugin
-
-print >> sys.stderr, "after pythonplugin"
+    pass
 
 
-#pdb.set_trace()
+
+# well this doesnt seem to be working
+# not sure if can subclass a GObject subclass
+# is this now a python subclass??
+
+class GncPluginPythonExample(GncPluginPython):
+
+    # ah - this is something I think Ive missed - we can name the GType here
+    __gtype_name__ = 'GncPluginPythonExample'
+
+    # add properties/signals here
+    #__gproperties__ =
+
+    # I think these are more consistent if they are class variables
+    # unfortunately cant figure out how to have a method of the class
+    # in a class variable
+
+    # the analysis is that essentially in gnucash plugins are single
+    # instance classes
+
+    def __init__ (self):
+
+        #pdb.set_trace()
+
+        super(GncPluginPythonExample,self).__init__()
+        #GncPluginPython.__init__(self)
 
 
-class MyPlugin(object):
+        # following the C code we set the parent GncPlugin class variables
+        # in the subclass
 
-    def __init__(self):
-        pass
+        # dont quite see why these are class variables - this just follows the
+        # C code currently
 
-    def plugin_class_init (self):
-        print >> sys.stderr, "plugin_class_init called"
-        # try creating the ui xml file here
-        ui_xml = \
-"""
+        GncPluginPythonExample.plugin_name = "GncPluginPythonExample"
+
+        GncPluginPythonExample.actions_name = "GncPluginPythonExampleActions"
+
+
+        GncPluginPythonExample.plugin_actions = [ \
+               ("exampleAction", None, N_("example description..."), None,
+                N_("example tooltip"),
+                self.cmd_test,
+               ),
+               ]
+
+        GncPluginPythonExample.plugin_toggle_actions = []
+
+        GncPluginPythonExample.plugin_important_actions = []
+
+        GncPluginPythonExample.ui_filename = None
+
+        GncPluginPythonExample.ui_xml_str = """
 <ui>
   <menubar>
-    <menu name="Reports" action="ReportsAction">
-      <placeholder name="OtherReports">
-        <menu name="PythonReports" action="PythonReportsAction">
-          <placeholder name="PythonReportsholder">
-            <menuitem name="Python Reports" action="pythonreportsAction"/>
-          </placeholder>
-        </menu>
-     </placeholder>
-    </menu>
     <menu name="Tools" action="ToolsAction">
       <placeholder name="ToolsPlaceholder">
-        <menu name="PythonTools" action="PythonToolsAction">
-          <placeholder name="PythonToolsholder">
-            <menuitem name="Python Tools" action="pythongenericAction"/>
-          </placeholder>
-        </menu>
+        <menuitem name="example" action="exampleAction"/>
      </placeholder>
     </menu>
   </menubar>
 </ui>
 """
-        fdes = open("/Users/djosg/.gnucash/ui/gnc-plugin-python-generic-ui-tmp.xml",'w')
-        fdes.write(ui_xml)
-        fdes.close()
-        # not sure about life time if make it local
-        # making it a self attribute means stays around as long as instance does
-        # - we really need it to stay around as long as module is loaded
-        # be careful - passing None here means must check for Py_None in the extension!!
-        mylist = [ \
-            ("PythonReportsAction", None, "Python Reports...", None, "python reports tooltip", None),
-            ("PythonToolsAction", None, "Python Tools...", None, "python tools tooltip", None),
-            ("pythonreportsAction", None, "Python reports description...", None, "python reports tooltip", None),
-            ("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", None),
-                 ]
-        self.myactions = { \
-                         'actions_name' : "gnc-plugin-python-generic-actions",
-                         'actions' : mylist,
-                         'ui_filename' : "/Users/djosg/.gnucash/ui/gnc-plugin-python-generic-ui-tmp.xml",
-                         }
-        return self.myactions
 
-    def plugin_init (self):
-        print >> sys.stderr, "plugin_init called"
 
-    def plugin_finalize (self):
-        print >> sys.stderr, "plugin_finalize called"
-
-    def plugin_action_callback (self,actionobj,dataobj):
-        print >> sys.stderr, "plugin_action_callback called",actionobj
-        print >> sys.stderr, "plugin_action_callback called",actionobj.get_name()
-        # this gets access to the underlying C pointer
-        #ctypes.pythonapi.PyCObject_AsVoidPtr.restype = ctypes.c_long
-        #ctypes.pythonapi.PyCObject_AsVoidPtr.argtypes = [ctypes.py_object]
-        #dataadr = ctypes.pythonapi.PyCObject_AsVoidPtr(dataobj)
-        # this does what is needed - except this calls the guile report system
-        # so creates a failed report page
-        #windowdata_ptr = ctypes.cast(dataobj, ctypes.POINTER(gnc_main_window.GncMainWindowActionData))
-        #window = ctypes.addressof(windowdata_ptr.contents.window.contents)
-        #gnc_plugin_page_report.GncPluginPageReport.OpenReport(42,window)
         #pdb.set_trace()
-        window = dataobj['window']
-        if actionobj.get_name() == 'pythonreportsAction':
-            try:
-                #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(42,window)
-                gnc_plugin_page_python_report.OpenReport(42,window)
-            except Exception, errexc:
-                print >> sys.stderr, "error in plugin_action callback",str(errexc)
-            print  "junk"
 
-# gdb call back for report
-#0  0x0000000100040898 in gnc_html_report_stream_cb ()
-#1  0x00000001001c853e in load_to_stream ()
-#2  0x00000001001c8d97 in impl_webkit_show_url ()
-#3  0x00000001001c5fb1 in gnc_html_show_url ()
-#4  0x000000010003e8d6 in gnc_plugin_page_report_create_widget ()
-#5  0x000000010021e981 in gnc_plugin_page_create_widget ()
-#6  0x0000000100214220 in gnc_main_window_open_page ()
+        print >> sys.stderr, "before access private"
+
+        priv = self.access_private_data()
+
+        print >> sys.stderr, "after access private"
+
+        # it appears to be confirmed the following works
+        # but prefixing with cls. does not - get needs an argument error
+        #cls.set_class_init_data(plugin_name=cls.plugin_name, actions_name=cls.actions_name)
+        #self.set_class_init_data(plugin_name=self.plugin_name, actions_name=self.actions_name)
+
+        #GncPluginPythonExample.class_init()
+
+        self.class_init()
+
+        # gobjects have constructor function
+        #self.constructor(report)
+
+
+    # to follow the C code in python this should be a classmethod
+    # however this does not appear to work for the codegen wrapped functions
+    # - looks like you cannot use cls. as the prefix - complains about
+    # missing argument - which Im assuming is the self object - so Im assuming
+    # the cls object is not being passed as 1st argument
+    #@classmethod
+    #def class_init (cls):
+    #    pass
+
+    def class_init (self):
+
+        # this is the class init function
+        # unfortunately Im not seeing anyway to access the private data from python
+
+        # first call the parent class_init - this is only way to do this
+        # if we add the parent class_init call to the parent __init__
+        # we will call the subclass class_init at that time
+        super(GncPluginPythonExample,self).class_init()
+
+        # this follows the C code - the GncPlugin class private data is set in the
+        # subclass class_init function - not by calling the GncPlugin classes own
+        # class_init function!!
+
+        #pdb.set_trace()
+
+        # we need to set some parent items - how to do this??
+        # we probably need to set all of these
+        #gnc_plugin_class->plugin_name     = GNC_PLUGIN_NAME;
+
+        print >> sys.stderr, "before super set_plugin_name"
+
+        print "junk",self.plugin_name,self.actions_name
+
+        # define special C function in the wrappers to set the class private data
+        #pdb.set_trace()
+        self.set_class_init_data(plugin_name=self.plugin_name, actions_name=self.actions_name)
+
+        print >> sys.stderr, "before super set_callbacks"
+
+        # and another special C function in the wrappers to set the callbacks
+        # in the class private data
+        self.set_callbacks()
+
+        #print >> sys.stderr, "after set_callbacks"
+
+
+    # note that in the C the primary version of these functions are defined in
+    # gnc-plugin.c - and at the end of their code they call the functions saved
+    # in the GncPlugin class private data - if they are defined
+    # in python this gets sort of inverted - we define functions here to call
+    # the parent GncPluginPython class version of these functions - before doing
+    # extra work - and the GncPluginPython version of these functions does not
+    # call functions of the subclass (how could it)
+
+    def add_to_window (self, window, window_type):
+
+        print >> sys.stderr, "called add_to_window"
+
+        super(GncPluginPythonExample,self).add_to_window(window, window_type)
+
+    def remove_from_window (self, window, window_type):
+
+        print >> sys.stderr, "called remove_from_window"
+        pdb.set_trace()
+        print >> sys.stderr, "called remove_from_window"
+
+        super(GncPluginPythonExample,self).remove_from_window(window, window_type)
 
 
 
-myplugin = MyPlugin()
+    def cmd_test (self, action, data):
 
-try:
-    pythonplugin.loadPlugin(myplugin,"gnucash/plugins/python_generic",0)
-except Exception, errexc:
-    print >> sys.stderr, str(errexc)
-    pdb.set_trace()
+        print >> sys.stderr, " entered cmd_test"
 
+        pdb.set_trace()
+
+        print >> sys.stderr, " entered cmd_test"
+
+
+#pdb.set_trace()
+
+gobject.type_register(GncPluginPythonExample)
 
 
