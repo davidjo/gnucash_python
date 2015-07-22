@@ -7,7 +7,7 @@ PYTHONBIN=${PYTHONPREFIX}/bin/python2.7
 SWIG=/opt/local/bin/swig
 
 # Set the C flags to include the GTK+ and Python libraries
-CFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gtk+-2.0 pygtk-2.0 webkit-1.0` -I${PYTHONINC} -I../../libqof/qof -I../../gnome-utils -I../../app-utils -I../../html -I../../engine -I. -I../.. -I../../..
+CFLAGS = -g `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gtk+-2.0 pygtk-2.0 webkit-1.0` -I${PYTHONINC} -I../../libqof/qof -I../../gnome-utils -I../../app-utils -I../../html -I../../engine -I. -I../.. -I../../..
 LDFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs gtk+-2.0 pygtk-2.0` -L${PYTHONLIB} -lpython2.7
 
 
@@ -18,6 +18,43 @@ DEFSGEN=${PYTHONPREFIX}/share/pygobject/2.0/codegen/defsgen.py
 # The path to the GTK+ python types
 #DEFS=`pkg-config --variable=defsdir pygtk-2.0`
 DEFS=${PYTHONPREFIX}/share/pygtk/2.0/defs
+
+
+gncplugin.so: gncplugin-methods.o gncpluginmodule.o
+	#$(CC) $(LDFLAGS) -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	#$(CC) $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib ../../app-utils/.libs/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) -g $(LDFLAGS) ../../gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+
+# Generate the C wrapper from the defs and our override file
+gncplugin-methods.c: gncplugin.defs gncplugin.override
+	#./runcodegen.py --prefix gncplugin 
+	#${CODEGEN} --prefix gncplugin \
+	#--load-types gpointer-types.py \
+	#--register $(DEFS)/gdk-types.defs \
+	#gncplugin.defs > $@
+	${CODEGEN} --prefix gncplugin \
+	--load-types gncplugin-types.py \
+	--register $(DEFS)/gtk-types.defs \
+	--override gncplugin.override \
+	gncplugin.defs > $@
+
+gncplugin.defs: gncplugin-methods.defs gncplugin-new.defs
+	cat gncplugin-methods.defs gncplugin-new.defs >gncplugin.defs
+
+gncplugin-methods.defs:
+	${H2DEF} ../../gnome-utils/gnc-plugin.h >gncplugin-methods.defs
+	#${DEFSGEN} -m gncplugin -l 
+
+# Generate the C wrapper from the defs and our override file
+gncpluginpage-methods.c: gncpluginpage.defs gncpluginpage.override
+	#./runcodegen.py --prefix gncpluginpage 
+	${CODEGEN} --prefix gncpluginpage \
+	--load-types gpointer-types.py \
+	--register $(DEFS)/gdk-types.defs \
+	--register $(DEFS)/gtk-types.defs \
+	--override gncpluginpage.override \
+	gncpluginpage.defs > $@
 
 gncpluginpage.so: gncpluginpage-methods.o gncpluginpagemodule.o
 	#$(CC) $(LDFLAGS) -shared $^ -o $@
