@@ -30,12 +30,15 @@ class gpointer(ArgType):
 
 matcher.register('gpointer', gpointer())
 
+
 class StringList(ArgType):
 
     before = ('    if (!PyList_Check(py_%(name)s)) {\n'
               '        PyErr_Print();\n'
               '        return NULL;\n'
               '    }\n'
+              '    %(name)s = (gchar **) g_malloc(sizeof(gchar*)*(PyList_Size(py_%(name)s)+1));\n'
+              '    gchar **%(name)s_ptr = %(name)s;\n'
               '    for (indx_%(name)s=0; indx_%(name)s<PyList_Size(py_%(name)s); indx_%(name)s++)\n'
               '        {\n'
               '        PyObject *pstr = PyList_GetItem(py_%(name)s,indx_%(name)s);\n'
@@ -44,8 +47,10 @@ class StringList(ArgType):
               '            return NULL;\n'
               '        }\n'
               '        gchar *gstr = PyString_AsString(pstr);\n'
-              '        *%(name)s++ = gstr;\n'
+              '        *%(name)s_ptr++ = gstr;\n'
               '        }\n')
+
+    after = ('    g_free(%(name)s);\n\n')
 
     def write_param(self, ptype, pname, pdflt, pnull, info):
         info.varlist.add('PyObject', '*py_' + pname)
@@ -54,6 +59,7 @@ class StringList(ArgType):
         info.add_parselist('O', ['&py_'+pname], [pname])
         info.arglist.append(pname)
         info.codebefore.append (self.before % { 'name' : pname, 'namecopy' : 'NULL' })
+        info.codeafter.append (self.after % { 'name' : pname, 'namecopy' : 'NULL' })
 
 
     def write_return(self, ptype, ownsreturn, info):
