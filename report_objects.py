@@ -440,52 +440,87 @@ def load_python_reports ():
     python_reports_by_name = {}
     python_reports_by_guid = {}
 
-    try:
-        from reports.hello_world import HelloWorld
-        python_reports_by_name['HelloWorld'] = HelloWorld()
-        python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+    if False:
 
-    try:
-        from reports.price_scatter import PriceScatter
-        python_reports_by_name['PriceScatter'] = PriceScatter()
-        python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+        try:
+            from reports.hello_world import HelloWorld
+            python_reports_by_name['HelloWorld'] = HelloWorld()
+            python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
 
-    try:
-        from reports.cash_flow import CashFlow
-        python_reports_by_name['CashFlow'] = CashFlow()
-        python_reports_by_guid[python_reports_by_name['CashFlow'].report_guid] = python_reports_by_name['CashFlow']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+        try:
+            from reports.price_scatter import PriceScatter
+            python_reports_by_name['PriceScatter'] = PriceScatter()
+            python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+        try:
+            from reports.cash_flow import CashFlow
+            python_reports_by_name['CashFlow'] = CashFlow()
+            python_reports_by_guid[python_reports_by_name['CashFlow'].report_guid] = python_reports_by_name['CashFlow']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
 
 
-    try:
-        from reports.portfolio import Portfolio
-        python_reports_by_name['Portfolio'] = Portfolio()
-        python_reports_by_guid[python_reports_by_name['Portfolio'].report_guid] = python_reports_by_name['Portfolio']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+        try:
+            from reports.portfolio import Portfolio
+            python_reports_by_name['Portfolio'] = Portfolio()
+            python_reports_by_guid[python_reports_by_name['Portfolio'].report_guid] = python_reports_by_name['Portfolio']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
 
-    try:
-        from reports.advanced_portfolio import AdvancedPortfolio
-        python_reports_by_name['AdvancedPortfolio'] = AdvancedPortfolio()
-        python_reports_by_guid[python_reports_by_name['AdvancedPortfolio'].report_guid] = python_reports_by_name['AdvancedPortfolio']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+        try:
+            from reports.advanced_portfolio import AdvancedPortfolio
+            python_reports_by_name['AdvancedPortfolio'] = AdvancedPortfolio()
+            python_reports_by_guid[python_reports_by_name['AdvancedPortfolio'].report_guid] = python_reports_by_name['AdvancedPortfolio']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
 
-    try:
-        from reports.gains import CapitalGains
-        python_reports_by_name['CapitalGains'] = CapitalGains()
-        python_reports_by_guid[python_reports_by_name['CapitalGains'].report_guid] = python_reports_by_name['CapitalGains']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+        try:
+            from reports.gains import CapitalGains
+            python_reports_by_name['CapitalGains'] = CapitalGains()
+            python_reports_by_guid[python_reports_by_name['CapitalGains'].report_guid] = python_reports_by_name['CapitalGains']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+
+        try:
+            from reports.dividends import Dividends
+            python_reports_by_name['Dividends'] = Dividends()
+            python_reports_by_guid[python_reports_by_name['Dividends'].report_guid] = python_reports_by_name['Dividends']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+
+    if True:
+
+        # code to try for autoimporting - so can just add new reports
+        # only works assuming always use class name as reports name in python_reports_by_name
+
+        try:
+            import reports
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+        # if we want to find all new classes another way is to use introspection
+        # and find all classes whose __module__ attribute is the module name it was imported
+        # under
+
+        # this is a very sneaky way to find new classes if all classes you want
+        # are guaranteed to be subclasses of a specific class
+        __all__classes = [ cls for cls in ReportTemplate.__subclasses__() ]
+
+        for report_cls in __all__classes:
+            python_reports_by_name[report_cls.__name__] = report_cls()
+            python_reports_by_guid[python_reports_by_name[report_cls.__name__].report_guid] = python_reports_by_name[report_cls.__name__]
 
