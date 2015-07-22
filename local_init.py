@@ -42,6 +42,16 @@ try:
     #import gnucash_ext
 
 
+    import gnc_plugin_manager
+
+
+    import gnc_plugin_python_example
+
+    myplugin_example = gnc_plugin_python_example.GncPluginPythonExample()
+
+    gnc_plugin_manager.plugin_manager.add_plugin(myplugin_example)
+
+
     # hmm - we need to instantiate the python report page module here
     # - other wise the callbacks wont exist when restoring pages saved on normal shutdown
     # however this means we need a re-factor as can now only do widget stuff later
@@ -50,9 +60,6 @@ try:
     # actually do we need the instantiation - maybe the import is enough??
     # yes - looks like the import is enough
     import gnc_plugin_page_python_report
-
-    #import gnc_plugin_python_example
-
 
     import python_only_plugin 
     myplugin = python_only_plugin.MyPlugin()
