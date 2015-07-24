@@ -132,7 +132,7 @@ class MyCallbacks(object):
 
 class MyPlugin(gobject.GObject):
 
-    # python class which emulates the GncPlugin object
+    # python class which emulates a subclass of the GncPlugin object
 
     def __init__(self):
         self.plugin_class_init()
@@ -156,6 +156,19 @@ class MyPlugin(gobject.GObject):
         <menu name="PythonTools" action="PythonToolsAction">
           <placeholder name="PythonToolsholder">
             <menuitem name="Python Tools" action="pythongenericAction"/>
+          </placeholder>
+        </menu>
+     </placeholder>
+    </menu>
+  </menubar>
+</ui>
+"""
+        ui_xml = """<ui>
+  <menubar>
+    <menu name="Reports" action="ReportsAction">
+      <placeholder name="OtherReports">
+        <menu name="PythonReports" action="PythonReportsAction">
+          <placeholder name="PythonReportsholder">
           </placeholder>
         </menu>
      </placeholder>
@@ -195,10 +208,11 @@ class MyPlugin(gobject.GObject):
         #pythoncallback.add_actions(self.save_callbacks, actiongroup, [ \
         actiongroup.add_actions([ 
             ("PythonReportsAction", None, "Python Reports...", None, "python reports tooltip", None),
-            ("PythonToolsAction", None, "Python Tools...", None, "python tools tooltip", None),
-            ("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
                  ], user_data=self.main_window)
 
+            # ("PythonToolsAction", None, "Python Tools...", None, "python tools tooltip", None),
+            # ("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
+            #     ], user_data=self.main_window)
             #("pythonreportsAction", None, "Python reports description...", None, "python reports tooltip", self.reports_cb),
             #("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
             #     ], user_data=self.main_window)
