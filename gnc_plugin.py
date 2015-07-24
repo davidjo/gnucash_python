@@ -247,26 +247,30 @@ class GncPluginPython(BaseGncPlugin):
         # now this is confusing - this can be called multiple times
         # for each gnucash main window (we can have more than one)
 
+        # in C the action groups/merge ids are stored in a per GncMainWindow
+        # private data structure - merged_actions_table
+        # for the moment store the windows per plugin in the plugin
+        # - self.saved_windows
+
         if hash(window) in self.saved_windows:
             # what to do!!
             print "add called more than once same window!!"
             pdb.set_trace()
             print "add called more than once same window!!"
 
-        # do we need to save window object - for safety lets not for the moment
-        if not hash(window) in self.saved_windows:
-            self.saved_windows[hash(window)] = 1
+        if self.actions_name != None:
 
-        # need to map the window somehow to a window object
-        window = gnc_main_window.main_window_wrap(window)
+            # need to map the window somehow to a window object
+            window = gnc_main_window.main_window_wrap(window)
 
-        (action_group, merge_id) = window.merge_actions(self.actions_name, self.plugin_actions, self.plugin_toggle_actions, self.ui_xml_str, self)
+            (action_group, merge_id) = window.merge_actions(self.actions_name, self.plugin_actions, self.plugin_toggle_actions, self.ui_xml_str, self)
 
-        self.saved_windows[hash(window)] = (action_group, merge_id)
+            # do we need to save window object - for safety lets not for the moment
+            self.saved_windows[hash(window)] = (action_group, merge_id)
 
-        if self.plugin_important_actions:
+            if self.plugin_important_actions:
 
-            self.set_important_actions(self.plugin_important_actions)
+                self.set_important_actions(self.plugin_important_actions)
 
 
 
@@ -276,18 +280,28 @@ class GncPluginPython(BaseGncPlugin):
         pdb.set_trace()
         print >> sys.stderr, "called super remove_from_window"
 
-        if not hash(window) in self.saved_windows:
-            # what to do!!
-            print "remove called and no saved window!!"
-            pdb.set_trace()
-            print "remove called and no saved window!!"
-
-        (action_group, merge_id) = self.saved_windows[hash(window)]
-
         # need to map the window somehow to a window object
         window = gnc_main_window.main_window_wrap(window)
 
-        window.unmerge_actions(self.actions_name, action_group, merge_id)
+        if hash(window) in self.saved_windows:
+
+            (action_group, merge_id) = self.saved_windows[hash(window)]
+
+            del self.saved_windows[hash(window)]
+
+            # need to map the window somehow to a window object
+            window = gnc_main_window.main_window_wrap(window)
+
+            if self.actions_name != None:
+                window.unmerge_actions(self.actions_name, action_group, merge_id)
+
+        else:
+
+            if self.actions_name != None:
+                # what to do!!
+                print "remove called and no saved window!!"
+                pdb.set_trace()
+                print "remove called and no saved window!!"
 
 
     def set_important_actions (self, action_group, important_actions):

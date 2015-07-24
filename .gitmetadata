@@ -25,7 +25,7 @@
 {'st_mtime': '1437569825', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10083'}  ;  gnc_main_window.py
 {'st_mtime': '1409253339', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2868'}  ;  gnc_menu_extension.py
 {'st_mtime': '1401575284', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7424'}  ;  gnc_menu_extension_direct.py
-{'st_mtime': '1437568724', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9834'}  ;  gnc_plugin.py
+{'st_mtime': '1437743275', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10334'}  ;  gnc_plugin.py
 {'st_mtime': '1437341035', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3831'}  ;  gnc_plugin_manager.py
 {'st_mtime': '1437591720', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11167'}  ;  gnc_plugin_page.py
 {'st_mtime': '1412443320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '34349'}  ;  gnc_plugin_page_python_report.py
