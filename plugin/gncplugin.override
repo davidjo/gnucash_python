@@ -167,7 +167,7 @@ _wrap_gnc_plugin_set_class_init_data(PyGObject *self, PyObject *args, PyObject *
 
     // hmm - for me looks like do NOT use GIL state in functions called from python!!
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OOOO:GncPlugin.set_class_init_data",
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOO:GncPlugin.set_class_init_data",
                                      kwlist, &plugin_name_obj, &actions_name_obj, &actions_obj, &toggle_actions_obj, &important_actions_obj, &ui_filename_obj)) {
         return NULL;
     }
@@ -180,10 +180,12 @@ _wrap_gnc_plugin_set_class_init_data(PyGObject *self, PyObject *args, PyObject *
     if (pname != NULL)
         klass->plugin_name = pname;  // gchar *
 
-    char *aname = PyString_AsString(actions_name_obj);
-    fprintf(stderr,"aname pointer %llx\n",(void *)aname);
-    if (aname != NULL)
-        klass->actions_name = aname;  // gchar *
+    if (actions_name_obj != NULL) {
+        char *aname = PyString_AsString(actions_name_obj);
+        fprintf(stderr,"aname pointer %llx\n",(void *)aname);
+        if (aname != NULL)
+            klass->actions_name = aname;  // gchar *
+    }
 
     // we need to convert the python data here and store into the
     // class data structures because these are used by the

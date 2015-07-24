@@ -70,7 +70,7 @@
 {'st_mtime': '1437316738', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '583'}  ;  plugin/gncplugin-new.defs
 {'st_mtime': '1437314470', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6697'}  ;  plugin/gncplugin-types.py
 {'st_mtime': '1437338063', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2336'}  ;  plugin/gncplugin.defs
-{'st_mtime': '1437547731', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '17289'}  ;  plugin/gncplugin.override
+{'st_mtime': '1437729085', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '17347'}  ;  plugin/gncplugin.override
 {'st_mtime': '1437314581', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '557'}  ;  plugin/gncpluginmodule.c
 {'st_mtime': '1402067603', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1758'}  ;  plugin/gncpluginpage-new.defs
 {'st_mtime': '1412442201', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33841'}  ;  plugin/gncpluginpage.override
