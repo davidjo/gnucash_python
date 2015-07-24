@@ -45,11 +45,18 @@ try:
     import gnc_plugin_manager
 
 
-    import gnc_plugin_python_example
+    #import gnc_plugin_python_example
 
-    myplugin_example = gnc_plugin_python_example.GncPluginPythonExample()
+    #myplugin_example = gnc_plugin_python_example.GncPluginPythonExample()
 
-    gnc_plugin_manager.plugin_manager.add_plugin(myplugin_example)
+    #gnc_plugin_manager.plugin_manager.add_plugin(myplugin_example)
+
+
+    import gnc_plugin_python_tools
+
+    python_tools = gnc_plugin_python_tools.GncPluginPythonTools()
+
+    gnc_plugin_manager.plugin_manager.add_plugin(python_tools)
 
 
     # hmm - we need to instantiate the python report page module here
