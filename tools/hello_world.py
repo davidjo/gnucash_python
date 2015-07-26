@@ -41,7 +41,7 @@ class HelloWorld(ToolTemplate):
         self.window.connect('destroy-event', self.destroy_cb)
         self.window.connect('delete-event', self.delete_cb)
         button = gtk.Button(label="My Button")
-        self.widget.add(button)
+        self.window.add(button)
         self.window.show_all()
 
     def destroy_cb (self, actionobj, userdata=None):
