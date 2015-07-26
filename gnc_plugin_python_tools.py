@@ -193,11 +193,11 @@ class GncPluginPythonTools(GncPluginPython):
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "before access private"
+        print >> sys.stderr, "before access class"
 
-        priv = self.access_private_data()
+        priv = self.access_class_data()
 
-        print >> sys.stderr, "after access private"
+        print >> sys.stderr, "after access class"
 
 
         # we need to set some parent items - how to do this??

@@ -34,6 +34,31 @@ ignore-glob
 %%
 body
 
+// I see no way but to include the private data structure here
+
+typedef struct _GncPluginPagePrivate
+{
+    /** The group of all actions provided by this plugin. */
+    GtkActionGroup *action_group;
+    GtkUIManager *ui_merge;
+    guint merge_id;
+    char *ui_description;
+
+    GList *books;
+
+    gboolean use_new_window;
+
+    gchar *page_name;
+    gchar *page_long_name;
+    gchar *page_color;
+    gchar *uri;
+    gchar *statusbar_text;
+} GncPluginPagePrivate;
+
+#define GNC_PLUGIN_PAGE_GET_PRIVATE(o)  \
+   (G_TYPE_INSTANCE_GET_PRIVATE ((o), GNC_TYPE_PLUGIN_PAGE, GncPluginPagePrivate))
+
+
 int dbgflg = 0;
 
 QofBook *gnc_get_current_book();
@@ -250,9 +275,9 @@ _wrap_gnc_plugin_page_has_book(PyGObject *self, PyObject *args, PyObject *kwargs
 }
 
 %%
-override gnc_plugin_page_access_private_data
+override gnc_plugin_page_access_class_data
 static PyObject *
-_wrap_gnc_plugin_page_access_private_data(PyGObject *self, PyObject *args, PyObject *kwargs)
+_wrap_gnc_plugin_page_access_class_data(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *class_obj;
 
@@ -266,6 +291,28 @@ _wrap_gnc_plugin_page_access_private_data(PyGObject *self, PyObject *args, PyObj
 
     /* pyg_pointer_new handles NULL checking */
     class_obj = pyg_pointer_new(G_TYPE_POINTER,klass);
+
+    return class_obj;
+
+}
+
+%%
+override gnc_plugin_page_access_private_data
+static PyObject *
+_wrap_gnc_plugin_page_access_private_data(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *class_obj;
+
+    GncPluginPage *page = (GncPluginPage *)self->obj;
+    GncPluginPagePrivate *priv = GNC_PLUGIN_PAGE_GET_PRIVATE(page);
+
+    if (dbgflg) fprintf(stderr,"access plugin private is %llx\n",(unsigned long long) priv);
+
+    //klass->tab_icon    = NULL;
+    //klass->plugin_name = NULL;
+
+    /* pyg_pointer_new handles NULL checking */
+    class_obj = pyg_pointer_new(G_TYPE_POINTER,priv);
 
     return class_obj;
 

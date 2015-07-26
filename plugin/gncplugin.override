@@ -69,7 +69,7 @@ _wrap_gnc_plugin_init_short_names(PyObject *self, PyObject *args, PyObject *kwar
     action_toolbar_labels *toolbar_labels;
     int indx_toolbar_labels;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO:GncPluginPage.init_short_names",
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO:GncPlugin.init_short_names",
                                      kwlist, &action_group_obj, &toolbar_labels_obj)) {
         return NULL;
     }
@@ -124,9 +124,9 @@ _wrap_gnc_plugin_init_short_names(PyObject *self, PyObject *args, PyObject *kwar
 
 
 %%
-override gnc_plugin_access_private_data
+override gnc_plugin_access_class_data
 static PyObject *
-_wrap_gnc_plugin_access_private_data(PyGObject *self, PyObject *args, PyObject *kwargs)
+_wrap_gnc_plugin_access_class_data(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *class_obj;
 
@@ -143,6 +143,96 @@ _wrap_gnc_plugin_access_private_data(PyGObject *self, PyObject *args, PyObject *
 
     return class_obj;
 
+}
+
+%%
+override gnc_plugin_access_private_data
+static PyObject *
+_wrap_gnc_plugin_access_private_data(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *class_obj;
+
+    // we cannot do this as we need the private struct - which is private ie not in the header file!!
+    // apparently this function is called: g_type_instance_get_private
+
+    GncPlugin *page = (GncPlugin *)self->obj;
+    //GncPluginPagePrivate *priv = GNC_PLUGIN_PAGE_GET_PRIVATE(page);
+    void *priv = NULL;
+
+    if (dbgflg) fprintf(stderr,"access plugin private is %llx\n",(unsigned long long) priv);
+
+    /* pyg_pointer_new handles NULL checking */
+    class_obj = pyg_pointer_new(G_TYPE_POINTER,priv);
+
+    return class_obj;
+
+}
+
+%%
+override gnc_plugin_print_class_data
+static PyObject *
+_wrap_gnc_plugin_print_class_data(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *class_obj;
+
+    GncPlugin *page = (GncPlugin *)self->obj;
+    GncPluginClass *klass = GNC_PLUGIN_GET_CLASS(page);
+
+    if (dbgflg) fprintf(stderr,"print plugin class is %llx\n",(unsigned long long) klass);
+
+    if (klass->plugin_name != NULL)
+         fprintf(stderr,"GncPlugin.plugin_name = %s\n",klass->plugin_name);
+    else
+         fprintf(stderr,"GncPlugin.plugin_name = NULL\n");
+
+    if (klass->actions_name != NULL)
+         fprintf(stderr,"GncPlugin.actions_name = %s\n",klass->actions_name);
+    else
+         fprintf(stderr,"GncPlugin.actions_name = NULL\n");
+
+    if (klass->actions != NULL)
+         fprintf(stderr,"GncPlugin.actions = %llx\n",klass->actions);
+    else
+         fprintf(stderr,"GncPlugin.actions = NULL\n");
+
+    if (klass->n_actions != NULL)
+         fprintf(stderr,"GncPlugin.n_actions = %llx\n",klass->n_actions);
+    else
+         fprintf(stderr,"GncPlugin.n_actions = NULL\n");
+
+    if (klass->toggle_actions != NULL)
+         fprintf(stderr,"GncPlugin.toggle_actions = %llx\n",klass->toggle_actions);
+    else
+         fprintf(stderr,"GncPlugin.toggle_actions = NULL\n");
+
+    if (klass->n_toggle_actions != NULL)
+         fprintf(stderr,"GncPlugin.n_toggle_actions = %llx\n",klass->n_toggle_actions);
+    else
+         fprintf(stderr,"GncPlugin.n_toggle_actions = NULL\n");
+
+    if (klass->important_actions != NULL)
+         fprintf(stderr,"GncPlugin.important_actions = %llx\n",klass->important_actions);
+    else
+         fprintf(stderr,"GncPlugin.important_actions = NULL\n");
+
+    if (klass->ui_filename != NULL)
+         fprintf(stderr,"GncPlugin.ui_filename = %s\n",klass->ui_filename);
+    else
+         fprintf(stderr,"GncPlugin.ui_filename = NULL\n");
+
+
+    if (klass->add_to_window != NULL)
+         fprintf(stderr,"GncPlugin.add_to_window = %llx\n",klass->add_to_window);
+    else
+         fprintf(stderr,"GncPlugin.add_to_window = NULL\n");
+
+    if (klass->remove_from_window != NULL)
+         fprintf(stderr,"GncPlugin.remove_from_window = %llx\n",klass->remove_from_window);
+    else
+         fprintf(stderr,"GncPlugin.remove_from_window = NULL\n");
+
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 %%

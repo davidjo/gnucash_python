@@ -2,6 +2,12 @@
 ;; additional definitions to figure out how to access
 ;; the private variables
 
+(define-method access_class_data
+  (of-object "GncPluginPage")
+  (c-name "gnc_plugin_page_access_class_data")
+  (return-type "gpointer")
+)
+
 (define-method access_private_data
   (of-object "GncPluginPage")
   (c-name "gnc_plugin_page_access_private_data")

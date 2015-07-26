@@ -116,11 +116,11 @@ class GncPluginPythonExample(GncPluginPython):
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "before access private"
+        print >> sys.stderr, "before access class"
 
-        priv = self.access_private_data()
+        priv = self.access_class_data()
 
-        print >> sys.stderr, "after access private"
+        print >> sys.stderr, "after access class"
 
         # it appears to be confirmed the following works
         # but prefixing with cls. does not - get needs an argument error
