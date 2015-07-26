@@ -68,8 +68,15 @@ try:
     # yes - looks like the import is enough
     import gnc_plugin_page_python_report
 
-    import python_only_plugin 
-    myplugin = python_only_plugin.MyPlugin()
+    #import python_only_plugin 
+    #myplugin = python_only_plugin.MyPlugin()
+
+    import gnc_plugin_python_reports
+
+    python_reports = gnc_plugin_python_reports.GncPluginPythonReports()
+
+    gnc_plugin_manager.plugin_manager.add_plugin(python_reports)
+
 
     #pdb.set_trace()
     print "local_init loaded"
