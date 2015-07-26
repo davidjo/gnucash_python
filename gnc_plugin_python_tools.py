@@ -37,6 +37,8 @@ import gnc_main_window
 
 import python_menu_extensions
 
+from python_menu_extensions import GncMenuItem, GncActionEntry
+
 import tool_objects
 
 
@@ -57,29 +59,6 @@ def close_handler (arg):
     pass
 
 
-class GncMenuItem(object):
-    def __init__ (self,path=None,ae=None,action=None,type=None):
-        self.path = path
-        self.ae = ae
-        self.action = action
-        self.type = type
-
-class GncActionEntry(object):
-    def __init__ (self,name=None,stock_id=None,label=None,accelerator=None,tooltip=None,callback=None):
-        self.name = name
-        self.stock_id = stock_id
-        self.label = label
-        self.accelerator = accelerator
-        self.tooltip = tooltip
-        self.callback = callback
-
-    def as_tuple (self):
-        return (self.name,self.stock_id,self.label,self.accelerator,self.tooltip,self.callback)
-
-
-# well this doesnt seem to be working
-# not sure if can subclass a GObject subclass
-# is this now a python subclass??
 
 class GncPluginPythonTools(GncPluginPython):
 
@@ -248,7 +227,7 @@ class GncPluginPythonTools(GncPluginPython):
 
     def remove_from_window (self, window, window_type):
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         # need to map the window somehow to a window object
         save_window = window
@@ -256,9 +235,9 @@ class GncPluginPythonTools(GncPluginPython):
 
         self.menu_extensions.remove_from_window(window, window_type)
 
-        print >> sys.stderr, "called remove_from_window"
-        pdb.set_trace()
-        print >> sys.stderr, "called remove_from_window"
+        #print >> sys.stderr, "called remove_from_window"
+        #pdb.set_trace()
+        #print >> sys.stderr, "called remove_from_window"
 
         super(GncPluginPythonTools,self).remove_from_window(save_window, window_type)
 
