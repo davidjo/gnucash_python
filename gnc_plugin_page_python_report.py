@@ -96,14 +96,16 @@ STOCK_PDF_EXPORT = "gnc-pdf-export"
 if True:
 
     import gncpluginpage
+
+    from gnc_plugin_page import GncPluginPagePython
+
     from gncpluginpage import PluginPage
+
+elif False:
 
     #import gnc_plugin_page
 
     gncpluginpagetype = gobject.type_from_name('GncPluginPage')
-
-    gncpluginpagereporttype = gobject.type_from_name('GncPluginPageReport')
-
 
     # strange  - it is here where the class init function is called
 
@@ -112,8 +114,6 @@ if True:
 
     # this lists the signal names
     #print >> sys.stderr, gobject.signal_list_names(gncpluginpagetype)
-
-
 
 
     # OK attempt to create a Python class for gnc_plugin_page
@@ -138,10 +138,21 @@ else:
     # can we do this??
     PluginPage = GncPluginPage
 
+
 # this sort of worked prior to wrap of gncpluginpage using codegen
 #class GncPluginPagePythonReport(type(tmppluginpage)):
 
-class GncPluginPagePythonReport(PluginPage):
+
+
+class GncPluginPagePythonReport(GncPluginPagePython):
+
+    # can we do subclass of subclass - yes!!
+
+    # note that here this is a full definition of a new subclass in python
+    # - so everything is done in python
+    # compare to GncPluginPagePython which is for extending the wrapping
+    # of an existing GObject class and need to maintain the base C variables
+    # etc.
 
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncPluginPagePythonReport'
@@ -165,9 +176,8 @@ class GncPluginPagePythonReport(PluginPage):
 
     def __init__ (self, report):
 
-        # do we need to init the parent class - GncPluginPage
-        # do this or use gobject.GObject.__init__(self)
-        gncpluginpage.PluginPage.__init__(self)
+        # init the parent class
+        super(GncPluginPagePythonReport,self).__init__()
 
         # again we are passing the instance pointer in python rather than integer report id
         # - but the report instance contains the report id
@@ -260,11 +270,21 @@ class GncPluginPagePythonReport(PluginPage):
 
         #pdb.set_trace()
 
+        #print >> sys.stderr, "before access class"
+
+        priv = self.access_class_data()
+
+        #print >> sys.stderr, "after access class"
+
+        # this is because of special implementation in the codegen wrapper
+        # - copying the private structure definition into the wrapper code
+
         #print >> sys.stderr, "before access private"
 
         priv = self.access_private_data()
 
         #print >> sys.stderr, "after access private"
+
 
         # variables from the private data structure
         # do we need any of these
@@ -272,12 +292,21 @@ class GncPluginPagePythonReport(PluginPage):
         # but we still need the python instance
         self.reportId = 0
         self.component_manager_id = 0
+
+        self.cur_report = None
+        self.cur_odb = None
         self.option_change_cb_id = None
-        self.name_change_cb_id = None
+
         self.initial_report = None
+        self.initial_odb = None
+        self.name_change_cb_id = None
+
         self.edited_reports = None
+
         self.need_reload = False
+
         self.reloading = False
+
         # thats another module we might need - gnc-html
         self.html = None
         self.container = None
@@ -307,6 +336,9 @@ class GncPluginPagePythonReport(PluginPage):
 
         # we need to set some parent items - how to do this??
         # we probably need to set all of these
+
+        #self.set_class_init_data(tab_icon=GNC_STOCK_ACCOUNT)
+
         #gnc_plugin_page_class->plugin_name     = GNC_PLUGIN_PAGE_REPORT_NAME;
 
         #print >> sys.stderr, "before set_plugin_name"
@@ -335,17 +367,32 @@ class GncPluginPagePythonReport(PluginPage):
         #print >> sys.stderr, "after set_callbacks"
 
         # need to add report-id as a property??
+        # - done previously
 
 
     def constructor (self, report):
         #pdb.set_trace()
         # why this??
-        report_Id = -42;
+        #report_Id = -42;
         #
-        # this calls the parent constructor
+        # I dont understand the following C mess - this calls a parent constructor
         # (how does this work in the pygobject universe??)
         # then gets the report-id property by scanning the properties passed as an argument
-        report_Id = self.get_property("report-id")
+
+        #0  0x000000010003ee71 in gnc_plugin_page_report_constructor ()
+        #1  0x0000000104f5935a in g_object_new_internal ()
+        #2  0x0000000104f59b32 in g_object_new_valist ()
+        #3  0x0000000104f5a18a in g_object_new ()
+        #4  0x000000010003bffa in gnc_plugin_page_report_new ()
+        #5  0x000000010003c14b in gnc_main_window_open_report ()
+
+        #report_Id = self.get_property("report-id")
+
+        # yes - here I think in C the reportId is passed - in python we are passing the report object
+        # so ignore the above
+        report_Id = report.id
+
+        # the report.id is a sequential count of number of reports run in the current gnucash run
         #print "constructor report-id",report_Id
 
         # scheme passes the report_Id - in python we will pass the report instance
@@ -371,6 +418,11 @@ class GncPluginPagePythonReport(PluginPage):
         #gnc_plugin_page_report_setup(self)
         self.report_setup(report)
 
+        # need to figure out how to get preferences
+        #use_new = gnc_prefs_get_bool(GNC_PREFS_GROUP_GENERAL_REPORT, GNC_PREF_USE_NEW)
+        use_new = False
+
+        # decided to construct full path here - in real gnucash only the filename is stored
         ui_desc_path = os.path.join(os.environ['HOME'],'.gnucash','ui',"gnc-plugin-page-python-report-ui.xml")
 
         if not os.path.exists(ui_desc_path):
@@ -382,13 +434,14 @@ class GncPluginPagePythonReport(PluginPage):
         self.set_property("page-name", self.initial_report.report_type.name)
         self.set_property("page-uri", "default:")
         self.set_property("ui-description", ui_desc_path)
-        self.set_property("use-new-window", False)
+        self.set_property("use-new-window", use_new)
 
         # with wrapping module this now returns a gnucash python bindings Book instance
         curbook = sw_app_utils.get_current_book()
         #pdb.set_trace()
         # really need to make this function accept a Book instance
-        self.add_book(curbook.instance.__long__())
+        #self.add_book(curbook.instance.__long__())
+        self.add_book(curbook)
 
         # Create menu and toolbar information
 
@@ -405,6 +458,10 @@ class GncPluginPagePythonReport(PluginPage):
 
 
     # note we define do_.... functions but call them as set_... or get__...
+
+    # silly me - we are a subclass of GncPluginPage - so its GObject properties work
+    # but report-id is a property of this subclass - not the parent - which has no
+    # C equivalent so need proper definition
 
     def do_get_property (self, property):
         if property.name == 'report-id':
@@ -459,6 +516,26 @@ class GncPluginPagePythonReport(PluginPage):
         #       type ? type : "(null)", location ? location : "(null)",
         #       label ? label : "(null)" );
 
+        #if url_type == 'report' and url_location[0:3] == 'id=':
+        #    report_id = int(url_location[3:])
+        #    #DEBUG( "parsed id=%d", report_id );
+        #elif url_type == 'options' and url_location[0:10] == 'report-id=':
+        #    report_id = int(url_location[10:])
+        #    if report_id in Report.report_ids:
+        #        inst_report = Report.report_ids[report_id]
+        #        self.add_edited_report(inst_report)
+        #    return
+        #else:
+        #    #LEAVE( " unknown URL type [%s] location [%s]", type, location )
+        #    return
+
+        # we are passing the report object - must exist!!
+        #if report_id in Report.report_ids:
+        #    inst_report = Report.report_ids[report_id]
+        #else:
+        #    return
+
+
         # so first dont understand how this can be true
         # - report_setup sets initial_report
         # so I dont see how this is ever done
@@ -469,9 +546,10 @@ class GncPluginPagePythonReport(PluginPage):
             #if report_id in Report.report_ids:
             #    inst_report = Report.report_ids[report_id]
             #self.initial_report = inst_report
-            self.initial_report.set_needs_save(True)
-            self.initial_odb = GncOoptionDB(self.initial_report.options)
-            self.name_change_cb_id = self.initial_odb.register_change_callback(self.refresh,"General", "Report name")
+            #self.initial_report.set_needs_save(True)
+            #self.initial_odb = GncOoptionDB(self.initial_report.options)
+            #self.name_change_cb_id = self.initial_odb.register_change_callback(self.refresh,"General", "Report name")
+            pdb.set_trace()
 
         # in scheme cur_report is another pointer to the report instance
         if self.cur_report != None and self.cur_odb != None:
@@ -492,6 +570,8 @@ class GncPluginPagePythonReport(PluginPage):
         self.cur_odb = GncOptionDB(self.initial_report.options)
 
         # this is very important for reloading report on option change
+        # report is passed in the C code
+        #self.option_change_cb_id = self.cur_odb.register_change_callback(self.option_change_cb,report)
         self.option_change_cb_id = self.cur_odb.register_change_callback(self.option_change_cb)
 
         # some history stuff not got into yet
@@ -578,6 +658,11 @@ class GncPluginPagePythonReport(PluginPage):
            #child_name = gnc_build_url( URL_TYPE_REPORT, id_name, NULL );
            #type = gnc_html_parse_url( priv->html, child_name, &url_location, &url_label);
 
+           # this is what appear to get - URL_TYPE_REPORT is the string report
+           url_type = 'report'
+           url_location = id_name
+           url_label = ""
+
 
            # this seems to be the major drawing bit
            # im going to sort of assume that this is what draws in the above created window
@@ -587,14 +672,12 @@ class GncPluginPagePythonReport(PluginPage):
            #gnc_window_set_progressbar_window( NULL );
 
            #pdb.set_trace()
+
            # this is complicated now
            # if we follow the C/scheme self.cur_report is only defined
            # after the load_cb callback is called so cant pass report here
            # essentially here C/scheme passes the report Id then looks it
            # up in load_cb
-           url_type = 'file'
-           url_location = id_name
-           url_label = ""
 
            self.html.show_url(url_type,url_location,url_label,report_cb=self.get_cur_report)
 
@@ -670,9 +753,11 @@ class GncPluginPagePythonReport(PluginPage):
         key_file.set_value(group_name, "PythonOptions", repr(pyitms))
         #key_file.set_value(group_name, "PythonOptions", json.dumps(report_objects.python_reports_by_guid))
 
-    def window_changed (self, *args):
-        gnucash_log.dbglog_err("window_changed",len(args))
-        pdb.set_trace()
+    # dont see why I defined this here - dont see where its used
+    # - it seems it was defined in the callbacks but now commented
+    #def window_changed (self, *args):
+    #    gnucash_log.dbglog_err("window_changed",len(args))
+    #    pdb.set_trace()
 
     def page_name_changed (self, *args):
         gnucash_log.dbglog_err("page_name_changed",len(args))
@@ -693,6 +778,13 @@ class GncPluginPagePythonReport(PluginPage):
             return
         old_name = self.get_page_name()
         new_name = self.cur_odb.lookup_string_option('General','Report name',None)
+        if new_name != old_name:
+            # some name updating code
+            # dont have good place - this is defined in gnc-main-window.c but its
+            # 1st arg is a GncPluginPage so it should be in that class
+            #main_window_update_page_name(pluginpage, new_name_escaped)
+            pdb.set_trace()
+            pass
         self.cur_report.set_dirty(True)
         self.need_reload = True
         self.html.reload()
@@ -808,6 +900,7 @@ class GncPluginPagePythonReport(PluginPage):
     def OpenNewReport (cls, report, window):
         global python_pages
         gnucash_log.dbglog_err("OpenNewReport",window)
+        #pdb.set_trace()
         # we are currently passing the report instance rather than the integer report id
         # as scheme does - note that the report id is defined by report.id
         report_id = report.id
@@ -832,6 +925,8 @@ class GncPluginPagePythonReport(PluginPage):
             # deallocated 
             python_pages[report_id] = myreportpage
 
+            #pdb.set_trace()
+
             windowp = hash(window)
             #windowp = ctypes.cast(windowp,ctypes.POINTER(gnc_main_window.GncMainWindowOpaque))
             #windowp = ctypes.cast(windowp,ctypes.c_void_p)
@@ -847,6 +942,7 @@ class GncPluginPagePythonReport(PluginPage):
             gnc_main_window.libgnc_gnomeutils.gnc_main_window_open_page(windowp,myreportp)
 
             #pdb.set_trace()
+            #print "junk"
 
         except Exception, errexc:
             traceback.print_exc()
@@ -877,6 +973,8 @@ gobject.type_register(GncPluginPagePythonReport)
 # only one class structure of a GType exists for all instances
 # these callbacks are set into the parent class structure of GncPluginPagePythonReport
 # and are the same for all instances of GncPluginPagePythonReport
+
+# must be done here as need to be after type registration
 
 gncpluginpage.set_recreate_callback("GncPluginPagePythonReport")
 

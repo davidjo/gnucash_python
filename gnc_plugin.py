@@ -153,6 +153,12 @@ class GncPluginPython(BaseGncPlugin):
 
 
     # for equvalency with C code make these class variables
+    # as far as I can see variables in python (class or instance)
+    # are independent of those variables in the underlying GType GObject
+    # still cant see anyway to access such variables except by some
+    # helper functions in the wrapper
+    # (except for SWIG which wraps both structures (instance and class)
+    # and creates accessor functions for all structure items)
 
     plugin_name = None
 
@@ -171,19 +177,21 @@ class GncPluginPython(BaseGncPlugin):
 
     def __init__ (self):
 
-        #pdb.set_trace()
+        pdb.set_trace()
 
         # do we need to init the parent class - GncPlugin
         # do this or use gobject.GObject.__init__(self)
         #super(GncPluginPython,self).__init__()
         gncplugin.Plugin.__init__(self)
 
+        # we cannot easily get access to the instance private data structure
+        # without including the full private data struct
 
-        print >> sys.stderr, "before super access private"
+        print >> sys.stderr, "before super access class"
 
-        priv = self.access_private_data()
+        priv = self.access_class_data()
 
-        print >> sys.stderr, "after super access private"
+        print >> sys.stderr, "after super access class"
 
         # sort of emulate the functions called in gnc_plugin.c
         # this is whats in the class_init function
@@ -197,6 +205,7 @@ class GncPluginPython(BaseGncPlugin):
         #self.class_init()
 
         # gobjects have constructor function
+        # again in python these would be called by super calls from subclasses
         #self.constructor(report)
 
 
@@ -215,6 +224,10 @@ class GncPluginPython(BaseGncPlugin):
         print "doing parent class_init"
 
         #pdb.set_trace()
+
+        # a finalize function is assigned here
+        # again this is a function stored in the parent class - in this case the GObject
+        # how is this done here
 
         pass
 
@@ -238,6 +251,11 @@ class GncPluginPython(BaseGncPlugin):
     # so the gnc-plugin.c implementations of these functions will skip the
     # UI updates so we have to do those updates here - which is actually good
     # for doing things in python
+    # its important that subclasses of this do not define the C actions_name
+    # using the wrapper function set_class_init_data to prevent calls to the
+    # C function from attempting to perform ui merge actions
+    # - then the virtual function call they do will call this python function now
+    # after set_callbacks
 
     def add_to_window (self, window, window_type):
 

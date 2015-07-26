@@ -8,7 +8,7 @@ try:
     #import _sw_app_utils
     #from gnucash import *
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
-    #import gtk
+    import gtk
     pass
 except Exception, errexc:
     print >> sys.stderr, "Failed to import!!"
@@ -122,11 +122,11 @@ class GncPluginPagePython(BaseGncPluginPage):
     __gtype_name__ = 'GcnPluginPagePython'
 
 
-    # for equvalency with C code make these class variables
-
-    plugin_name = None
-
-    tab_icon = None
+    # these are the C class variables - we can access these using the special wrapper
+    # function set_class_init_data
+    # note these seem to be designed to be set by subclasses
+    #plugin_name = None
+    #tab_icon = None
 
     # we can ignore proper GObject signals - these are handled properly as GObjects
 
@@ -158,33 +158,55 @@ class GncPluginPagePython(BaseGncPluginPage):
         #super(GncPluginPagePython,self).__init__()
         gncpluginpage.PluginPage.__init__(self)
 
-        print >> sys.stderr, "before super access private"
+        print >> sys.stderr, "before super access class"
 
-        priv = self.access_private_data()
+        priv = self.access_class_data()
 
-        print >> sys.stderr, "after super access private"
+        print >> sys.stderr, "after super access class"
+
+
+        # NOTA BENE these are python only versions of these variables
+        # if access is needed the base C variable we must use the direct
+        # codegen function calls to set the variable
+
+        # this lists the variables in use but we should try to ensure use
+        # the C variables - in case a GncPluginPage function is called elsewhere
+        # in the C code - in which will check the C variable
+        # these only here for documentation
+        # note that variables defined as properties are available by
+        # using get_property/set_property
+
+        # instance public data
+        #self.window = None
+        #self.notebook_page = None
+        #self.summarybar = None
 
         # instance private data handle here
-        # these are properties
-        self.action_group = None
-        self.ui_merge = None
-        self.ui_description = None
-        self.use_new_window = None
-        self.page_name = None
-        self.page_color = None
-        self.uri = None
-        self.statusbar_text = None
+        # these are properties so can access using set_property/get_property
+        #self.ui_description = None
+        #self.use_new_window = None
+        #self.page_name = None
+        #self.page_color = None
+        #self.uri = None
+        #self.statusbar_text = None
 
-        self.merge_id = None
-        self.books = []
-        self.page_long_name = None
+        #self.ui_merge = None
+        #self.action_group = None
+
+        # non-property private variables
+        # these very difficult to access without having to copy the private C structure
+        # to the wrapping code
+        #self.merge_id = None
+        #self.books = []
+        #self.page_long_name = None
 
         # the actual code in the C init function
-        self.page_name = None
-        self.page_color = None
-        self.uri = None
-        self.window = None
-        self.summarybar = None
+        #self.page_name = None
+        #self.page_color = None
+        #self.uri = None
+
+        #self.window = None
+        #self.summarybar = None
 
 
     def class_init (self):
@@ -197,11 +219,13 @@ class GncPluginPagePython(BaseGncPluginPage):
 
         # note in python we call this using a super call from a subclass
 
-        self.tab_icon = None
-        self.plugin_name = None
+        #self.tab_icon = None
+        #self.plugin_name = None
 
         # ah - if GObjects being used properly the GObjects will have the
         # properties and signals - we do not need to define them here
+
+        pass
 
 
     # gnucash does weird things - a base class functionality often
@@ -215,22 +239,26 @@ class GncPluginPagePython(BaseGncPluginPage):
     # (a lot of the gnucash code can be ignored because python handles the garbage
     # collection/reference counting automagically)
 
+
+    # we need to be very careful what we re-implement here - check very
+    # carefully if we need to ensure that the codegen function is called
+    # - because the C function updates private variables and if some function
+    # involving those private variable(s) is called somewhere else in gnucash
+    # we need to ensure the codegen functions are used here
+    # a good example if the books private variable
+
+
     # def create_widget (self)
+    #     # we could call the base C function with a super call here I think
+    #     super(GncPluginPagePython,self).create_widget(...)
 
     # def destroy_widget (self)
 
 
-    def show_summarybar (self, visible):
+    # not sure we need to implement this - the summarybar is part of instance data
+    # - still not sure if can access via GObject though
 
-        if self.summarybar == None:
-            return
-
-        # check using correct gtk functions here!!
-        if visible:
-            self.summarybar.show()
-        else:
-            self.summarybar.hide()
-
+    # def show_summarybar (self, visible):
 
     # def save_page (self, key_file, group_name):
 
@@ -239,178 +267,28 @@ class GncPluginPagePython(BaseGncPluginPage):
     # def recreate_page (window, page_type, key_file, page_group):
 
 
-    # not clear where to define this function - defined in gnc-plugin.c in C
-    # but has no connection to the GncPlugin GObject
-    # change the filename to an xml string - loaded externally
-    # in python the ui_merge is assumed to be a pygtk gtk.UIManager object
-    # all arguments should be non-null
+    # we MUST ensure the codegen functions are called here
+    # to ensure the C private variable books is updated
+    # primarily because the gnc_plugin_page_has_book function is called by
+    # gnc_main_window_open_page to create the page
+    # we can either just not define these functions here
+    # or maybe we can call the super class functions
 
-    #def add_actions (ui_merge, action_group, filename):
-    @staticmethod
-    def add_actions (ui_merge, action_group, ui_xml_str):
-
-        ui_merge.insert_action_group(action_group, 0)
-
-        #merge_id = ui_merge.add_ui_from_file(filename)
-
-        merge_id = ui_merge.add_ui_from_string(ui_xml_str)
-
-        if merge_id:
-            ui_merge.ensure_update()
-
-        return merge_id
-
-
-    def merge_actions (self, ui_merge):
-
-        self.ui_merge = ui_merge
-
-        self.merge_id = self.add_actions(self.ui_merge, self.action_group, self.ui_description)
-
-
-    def unmerge_actions (self, ui_merge):
-
-        self.ui_merge.remove_ui(self.merge_id)
-
-        self.ui_merge.remove_action_group(self.action_group)
-
-        self.ui_merge = None
-
-        self.merge_id = 0
-
-
-    def get_action (self, name):
-
-        return self.action_group.get_action(name)
-
-    def get_plugin_name (self):
-
-        return self.plugin_name
-
-
-
-    def do_get_property (self, property):
-        if property.name == 'page-name':
-            return self.page_name
-        elit property.name == 'page-color':
-            return self.page_color
-        elit property.name == 'uri':
-            return self.uri
-        elit property.name == 'statusbar-text':
-            return self.statusbar_text
-        elit property.name == 'ui-description':
-            return self.ui_description
-        elit property.name == 'ui-merge':
-            return self.ui_merge
-        elit property.name == 'action-group':
-            return self.action_group
-        else:
-            raise AttributeError, 'unknown property %s' % property.name
-
-    def do_set_property (self, property, value):
-        if property.name == 'page-name':
-            self.page_name = value
-        elit property.name == 'page-color':
-            self.page_color = value
-        elit property.name == 'uri':
-            self.uri = value
-        elit property.name == 'statusbar-text':
-            self.statusbar_text = value
-        elit property.name == 'ui-description':
-            self.ui_description = value
-        elit property.name == 'ui-merge':
-            self.ui_merge = value
-        elit property.name == 'action-group':
-            self.action_group = value
-        else:
-            raise AttributeError, 'unknown property %s' % property.name
-
-
-
-    # im not sure how we handle signals yet
-    # all these functions do is to emit a signal??
-
-    # def inserted (self):
-    #     self.emit("inserted",0)
-
-    # def removed (self):
-    #     self.emit("removed",0)
-
-    # def selected (self):
-    #     self.emit("selected",0)
-
-    # def unselected (self):
-    #     self.emit("unselected",0)
-
+    # yes - we have confirmed the following works
+    # - useful as can now map the book class here rather than in the subclass
+    # - we pass around the SWIG wrapped book object in general
 
     def add_book (self, book):
-
-        self.books.append(book)
-
+        #pdb.set_trace()
+        super(GncPluginPagePython,self).add_book(book.instance.__long__())
 
     def has_book (self, book):
-
-        for tmp_book in self.books:
-            if tmp_book == book:
-                return True
-
-        return False
+        pdb.set_trace()
+        retval = super(GncPluginPagePython,self).has_book(book.instance.__long__())
+        return retval
 
     def has_books (self):
-
+        pdb.set_trace()
+        books = super(GncPluginPagePython,self).has_books()
         return self.books != None and len(self.books) != 0
 
-    def get_window (self);
-
-        return self.window
-
-
-    # all the properties seem to have get/set functions defined for them
-    # why??
-
-    def get_page_name (self):
-
-        return self.page_name
-
-    def set_page_name (self,name):
-
-         self.page_name = name
-
-         if self.page_name_changed:
-             self.page_name_changed(name)
-
-
-    def get_page_long_name (self):
-
-        return self.page_long_name
-
-
-    def set_page_long_name (self, name):
-
-         self.page_long_name = name
-
-
-    def get_ui_description (self):
-
-       return self.ui_description
-
-    def set_ui_description (self, ui_filename):
-
-        self.ui_description = ui_filename
-
-    def get_ui_merge (self):
-
-        return self.ui_merge
-
-
-    def create_action_group (self, group_name):
-
-        group = gtk.ActionGroup(group_name)
-        group.set_translation_domain("gnucash")
-
-        self.action_group = group
-
-
-    def get_action_group (self):
-
-        return self.action_group
