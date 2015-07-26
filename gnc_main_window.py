@@ -141,6 +141,9 @@ else:
     libgnc_gnomeutils.gnc_main_window_manual_merge_actions.argtypes = [ c_void_p, c_char_p, c_void_p, guint ]
     libgnc_gnomeutils.gnc_main_window_manual_merge_actions.restype = None
 
+    libgnc_gnomeutils.gnc_main_window_get_action_group.argtypes = [ c_void_p, c_char_p ]
+    libgnc_gnomeutils.gnc_main_window_get_action_group.restype = c_void_p
+
     libgnc_gnomeutils.gnc_gtk_action_group_set_translation_domain.argtypes = [ c_void_p, c_char_p ]
     libgnc_gnomeutils.gnc_gtk_action_group_set_translation_domain.restype = None
 
@@ -184,6 +187,8 @@ else:
 
         main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window, main_window.__class__)
 
+        main_window.get_action_group = types.MethodType(get_action_group, main_window, main_window.__class__)
+
         return main_window
 
     def get_uimanager (self):
@@ -222,6 +227,20 @@ else:
         group_ptr = hash(group)
 
         libgnc_gnomeutils.gnc_gtk_action_group_set_translation_domain(group_ptr, domain_name)
+
+    def get_action_group (self, group_name):
+
+        #pdb.set_trace()
+
+        mnwndw_ptr = hash(self)
+
+        group_ptr = libgnc_gnomeutils.gnc_main_window_get_action_group(mnwndw_ptr, group_name)
+
+        # need to wrap group
+        #Cgobject = PyGObjectCAPI()
+        group = Cgobject.pygobject_new(group_ptr)
+
+        return group
 
 
 
@@ -308,7 +327,7 @@ else:
     def unmerge_actions (self, group_name, actiongroup, merge_id):
 
         # self is a GObject wrapped gtk.Window runthrough main_window_wrap
-        pdb.set_trace()
+        #pdb.set_trace()
 
         # this is a re-implementation of gnc_main_window_unmerge_actions
         # except here we pass the actiongroup and merge_id rather than looking it up

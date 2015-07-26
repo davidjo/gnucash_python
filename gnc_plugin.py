@@ -177,7 +177,7 @@ class GncPluginPython(BaseGncPlugin):
 
     def __init__ (self):
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         # do we need to init the parent class - GncPlugin
         # do this or use gobject.GObject.__init__(self)
@@ -294,9 +294,9 @@ class GncPluginPython(BaseGncPlugin):
 
     def remove_from_window (self, window, window_type):
 
-        print >> sys.stderr, "called super remove_from_window"
-        pdb.set_trace()
-        print >> sys.stderr, "called super remove_from_window"
+        #print >> sys.stderr, "called super remove_from_window"
+        #pdb.set_trace()
+        #print >> sys.stderr, "called super remove_from_window"
 
         # need to map the window somehow to a window object
         window = gnc_main_window.main_window_wrap(window)

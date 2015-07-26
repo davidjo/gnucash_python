@@ -21,6 +21,32 @@ import gnucash_log
 from gnucash_log import ENTER
 
 
+# these are helper classes for menu creation
+# note that GncActionEntry emulates the GtkActionEntry structure by the variable
+# names but a simple tuple form is used in pygtk
+# (should we make GncActionEntry a ctypes structure - could then actually copy into
+#  the C data structures directly?)
+
+class GncMenuItem(object):
+    def __init__ (self,path=None,ae=None,action=None,type=None):
+        self.path = path
+        self.ae = ae
+        self.action = action
+        self.type = type
+
+class GncActionEntry(object):
+    def __init__ (self,name=None,stock_id=None,label=None,accelerator=None,tooltip=None,callback=None):
+        self.name = name
+        self.stock_id = stock_id
+        self.label = label
+        self.accelerator = accelerator
+        self.tooltip = tooltip
+        self.callback = callback
+
+    def as_tuple (self):
+        return (self.name,self.stock_id,self.label,self.accelerator,self.tooltip,self.callback)
+
+
 
 class PythonMenuAdditions(gobject.GObject):
 
@@ -52,13 +78,17 @@ class PythonMenuAdditions(gobject.GObject):
 
         per_window.add_to_window(window, window_type)
 
+        self.saved_windows[hash(window)] = per_window
+
+
     def remove_from_window (self, window, window_type):
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
-        #if hash(window) in self.saved_windows:
-
-        per_window.remove_from_window(window, window_type)
+        if hash(window) in self.saved_windows:
+            per_window = self.saved_windows[hash(window)]
+            del self.saved_windows[hash(window)]
+            per_window.remove_from_window(window, window_type)
 
 
     # can these be done once - or do they need to be done in the  per window??
@@ -211,27 +241,26 @@ class PythonPerWindowMenuAdditions(gobject.GObject):
 
     def remove_from_window (self, window, window_type):
 
-        print >> sys.stderr, "called remove_from_window"
-        pdb.set_trace()
-        print >> sys.stderr, "called remove_from_window"
+        #print >> sys.stderr, "called remove_from_window"
+        #pdb.set_trace()
+        #print >> sys.stderr, "called remove_from_window"
 
         # weird - I think both this code is done and the super class
         # because the subclass actions are done first in C
+
+        print "window", window
+
+        ui_merge = window.get_uimanager()
 
         # if we call manual_merge_actions I dont think we need the following
 
         group = window.get_action_group(self.menu_additions.group_name)
 
         if group != None:
-            window.ui_merge.remove_action_group(group)
+            ui_merge.remove_action_group(group)
 
         # what I dont understand is the original C code does not attempt
         # to remove the UI for gcn-plugin-menu-additions - but does for
         # any other plugin 
-        window.ui_merge.remove_ui(self.merge_id)
-
-
-        # another miss - in remove window the subclass actions are done first
-        # then the superclass
-        super(GncPluginPythonMenuAdditions,self).remove_from_window(window, window_type)
+        ui_merge.remove_ui(self.merge_id)
 

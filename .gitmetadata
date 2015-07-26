@@ -22,12 +22,12 @@
 {'st_mtime': '1403822489', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4304'}  ;  gnc_html_scatter.py
 {'st_mtime': '1436727830', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1332'}  ;  gnc_html_utilities.py
 {'st_mtime': '1403800563', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1399'}  ;  gnc_jqplot.py
-{'st_mtime': '1437569825', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10083'}  ;  gnc_main_window.py
+{'st_mtime': '1437915765', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10698'}  ;  gnc_main_window.py
 {'st_mtime': '1409253339', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2868'}  ;  gnc_menu_extension.py
 {'st_mtime': '1401575284', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7424'}  ;  gnc_menu_extension_direct.py
 {'st_mtime': '1437666732', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3986'}  ;  gnc_menu_extension_new.py
 {'st_mtime': '1437732505', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8223'}  ;  gnc_menu_python_additions.py
-{'st_mtime': '1437904328', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11411'}  ;  gnc_plugin.py
+{'st_mtime': '1437915710', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11415'}  ;  gnc_plugin.py
 {'st_mtime': '1437341035', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3831'}  ;  gnc_plugin_manager.py
 {'st_mtime': '1437908151', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9470'}  ;  gnc_plugin_page.py
 {'st_mtime': '1437908105', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '37909'}  ;  gnc_plugin_page_python_report.py
@@ -102,7 +102,7 @@
 {'st_mtime': '1400106444', 'st_mode': '33204', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '33027'}  ;  pygkeyfile.c
 {'st_mtime': '1406988415', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5301'}  ;  pygobjectcapi.py
 {'st_mtime': '1400985604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4563'}  ;  python_example_plugin.py
-{'st_mtime': '1437750653', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6835'}  ;  python_menu_extensions.py
+{'st_mtime': '1437915669', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7801'}  ;  python_menu_extensions.py
 {'st_mtime': '1437634919', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11992'}  ;  python_only_plugin.py
 {'st_mtime': '1436727845', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12708'}  ;  qof_ctypes.py
 {'st_mtime': '1437126822', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '19313'}  ;  report_objects.py
