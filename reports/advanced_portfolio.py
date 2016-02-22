@@ -1157,6 +1157,8 @@ class AdvancedPortfolio(ReportTemplate):
         # the program - cannot interact with it anymore
         report_starting(self.name)
 
+        starttime = datetime.datetime.now()
+
         #pdb.set_trace()
 
         # get local values for options
@@ -1487,6 +1489,10 @@ class AdvancedPortfolio(ReportTemplate):
 
 
         report_finished()
+
+        endtime = datetime.datetime.now()
+
+        print "time taken",endtime-starttime
 
         return self.document
 
