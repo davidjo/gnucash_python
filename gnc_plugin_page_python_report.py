@@ -34,9 +34,13 @@ except Exception, errexc:
     print >> sys.stderr, "Failed to import!!"
     pdb.set_trace()
 
+import gnome_utils_ctypes
+
 #pdb.set_trace()
 
 import gnc_main_window
+
+import gnc_file
 
 from pygkeyfile import GKeyFile
 
@@ -813,6 +817,71 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         if not self.need_reload:
             return
 
+
+    def gnc_get_export_type_choice (self, export_types):
+
+        pass
+
+
+    def gnc_get_export_filename (self, choice):
+
+        if choice == None:
+            file_type = N_("HTML")
+        else:
+            file_type = choice
+
+        title = N_("Save %s To File"%file_type)
+
+        # GNC_PREFS_GROUP_REPORT = "dialogs.report"
+        default_dir = sw_app_utils.get_default_directory("dialogs.report")
+
+        file_dialog = gnc_file.GncFileDialog()
+
+        filepath = file_dialog.gnc_file_dialog(title, None, default_dir, file_dialog.GNC_FILE_DIALOG_EXPORT)
+
+        if filepath.find('.') < 0:
+            filepath = filepath + '.' + file_type.lower()
+
+        if filepath == None or filepath == "":
+            return None
+
+        default_dir = os.path.dirname(filepath)
+        # GNC_PREFS_GROUP_REPORT = "dialogs.report"
+        sw_app_utils.set_default_directory("dialogs.report", default_dir)
+
+        if os.path.exists(filepath):
+
+            try:
+                os.stat(filepath)
+                errstr = None
+            except OSError, osex:
+                errstr = osex.strerror
+
+            if errstr != None:
+
+                fmt = N_("You cannot save to that filename.\n\n%s")
+                errmsg = fmt%(filepath,errstr)
+
+                gnome_utils_ctypes.gnc_error_dialog(None, errmsg)
+
+                return None
+
+            if not os.path.isfile(filepath):
+
+                errmsg = N_("You cannot save to that filename.")
+
+                gnome_utils_ctypes.gnc_error_dialog(None, errmsg)
+
+                return None
+
+            errmsg = N_("The file %s already exists. Are you sure you want to overwrite it?")
+
+            if not gnome_utils_ctypes.gnc_verify_dialog(None, False, errmsg):
+                return None
+
+        return filepath
+
+
     # args are GtkAction *action, GncPluginPageReport *rep
     # in our case rep is currently this class ie GncPluginPagePythonReport
 
@@ -829,7 +898,44 @@ class GncPluginPagePythonReport(GncPluginPagePython):
     def save_as_cb (self, action, rep):
         gnucash_log.dbglog("save_as_cb called")
     def export_cb (self, action, rep):
+        print >> sys.stderr, "export_cb called"
         gnucash_log.dbglog("export_cb called")
+        # this appears to allow for a definition in the report template
+        # not fully implementing this
+        export_types = None
+        export_proc = None
+        if hasattr(self.cur_report,"export_types"):
+            export_types = self.cur_report.export_types
+        if hasattr(self.cur_report,"export_thunk"):
+            export_proc = self.cur_report.export_thunk
+        if type(export_types) == list and callable(export_proc):
+            #choice = self.gnc_get_export_type_choice(export_types)
+            if choice == None:
+                return
+        else:
+            choice = None
+
+        filepath = self.gnc_get_export_filename(choice)
+
+        if filepath == None or filepath == "":
+            return
+
+        if choice != None:
+            # I dont think I need self.cur_report - self will be cur_report
+            # export_proc called??
+            result = export_proc(self.cur_report, choice, filepath)
+        else:
+            result = self.html.export_to_file(filepath)
+            print "export_to_file",result
+
+        if not result:
+
+            fmt = N_("Could not open the file %s. The error is %s")
+            strerr = os.strerror(errno)
+            errmsg = fmt%(filepath,strerr)
+            gnome_utils_ctypes.gnc_error_dialog(None, errmsg)
+
+        return
     def options_cb (self, action, rep):
         gnucash_log.dbglog("options_cb called")
         # not sure what class partitioning should be here yet
@@ -848,8 +954,10 @@ class GncPluginPagePythonReport(GncPluginPagePython):
             self.add_edited_report(self.cur_report)
             pass
     def print_cb (self, action, rep):
+        print >> sys.stderr, "print_cb called"
         gnucash_log.dbglog("print_cb called")
     def exportpdf_cb (self, action, rep):
+        print >> sys.stderr, "exportpdf_cb called"
         gnucash_log.dbglog("exportpdf_cb called")
     def copy_cb (self, action, rep):
         gnucash_log.dbglog("copy_cb called")

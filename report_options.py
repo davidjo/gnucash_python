@@ -214,7 +214,7 @@ class OptionsDB(object):
         self.register_option(SimpleBooleanOption(pagename, name_show_subaccounts, sort_tag+"b",
                                                 N_("Override account-selection and show sub-accounts of all selected accounts?"), default_show_subaccounts))
         self.register_option(AccountListOption(pagename, name_accounts, sort_tag+"c",
-                                                N_("Report on these accounts, if display depth allows."), default_accounts, False, True))
+                                                N_("Report on these accounts, if display depth allows."), default_accounts, None, True))
 
     def add_account_levels (self, pagename, name_display_depth, sort_tag, help_string, default_depth):
         self.register_option(MultiChoiceOption(pagename, name_display_depth, sort_tag,

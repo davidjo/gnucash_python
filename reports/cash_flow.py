@@ -43,7 +43,7 @@ from report_objects import ReportTemplate
 from gnc_report_utilities import CommodityCollector
 from gnc_report_utilities import filter_accountlist_type
 from gnc_report_utilities import accounts_count_splits
-from gnc_report_utilities import report_percent_done
+from gnc_report_utilities import report_starting,report_percent_done,report_finished
 from gnc_report_utilities import get_all_subaccounts
 
 import gnc_commodity_utilities
@@ -257,6 +257,9 @@ class CashFlow(ReportTemplate):
     def renderer (self, report):
 
         # this actually implements the report look
+
+        # for some reason if do this if any error occurs in report GUI is locked
+        #report_starting(self.name)
 
         # lots of stuff about getting option values
 
@@ -522,6 +525,8 @@ class CashFlow(ReportTemplate):
             new_col = document.StyleSubElement(new_row,'total-number-cell')
             colval = money_diff_collector.sum(report_currency, exchange_fn)
             new_col.text = colval.to_currency_string()
+
+        report_finished()
 
         return document
 

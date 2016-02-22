@@ -22,6 +22,12 @@ from pygobjectcapi import PyGObjectCAPI
 import gnucash_log
 
 
+# junkily define this for the moment
+# define a function equivalent to N_ for internationalization
+def N_(msg):
+    return msg
+
+
 #gboolean = c_byte
 gboolean = c_int
 gpointer = c_void_p
@@ -147,4 +153,72 @@ libgnc_gnomeutils.gnc_date_edit_new.restype = c_void_p
 
 libgnc_gnomeutils.gnc_handle_date_accelerator.argtypes = [ c_void_p, c_void_p, c_char_p ]
 libgnc_gnomeutils.gnc_handle_date_accelerator.restype = c_bool
+
+
+libgnc_gnomeutils.gnc_ui_get_toplevel.argtypes = []
+libgnc_gnomeutils.gnc_ui_get_toplevel.restype = c_void_p
+
+
+# this definition needs to be here as otherwise get circular definitions
+# if in gnc_main_window.py
+
+def ui_get_toplevel ():
+
+    #global Cgobject
+
+    ui_top_ptr = libgnc_gnomeutils.gnc_ui_get_toplevel()
+
+    if ui_top_ptr != None:
+        # need to wrap returned gtk widget
+        Cgobject = PyGObjectCAPI()
+        ui_toplevel = Cgobject.pygobject_new(ui_top_ptr)
+    else:
+        ui_toplevel = None
+
+    return ui_toplevel
+
+
+# unfortunately gnc_error_dialog uses variable argument lists
+# for the moment lets reimplement in python - its pretty trivial
+# this does mean need to import gtk here
+# also just pass string
+
+
+
+import gtk
+
+def gnc_error_dialog (parent, errmsg):
+
+    if parent == None:
+        parent = ui_get_toplevel()
+
+    dialog = gtk.MessageDialog(parent,gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                    gtk.MESSAGE_ERROR,gtk.BUTTONS_CLOSE,N_(errmsg))
+
+    if parent == None:
+        dialog.set_skip_taskbar_hint(False)
+
+    dialog.show()
+
+    dialog.destroy()
+
+
+def gnc_verify_dialog (parent, yes_is_default, errmsg):
+
+    if parent == None:
+        parent = ui_get_toplevel()
+
+    dialog = gtk.MessageDialog(parent,gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                    gtk.MESSAGE_QUESTION,gtk.BUTTONS_YES_NO,N_(errmsg))
+
+    if parent == None:
+        dialog.set_skip_taskbar_hint(False)
+
+    dialog.set_default_response(gtk.RESPONSE_YES if yes_is_default else gtk.RESPONSE_NO)
+
+    result = dialog.run()
+
+    dialog.destroy()
+
+    return result == gtk.RESPONSE_YES
 

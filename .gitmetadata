@@ -15,8 +15,9 @@
 {'st_mtime': '1412769557', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2645'}  ;  gnc_date_edit_gnc.py
 {'st_mtime': '1437068007', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '22260'}  ;  gnc_date_edit_python.py
 {'st_mtime': '1403366011', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8237'}  ;  gnc_date_format.py
+{'st_mtime': '1444812669', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '2856'}  ;  gnc_file.py
 {'st_mtime': '1402808705', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3416'}  ;  gnc_general_select.py
-{'st_mtime': '1436871816', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5841'}  ;  gnc_html.py
+{'st_mtime': '1444813242', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6108'}  ;  gnc_html.py
 {'st_mtime': '1407509289', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1939'}  ;  gnc_html_ctypes.py
 {'st_mtime': '1436861094', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11157'}  ;  gnc_html_document.py
 {'st_mtime': '1403822489', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4304'}  ;  gnc_html_scatter.py
@@ -30,7 +31,7 @@
 {'st_mtime': '1437915710', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11415'}  ;  gnc_plugin.py
 {'st_mtime': '1437341035', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3831'}  ;  gnc_plugin_manager.py
 {'st_mtime': '1437908151', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9470'}  ;  gnc_plugin_page.py
-{'st_mtime': '1437908105', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '37909'}  ;  gnc_plugin_page_python_report.py
+{'st_mtime': '1444827856', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '41183'}  ;  gnc_plugin_page_python_report.py
 {'st_mtime': '1400190320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1167'}  ;  gnc_plugin_page_report.py
 {'st_mtime': '1437836328', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6091'}  ;  gnc_plugin_python_example.py
 {'st_mtime': '1437915503', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11137'}  ;  gnc_plugin_python_reports.py
@@ -40,7 +41,7 @@
 {'st_mtime': '1412449973', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8927'}  ;  gnc_tree_view_account.py
 {'st_mtime': '1402620931', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4689'}  ;  gnc_utils.py
 {'st_mtime': '1410629792', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4678'}  ;  gnome_utils.py
-{'st_mtime': '1412704752', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5018'}  ;  gnome_utils_ctypes.py
+{'st_mtime': '1444814593', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6784'}  ;  gnome_utils_ctypes.py
 {'st_mtime': '1407263719', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12055'}  ;  gnucash_ctypes.py
 {'st_mtime': '1436886375', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15750'}  ;  gnucash_ext.py
 {'st_mtime': '1412675052', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1962'}  ;  gnucash_log.py
@@ -106,10 +107,10 @@
 {'st_mtime': '1437634919', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11992'}  ;  python_only_plugin.py
 {'st_mtime': '1436727845', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12708'}  ;  qof_ctypes.py
 {'st_mtime': '1437126822', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '19313'}  ;  report_objects.py
-{'st_mtime': '1437003146', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '51130'}  ;  report_options.py
+{'st_mtime': '1444827003', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '51129'}  ;  report_options.py
 {'st_mtime': '1437126599', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '622'}  ;  reports/__init__.py
 {'st_mtime': '1436988957', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '70139'}  ;  reports/advanced_portfolio.py
-{'st_mtime': '1409317537', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '21524'}  ;  reports/cash_flow.py
+{'st_mtime': '1444827522', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '21701'}  ;  reports/cash_flow.py
 {'st_mtime': '1437159791', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '19891'}  ;  reports/dividends.py
 {'st_mtime': '1437053995', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '84442'}  ;  reports/gains.py
 {'st_mtime': '1412677008', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15987'}  ;  reports/hello_world.py

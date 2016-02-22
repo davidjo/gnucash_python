@@ -146,6 +146,14 @@ class HtmlView(object):
         # for the moment use the saved instance mapped to a function call via lambda
         self.show_url(None,None,None,report_cb=lambda : self.report_backup)
 
+    def export_to_file (self, filepath):
+        #pdb.set_trace()
+        #if self.use_pywebkit:
+        #    retval = self.webview.export_to_file(filepath)
+        if self.use_gncwebkit:
+            retval = self.html.export_to_file(filepath)
+        return retval
+
 
 def build_url (type, location, label):
 
