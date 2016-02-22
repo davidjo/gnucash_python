@@ -155,6 +155,9 @@ class CapitalGains(ReportTemplate):
         self.options.register_option(SimpleBooleanOption(N_("Display"), N_("Show all transactions"),"f",
                                                            N_("Display all transactions."), False))
 
+        self.options.register_option(SimpleBooleanOption(N_("Display"), N_("Convert currency all"),"f",
+                                                           N_("Convert currency for all values"), False))
+
 
         self.options.register_option(AccountListOption(N_("Accounts"), N_("Accounts"), "b",
                                                 N_("Stock Accounts to report on."), lambda : self.local_filter_accountlist_type(), lambda accounts: self.local_account_validator(accounts), True))
@@ -478,8 +481,8 @@ class CapitalGains(ReportTemplate):
 
 
     def table_add_gain_row (self, row, curacc, to_date_tp, from_date_tp, report_currency,
-         price_source, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
-         prefer_pricelist, handle_brokerage_fees,
+         price_source, show_symbol, show_listing, show_shares, show_price, show_all, convert_all,
+         basis_method, prefer_pricelist, handle_brokerage_fees,
          use_txn, pricing_txn, share_print_info, currency_frac,
          basis_amt,
          ticker_symbol, listing, txn_date, units, price, value, moneyin, moneyout, income, brokerage, gain, gain_report):
@@ -630,8 +633,8 @@ class CapitalGains(ReportTemplate):
 
 
     def table_add_stock_rows (self, accounts, to_date_tp, from_date_tp, report_currency, exchange_fn, price_fn,
-         price_source, include_empty, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
-         prefer_pricelist, handle_brokerage_fees,
+         price_source, include_empty, show_symbol, show_listing, show_shares, show_price, show_all, convert_all,
+         basis_method, prefer_pricelist, handle_brokerage_fees,
          total_basis, total_value, total_moneyin, total_moneyout, total_income, total_gain, total_ugain, total_brokerage, total_gain_report):
 
         optobj = self.options.lookup_name('Display','Share decimal places')
@@ -799,6 +802,9 @@ class CapitalGains(ReportTemplate):
 
             # ;; Now that we have a pricing transaction if needed, set the value of the asset
             value = my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod,units), report_currency)
+
+            # this may not be useful - if units is 0 there is no value and if we have sold all shares
+            # then at this point we have 0 units so value is 0
 
             print "Value ", value.to_currency_string()
             print " from ", gnc_commodity_utilities.GncMonetary(commod, units).to_currency_string()
@@ -1160,12 +1166,52 @@ class CapitalGains(ReportTemplate):
                             # if not it seems to return a 0 value
                             capgain_report = gnc_commodity_utilities.exchange_by_pricedb_nearest(capgain,report_currency,txn_date)
                             if capgain_report.amount.zero_p():
-                                capgain_report = capgain
+                                if not capgain.amount.zero_p():
+                                    capgain_report = capgain
+                                else:
+                                    capgain_report = gnc_commodity_utilities.GncMonetary(report_currency, GncNumeric(0,1))
                         gaincoll_report.add(report_currency,capgain_report.amount)
 
-                        self.table_add_gain_row(row, curacc, to_date_tp, from_date_tp, report_currency,
-                                    price_source, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
-                                    prefer_pricelist, handle_brokerage_fees,
+                        # convert all values to report currency if requested
+                        # note we cheat here by using single final currency conversion factor
+                        # ie we do not include currency conversion gains
+                        if convert_all:
+
+                            def convcurr (preval):
+                                if engine_ctypes.CommodityEquiv(preval.commodity,report_currency):
+                                    postval = preval
+                                else:
+                                    # this relies on having a price database for the currencies involved!!!
+                                    # if not it seems to return a 0 value
+                                    postval = gnc_commodity_utilities.exchange_by_pricedb_nearest(preval,report_currency,txn_date)
+                                    if postval.amount.zero_p():
+                                        if not preval.amount.zero_p():
+                                            postval = preval
+                                        else:
+                                            postval = gnc_commodity_utilities.GncMonetary(report_currency, GncNumeric(0,1))
+                                return postval
+
+                            report_basis_amt = convcurr(basis_amt)
+                            report_trans_price = convcurr(trans_price)
+                            report_trans_value = convcurr(trans_value)
+                            report_moneyin = convcurr(moneyin)
+                            report_moneyout = convcurr(moneyout)
+                            report_curincome = convcurr(curincome)
+                            report_curfees = convcurr(curfees)
+                            report_capgain = convcurr(capgain)
+
+                            self.table_add_gain_row(row, curacc, to_date_tp, from_date_tp, report_currency,
+                                    price_source, show_symbol, show_listing, show_shares, show_price, show_all, convert_all,
+                                    basis_method, prefer_pricelist, handle_brokerage_fees,
+                                    new_use_txn, new_pricing_txn, share_print_info, currency_frac,
+                                    report_basis_amt,
+                                    ticker_symbol, listing, txn_date, shares_change, report_trans_price, report_trans_value, report_moneyin, report_moneyout, report_curincome, report_curfees, report_capgain, capgain_report)
+
+                        else:
+
+                            self.table_add_gain_row(row, curacc, to_date_tp, from_date_tp, report_currency,
+                                    price_source, show_symbol, show_listing, show_shares, show_price, show_all, convert_all,
+                                    basis_method, prefer_pricelist, handle_brokerage_fees,
                                     new_use_txn, new_pricing_txn, share_print_info, currency_frac,
                                     basis_amt,
                                     ticker_symbol, listing, txn_date, shares_change, trans_price, trans_value, moneyin, moneyout, curincome, curfees, capgain, capgain_report)
@@ -1271,11 +1317,13 @@ class CapitalGains(ReportTemplate):
 
             # maybe this is why basis is done in report currency
             # - but why not just sum and convert here??
+            # ah - I think when we sell a stock the basis is reduced by the stock sold
+            # - so if we sell all a stock the final basis is 0
             curbasissum = self.sum_basis(basis_list, currency_frac)
             prccmd = price.commodity if use_txn else price.get_currency()
             curbasissum = gnc_commodity_utilities.GncMonetary(prccmd,curbasissum)
             curbasissum_report = gnc_commodity_utilities.exchange_by_pricedb_nearest(curbasissum,report_currency,txn_date)
-            total_basis.add(report_currency,  curbasissum_report)
+            total_basis.add(report_currency,  curbasissum_report.amount)
 
 
             # this is total gain line - as per original
@@ -1459,9 +1507,8 @@ class CapitalGains(ReportTemplate):
 
         # this actually implements the report look
 
-        # wierd - if this is called then when report crashes you have to kill
-        # the program - cannot interact with it anymore
-        report_starting(self.name)
+        # for some reason if do this if any error occurs in report GUI is locked
+        #report_starting(self.name)
 
         #pdb.set_trace()
 
@@ -1506,6 +1553,9 @@ class CapitalGains(ReportTemplate):
 
         optobj = self.options.lookup_name('Display','Show all transactions')
         show_all = optobj.get_value()
+
+        optobj = self.options.lookup_name('Display','Convert currency all')
+        convert_all = optobj.get_value()
 
         optobj = self.options.lookup_name('General','Basis calculation method')
         basis_method = optobj.get_value()
@@ -1659,8 +1709,8 @@ class CapitalGains(ReportTemplate):
 
 
             self.table_add_stock_rows(accounts, to_date_tp, from_date_tp, report_currency, self.exchange_fn, price_fn,
-                 price_source, include_empty, show_symbol, show_listing, show_shares, show_price, show_all, basis_method,
-                 prefer_pricelist, handle_brokerage_fees,
+                 price_source, include_empty, show_symbol, show_listing, show_shares, show_price, show_all, convert_all,
+                 basis_method, prefer_pricelist, handle_brokerage_fees,
                  total_basis, total_value, total_moneyin, total_moneyout, total_income, total_gain, total_ugain, total_brokerage, total_gain_report)
 
             #pdb.set_trace()
