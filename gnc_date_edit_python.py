@@ -201,10 +201,14 @@ class GncDateEdit(gtk.HBox):
         # we should get the value from gnc_date_format
         # just junkily do it for the moment
         dtstr = mydttm.strftime("%m/%d/%y")
+        print "set_time_internal",the_time
+        print "set_time_internal",mydttm
+        print "set_time_internal",dtstr
         self.date_entry.set_text(dtstr)
         if not self.in_selected_handler:
+            print "set_time_internal 2"
             self.calendar.select_day(1)
-            self.calendar.select_month(mydttm.month,mydttm.year)
+            self.calendar.select_month(mydttm.month-1,mydttm.year)
             self.calendar.select_day(mydttm.day)
 
         if (self.flags & GncDateEdit.GNC_DATE_EDIT_24_HR):
@@ -224,12 +228,14 @@ class GncDateEdit(gtk.HBox):
         self.set_time(ts)
 
     def set_time_ts (self, the_time):
+        print "set_time_ts",the_time
         self.set_time(the_time.tv_sec)
 
     def set_time (self, the_time):
         # is this needed??
         # note this must be a timestamp in seconds
         if type(the_time) != float and type(the_time) != int: pdb.set_trace()
+        print "in set_time",the_time
         self.initial_time = int(the_time)
         self.set_property("time", int(the_time))
 
@@ -488,8 +494,9 @@ class GncDateEdit(gtk.HBox):
 
         dttm = dttm.replace(hour=0,minute=0,second=0,microsecond=0)
 
+        print "edit_popup",dttm
         self.calendar.select_day(1)
-        self.calendar.select_month(dttm.month, dttm.year)
+        self.calendar.select_month(dttm.month-1, dttm.year)
         self.calendar.select_day(dttm.day)
 
         toplevel = self.get_toplevel()
@@ -532,9 +539,9 @@ class GncDateEdit(gtk.HBox):
 
     def key_press_popup (self, widget, event):
         print "key_press_popup", widget, event
-        if event.keyval != gtk.gdk.KEY_Return and \
-             event.keyval != gtk.gdk.KEY_KP_Enter and \
-                event.keyval != gtk.gdk.KEY_Escape:
+        if event.keyval != gtk.keysyms.Return and \
+             event.keyval != gtk.keysyms.KP_Enter and \
+                event.keyval != gtk.keysyms.Escape:
             return self.date_entry.date_accel_key_press(widget,event)
 
     def position_popup (self):
@@ -627,8 +634,10 @@ class GncDateEdit(gtk.HBox):
         # this is no good - this is a string!!
         # we could convert back to integer I guess
         print "day_selected",dttupl
+        print "day_selected",dttm
         #dtts = dttm.strftime("%s")
         dtts = time.mktime(dttm.timetuple())
+        print "day_selected",dtts
         self.set_time(dtts)
         self.in_selected_handler = False
 
