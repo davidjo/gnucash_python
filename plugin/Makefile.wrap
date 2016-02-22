@@ -46,15 +46,6 @@ gncplugin-methods.defs:
 	${H2DEF} ../../gnome-utils/gnc-plugin.h >gncplugin-methods.defs
 	#${DEFSGEN} -m gncplugin -l 
 
-# Generate the C wrapper from the defs and our override file
-gncpluginpage-methods.c: gncpluginpage.defs gncpluginpage.override
-	#./runcodegen.py --prefix gncpluginpage 
-	${CODEGEN} --prefix gncpluginpage \
-	--load-types gpointer-types.py \
-	--register $(DEFS)/gdk-types.defs \
-	--register $(DEFS)/gtk-types.defs \
-	--override gncpluginpage.override \
-	gncpluginpage.defs > $@
 
 gncpluginpage.so: gncpluginpage-methods.o gncpluginpagemodule.o
 	#$(CC) $(LDFLAGS) -shared $^ -o $@
@@ -205,9 +196,16 @@ glib-helpers-python.so: glib-helpers-python.o
 	$(CC) $(LDFLAGS) -shared $^ -o $@
 
 
-pygkeyfile.so swighelpers.so: swig-runtime-python.h
+#pygkeyfile.so swighelpers.so: swig-runtime-python.h
+
+pygkeyfile.so : swig-runtime-python.h
 	#$(CC) $(CFLAGS) -c $^ -o $@
 	${PYTHONBIN} setup.py --verbose build_ext -i
+	# the above also creates swighelpers.so - but somehow not correctly
+	# maybe without debugging symbols
+	# so rebuild explicitly here
+	rm swighelpers.so
+	make -f Makefile.wrap swighelpers.so
 
 # dont add glib-helpers-python.o as need to include swig-runtime-python.h in module
 # and so swig functions will be defined and cant figure out how to ignore them
@@ -219,7 +217,7 @@ swighelpers.o: swighelpers.c swig-runtime-python.h
 	$(CC) $(CFLAGS) -c swighelpers.c -o $@
 
 #release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so gncmainwindow.so pygkeyfile.so
-release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so pygkeyfile.so
+release: gnchtml.so gnchtmlwebkit.so gncplugin.so gncpluginpage.so pygkeyfile.so
 
 # A rule to clean the generated files
 clean:
