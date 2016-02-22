@@ -120,6 +120,13 @@ libgnc_apputils.gnc_accounting_period_fiscal_end.argtypes = []
 libgnc_apputils.gnc_accounting_period_fiscal_end.restype = gint64
 
 
+libgnc_apputils.gnc_get_default_directory.argtypes = [ ctypes.c_char_p ]
+libgnc_apputils.gnc_get_default_directory.restype = ctypes.c_char_p
+
+libgnc_apputils.gnc_set_default_directory.argtypes = [ ctypes.c_char_p, ctypes.c_char_p ]
+libgnc_apputils.gnc_set_default_directory.restype = None
+
+
 
 # not available - static symbol
 #libgnc_apputils.gnc_default_print_info_helper.argtypes = [ ctypes.c_int ]
@@ -139,6 +146,80 @@ libgnc_apputils.gnc_commodity_print_info.restype = GncPrintAmountInfo
 
 libgnc_apputils.xaccPrintAmount.argtypes = [ GncNumeric, GncPrintAmountInfo ]
 libgnc_apputils.xaccPrintAmount.restype = ctypes.c_char_p
+
+
+
+# try adding in financial functions
+
+libgnc_apputils.fi_calc_payment.argtypes = [ ctypes.c_void_p ]
+libgnc_apputils.fi_calc_payment.restype = ctypes.c_double
+
+libgnc_apputils.fi_calc_future_value.argtypes = [ ctypes.c_void_p ]
+libgnc_apputils.fi_calc_future_value.restype = ctypes.c_double
+
+libgnc_apputils.fi_calc_present_value.argtypes = [ ctypes.c_void_p ]
+libgnc_apputils.fi_calc_present_value.restype = ctypes.c_double
+
+libgnc_apputils.fi_calc_interest.argtypes = [ ctypes.c_void_p ]
+libgnc_apputils.fi_calc_interest.restype = ctypes.c_double
+
+libgnc_apputils.fi_calc_num_payments.argtypes = [ ctypes.c_void_p ]
+libgnc_apputils.fi_calc_num_payments.restype = ctypes.c_uint
+
+
+class FinancialInfo(ctypes.Structure):
+    _fields_ = [ ("ir", ctypes.c_double),      # interest rate
+                 ("pv", ctypes.c_double),      # present value
+                 ("pmt", ctypes.c_double),     # periodic  payment
+                 ("fv", ctypes.c_double),      # future value
+                 ("npp", ctypes.c_uint),       # number of payment periods
+                 ("CF", ctypes.c_uint),        # Compounding frequency
+                 ("PF", ctypes.c_uint),        # payment frequency
+                 ("bep", ctypes.c_uint),       # beginning/end of period payment flag
+                 ("disc", ctypes.c_uint),      # discrete/continuous compounding flag
+                 ("prec", ctypes.c_uint),      # precision of roundoff for pv, pmt and fv
+	       ]
+
+FinancialInfoPtr = ctypes.POINTER(FinancialInfo)
+
+
+class FiCalc(object):
+
+    def __init__ (self):
+        self.fi_info = FinancialInfo()
+	self.fi_ptr = ctypes.cast( ctypes.addressof(self.fi_info), FinancialInfoPtr)
+
+    def num_payments (self):
+        intvl = libgnc_apputils.fi_calc_num_payments(self.fi_ptr)
+        return intvl
+
+    def interest (self):
+        dbvl = libgnc_apputils.fi_calc_interest(self.fi_ptr)
+        return dbvl
+
+    def present_value (self):
+        dbvl = libgnc_apputils.fi_calc_present_value(self.fi_ptr)
+        return dbvl
+
+    def payment (self):
+        dbvl = libgnc_apputils.fi_calc_payment(self.fi_ptr)
+        return dbvl
+
+    def future_value (self):
+        dbvl = libgnc_apputils.fi_calc_future_value(self.fi_ptr)
+        return dbvl
+
+    def print_finfo (self):
+        print "  ir",self.fi_info.ir
+        print "  pv",self.fi_info.pv
+        print " pmt",self.fi_info.pmt
+        print "  fv",self.fi_info.fv
+        print " npp",self.fi_info.npp
+        print "  CF",self.fi_info.CF
+        print "  PF",self.fi_info.PF
+        print "bep",self.fi_info.bep
+        print "disc",self.fi_info.disc
+        print "prec",self.fi_info.prec
 
 
 def gnc_accounting_period_fiscal_start ():
@@ -185,6 +266,17 @@ def get_current_book ():
 def get_current_root_account ():
     # re-implement in python rather can calling C function??
     return get_current_book().get_root_account()
+
+
+def get_default_directory (section):
+
+    dirpath = libgnc_apputils.gnc_get_default_directory(section)
+
+    return dirpath
+
+def set_default_directory (section, directory):
+
+    libgnc_apputils.gnc_set_default_directory(section, directory)
 
 
 # so this function is apparently "inlined" in the swig
@@ -369,12 +461,23 @@ def PrintAmount (amnt, gnc_print_info=None):
     # ah - a swig proxy exists when swig has recognized an class object in the underlying
     # language
     # this is also labelled as shadow objects in the swig code
-    gncnum_ptr = ctypes.cast( amnt.instance.this.__long__(), ctypes.POINTER( GncNumeric ) )
-
-    #print >> sys.stderr, "gncnum_ptr %x"%amnt.instance.this.__long__()
-    #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
-
-    # so looks like we can pass by value - and return by value!!
-    prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfo)
+    if hasattr(amnt,"instance"):
+        gncnum_ptr = ctypes.cast( amnt.instance.this.__long__(), ctypes.POINTER( GncNumeric ) )
+        #print >> sys.stderr, "gncnum_ptr %x"%amnt.instance.this.__long__()
+        #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
+        # so looks like we can pass by value - and return by value!!
+        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfo)
+    elif hasattr(amnt,"this"):
+        gncnum_ptr = ctypes.cast( amnt.this.__long__(), ctypes.POINTER( GncNumeric ) )
+        #print >> sys.stderr, "gncnum_ptr %x"%amnt.this.__long__()
+        #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
+        # so looks like we can pass by value - and return by value!!
+        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfo)
+    else:
+        # for direct GncNumeric objects (which ar GObjects) the memory address
+        # is given by the id value
+        pdb.set_trace()
+        gncnum_ptr = ctypes.cast( amnt.id, ctypes.POINTER( GncNumeric ) )
+        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr, prtinfo)
 
     return prtstr
