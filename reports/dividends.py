@@ -1,4 +1,6 @@
 
+import sys
+
 import operator
 
 import pdb
@@ -42,7 +44,7 @@ from report_objects import ReportTemplate
 from gnc_report_utilities import CommodityCollector
 from gnc_report_utilities import filter_accountlist_type
 from gnc_report_utilities import accounts_count_splits
-from gnc_report_utilities import report_percent_done
+from gnc_report_utilities import report_starting,report_percent_done,report_finished
 from gnc_report_utilities import get_all_subaccounts
 
 import gnc_commodity_utilities
@@ -155,6 +157,9 @@ class Dividends(ReportTemplate):
 
         # this actually implements the report look
 
+        # for some reason if do this if any error occurs in report GUI is locked
+        #report_starting(self.name)
+
         # lots of stuff about getting option values
 
         optobj = self.options.lookup_name('General','Start Date')
@@ -198,6 +203,8 @@ class Dividends(ReportTemplate):
 
         shwobj = self.options.lookup_name('Accounts','Always show sub-accounts')
         shwopt = shwobj.get_value()
+
+        print >> sys.stderr, "shwobj",shwobj,shwopt
 
         if shwopt:
             subacclst = get_all_subaccounts(accounts)
@@ -342,6 +349,12 @@ class Dividends(ReportTemplate):
 
             #pdb.set_trace()
 
+            total_coll = CommodityCollector()
+            total_rpt_coll = CommodityCollector()
+
+            # this is bad - this assumes all dividends in single currency
+            total_commod = None
+
             #for acc in dividend_accounts:
             for acc in do_accounts:
 
@@ -370,6 +383,9 @@ class Dividends(ReportTemplate):
                 anchor_markup = document.doc.SubElement(new_col,"a")
                 anchor_markup.attrib['href'] = accurl
                 anchor_markup.text = accnm + "\n"
+
+                acc_coll = CommodityCollector()
+                acc_rpt_coll = CommodityCollector()
 
                 for split in acc.GetSplitList():
 
@@ -459,16 +475,19 @@ class Dividends(ReportTemplate):
                         else:
                             splt_rpt = gnc_commodity_utilities.GncMonetary(report_currency,split_val)
 
+                        acc_coll.add(commod_currency, split_val)
+                        total_coll.add(commod_currency, split_val)
+                        acc_rpt_coll.add(splt_rpt.commodity, splt_rpt.amount)
+                        total_rpt_coll.add(splt_rpt.commodity, splt_rpt.amount)
+
+                        total_commod = commod_currency
+
                         colval = splt_rpt
 
                         new_col = document.StyleSubElement(new_row,'number-cell')
                         new_col.text = colval.to_currency_string()
 
-
-                if (row_num % 2) == 0:
-                    new_row = document.StyleSubElement(new_table,'normal-row')
-                else:
-                    new_row = document.StyleSubElement(new_table,'alternate-row')
+                new_row = document.StyleSubElement(new_table,'normal-row')
 
                 new_col = document.StyleSubElement(new_row,'text-cell')
                 new_col.text = "Balance"
@@ -476,21 +495,114 @@ class Dividends(ReportTemplate):
                 new_col = document.StyleSubElement(new_row,'text-cell')
                 new_col.text = ""
 
-                colval = gnc_commodity_utilities.GncMonetary(acc.GetCommodity(),acc.GetBalance().neg())
+                #colval = gnc_commodity_utilities.GncMonetary(acc.GetCommodity(),acc.GetBalance().neg())
+                colval = acc_coll.getmonetary(acc.GetCommodity())
+
+                new_col = document.StyleSubElement(new_row,'number-cell')
+                new_col.text = colval.to_currency_string()
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = ""
+
+                colval = acc_rpt_coll.getmonetary(report_currency)
 
                 new_col = document.StyleSubElement(new_row,'number-cell')
                 new_col.text = colval.to_currency_string()
 
 
-            #new_row = document.StyleSubElement(new_table,'grand-total')
-            #new_row.text = "\n"
-            #new_row.tail = "\n"
+                new_row = document.StyleSubElement(new_table,'normal-row')
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = "Joint contribution"
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = ""
+
+                #colval = gnc_commodity_utilities.GncMonetary(acc.GetCommodity(),acc.GetBalance().neg())
+                colval = acc_coll.getmonetary(acc.GetCommodity())
+                colval.amount = colval.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+
+                new_col = document.StyleSubElement(new_row,'number-cell')
+                new_col.text = colval.to_currency_string()
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = ""
+
+                colval = acc_rpt_coll.getmonetary(report_currency)
+                colval.amount = colval.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+
+                new_col = document.StyleSubElement(new_row,'number-cell')
+                new_col.text = colval.to_currency_string()
+
+
+            if len(do_accounts) > 0:
+
+                new_row = document.StyleSubElement(new_table,'normal-row')
+                new_row.text = "\n"
+                new_row.tail = "\n"
+
+                new_data = document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "100%" })
+                new_ruler = document.doc.SubElement(new_data,"hr")
+
+                new_row = document.StyleSubElement(new_table,'grand-total')
+                new_row.text = "\n"
+                new_row.tail = "\n"
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = N_("Total")
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = " "
+
+                colval = total_coll.getmonetary(total_commod)
+
+                new_col = document.StyleSubElement(new_row,'total-number-cell')
+                new_col.text = colval.to_currency_string()
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = " "
+
+                colval = total_rpt_coll.getmonetary(report_currency)
+
+                new_col = document.StyleSubElement(new_row,'total-number-cell')
+                new_col.text = colval.to_currency_string()
+
+
+                new_row = document.StyleSubElement(new_table,'grand-total')
+                new_row.text = "\n"
+                new_row.tail = "\n"
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = N_("Joint Contribution Total")
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = " "
+
+                colval = total_coll.getmonetary(total_commod)
+                colval.amount = colval.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+
+                new_col = document.StyleSubElement(new_row,'total-number-cell')
+                new_col.text = colval.to_currency_string()
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = " "
+
+                colval = total_rpt_coll.getmonetary(report_currency)
+                colval.amount = colval.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+
+                new_col = document.StyleSubElement(new_row,'total-number-cell')
+                new_col.text = colval.to_currency_string()
+
+
 
             #new_col = document.StyleSubElement(new_row,'text-cell')
             #new_col.text = N_("Money In")
             #new_col = document.StyleSubElement(new_row,'total-number-cell')
             #colval = self.money_in_collector.sum(report_currency, exchange_fn)
             #new_col.text = colval.to_currency_string()
+
+
+        report_finished()
 
         return document
 
