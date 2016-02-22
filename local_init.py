@@ -37,6 +37,9 @@ try:
 
     #print "done CAPI"
 
+    #print "system path"
+    #print sys.path
+
 
     # need to load early as we extend some base gnucash classes
     #import gnucash_ext
