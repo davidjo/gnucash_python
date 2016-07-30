@@ -341,28 +341,44 @@ def GetAssociatedAccountGUIDString (self, slotnm):
 
 def SetAssociatedAccount (self, slotnm, assocacc):
 
-    pdb.set_trace()
+    #pdb.set_trace()
 
     acc_ptr = cast( self.instance.__long__(), POINTER( QofInstanceOpaque ) )
 
     kvp_frame_ptr = libgnc_qof.qof_instance_get_slots(acc_ptr)
 
-    assocguid = assocacc.GetGUID()
+    if assocacc != None:
 
-    # need to munge swig GUID to ctypes GUID
-    # new feature - why is data object in GncGUID
-    # - this is what has the long
-    # how would you know which type had data??
-    # weird - the object this should store the underlying native object
-    # assocguid.instance.data.__long__() == assocguid.instance.this.__long__()
-    newguid = GncGUIDRaw()
-    guid_ptr = cast( assocguid.instance.data.__long__(), POINTER( GncGUIDRaw ) )
+        assocguid = assocacc.GetGUID()
 
-    kvp_value_ptr = libgnc_qof.kvp_value_new_guid(guid_ptr)
+        # need to munge swig GUID to ctypes GUID
+        # new feature - why is data object in GncGUID
+        # - this is what has the long
+        # how would you know which type had data??
+        # weird - the object this should store the underlying native object
+        # assocguid.instance.data.__long__() == assocguid.instance.this.__long__()
+        newguid = GncGUIDRaw()
+        guid_ptr = cast( assocguid.instance.data.__long__(), POINTER( GncGUIDRaw ) )
+
+        kvp_value_ptr = libgnc_qof.kvp_value_new_guid(guid_ptr)
+
+        self.BeginEdit()
+
+        libgnc_qof.kvp_frame_set_slot_nc(kvp_frame_ptr, slotnm, kvp_value_ptr)
+
+        libgnc_qof.qof_instance_set_dirty(acc_ptr)
+
+        self.CommitEdit()
+
+        return None
+
+
+    # amazing - this does appear to work in that the value and slot
+    # are deleted by passing None to libgnc_qof.kvp_frame_set_slot_nc
 
     self.BeginEdit()
 
-    libgnc_qof.kvp_frame_set_slot_nc(kvp_frame_ptr, slotnm, kvp_value_ptr)
+    libgnc_qof.kvp_frame_set_slot_nc(kvp_frame_ptr, slotnm, None)
 
     libgnc_qof.qof_instance_set_dirty(acc_ptr)
 
