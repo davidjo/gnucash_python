@@ -81,25 +81,27 @@ signal.signal(signal.SIGTTOU, old_sigttou)
 
 if noisy:
     print "Hello from python!"
-    #print "test", sys.modules.keys()
-    #print "test2", dir(_sw_app_utils)
+   #print "test", sys.modules.keys()
+   #print "test2", dir(_sw_app_utils)
 
-root = _sw_app_utils.gnc_get_current_root_account()
+   # doing gnc_get_current_root_account here is a bad idea as no
+   # session opened yet and gnc_get_current_root_account will open
+   # a new session (is this new behaviour) - which now need to save
+   # when open the real file
+   # so comment the following and any statements using root
 
-if noisy:
-    #print "test", dir(root), root.__class__
-    #print "test2", dir(gnucash_core_c)
-    pass
+   #root = _sw_app_utils.gnc_get_current_root_account()
 
-acct = Account(instance = root)
+   #print "test", dir(root), root.__class__
+   #print "test2", dir(gnucash_core_c)
 
-if noisy:
+   #acct = Account(instance = root)
+
    #print "test3", dir(acct)
    #print acct.GetName()
    #print acct.GetBalance()
    #print acct.GetSplitList()
    #print "test2", dir(gnucash.gnucash_core_c)
-   pass
 
 class Console (cons.Console):
     """ GTK python console """
