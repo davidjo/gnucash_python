@@ -69,6 +69,7 @@ import gnucash
 from gnucash import ACCT_TYPE_STOCK, ACCT_TYPE_MUTUAL, ACCT_TYPE_ASSET, ACCT_TYPE_EXPENSE, ACCT_TYPE_INCOME, ACCT_TYPE_BANK
 
 from gnucash import GNC_DENOM_AUTO, GNC_HOW_RND_ROUND, GNC_HOW_DENOM_REDUCE
+from gnucash.gnucash_core_c import GNC_HOW_DENOM_SIGFIG
 
 from gnucash import GncNumeric
 
@@ -1780,6 +1781,82 @@ class CapitalGains(ReportTemplate):
             new_col = self.document.StyleSubElement(new_row,'total-number-cell')
             new_col.text = sum_total_gain_report.to_currency_string()
             new_col.tail = "\n"
+
+
+            # add row for the joint contribution
+
+            new_row = self.document.doc.SubElement(self.new_table,"tr")
+            new_row.text = "\n"
+            new_row.tail = "\n"
+
+            new_col = self.document.StyleSubElement(new_row,'total-label-cell')
+            new_col.text = N_("Joint Contribution")
+
+            for itm in totalscols[1:]:
+                new_col = self.document.StyleSubElement(new_row,'total-label-cell')
+                new_col.text = itm
+
+            pdb.set_trace()
+
+            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+            new_num = total_basis.sum(report_currency, self.exchange_fn.run)
+            new_num.amount = new_num.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+            new_col.text = new_num.to_currency_string()
+            new_col.tail = "\n"
+
+            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+            new_num = total_value.sum(report_currency, self.exchange_fn.run)
+            new_num.amount = new_num.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+            new_col.text = new_num.to_currency_string()
+            new_col.tail = "\n"
+
+            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+            new_num.amount = sum_total_moneyin.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+            new_col.text = new_num.to_currency_string()
+            new_col.tail = "\n"
+
+            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+            new_num = total_moneyout.sum(report_currency, self.exchange_fn.run)
+            new_num.amount = new_num.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+            new_col.text = new_num.to_currency_string()
+            new_col.tail = "\n"
+
+            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+            new_num.amount = sum_total_income.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+            new_col.text = new_num.to_currency_string()
+            new_col.tail = "\n"
+
+            if handle_brokerage_fees != 'ignore-brokerage':
+
+               new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+               new_num.amount = sum_total_brokerage.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+               new_col.text = new_num.to_currency_string()
+               new_col.tail = "\n"
+
+            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+            new_num.amount = sum_total_gain.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+            new_col.text = new_num.to_currency_string()
+            new_col.tail = "\n"
+
+            new_col = self.document.StyleSubElement(new_row,'total-number-cell')
+            new_num.amount = sum_total_gain_report.amount.div(GncNumeric(2,1),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+            new_col.text = new_num.to_currency_string()
+            new_col.tail = "\n"
+
+
+            if self.warn_price_dirty:
+
+                new_col = self.document.doc.SubElement("")
+                new_col.text = N_("* this commodity data was built using transaction pricing instead of the price list.")
+                new_col.tail = "\n"
+
+                new_col = self.document.doc.SubElement("br")
+                new_col.text = ""
+                new_col.tail = "\n"
+
+                new_col = self.document.doc.SubElement("")
+                new_col.text = N_("If you are in a multi-currency situation, the exchanges may not be correct.")
+                new_col.tail = "\n"
 
 
             if self.warn_price_dirty:
