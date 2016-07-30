@@ -136,12 +136,39 @@ libgnc_gnomeutils.gnc_tree_view_account_set_selected_accounts.restype = None
 libgnc_gnomeutils.gnc_tree_view_account_get_selected_accounts.argtypes = [ c_void_p ]
 libgnc_gnomeutils.gnc_tree_view_account_get_selected_accounts.restype = c_void_p
 
+libgnc_gnomeutils.gnc_tree_view_account_get_selected_account.argtypes = [ c_void_p ]
+libgnc_gnomeutils.gnc_tree_view_account_get_selected_account.restype = c_void_p
+
 
 libgnc_gnomeutils.gnc_tree_view_account_new_with_root.argtypes = [ c_void_p, c_bool ]
 libgnc_gnomeutils.gnc_tree_view_account_new_with_root.restype = c_void_p
 
 libgnc_gnomeutils.gnc_tree_view_account_new.argtypes = [ c_bool ]
 libgnc_gnomeutils.gnc_tree_view_account_new.restype = c_void_p
+
+
+
+libgnc_gnomeutils.gnc_tree_model_account_types_new.argtypes = [ c_uint ]
+libgnc_gnomeutils.gnc_tree_model_account_types_new.restype = c_void_p
+
+libgnc_gnomeutils.gnc_tree_model_account_types_filter_using_mask.argtypes = [ c_uint ]
+libgnc_gnomeutils.gnc_tree_model_account_types_filter_using_mask.restype = c_void_p
+
+libgnc_gnomeutils.gnc_tree_model_account_types_set_mask.argtypes = [ c_void_p, c_uint ]
+libgnc_gnomeutils.gnc_tree_model_account_types_set_mask.restype = None
+
+libgnc_gnomeutils.gnc_tree_model_account_types_get_mask.argtypes = [ c_void_p ]
+libgnc_gnomeutils.gnc_tree_model_account_types_get_mask.restype = c_uint
+
+libgnc_gnomeutils.gnc_tree_model_account_types_get_selection.argtypes = [ c_void_p ]
+libgnc_gnomeutils.gnc_tree_model_account_types_get_selection.restype = c_uint
+
+libgnc_gnomeutils.gnc_tree_model_account_types_get_selection_single.argtypes = [ c_void_p ]
+libgnc_gnomeutils.gnc_tree_model_account_types_get_selection_single.restype = c_uint
+
+libgnc_gnomeutils.gnc_tree_model_account_types_set_selection.argtypes = [ c_void_p, c_uint ]
+libgnc_gnomeutils.gnc_tree_model_account_types_set_selection.restype = None
+
 
 
 libgnc_gnomeutils.gnc_date_edit_get_type.argtypes = []

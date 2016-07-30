@@ -19,12 +19,19 @@ class GncBuilder(gtk.Builder):
 
     def __init__ (self):
         super(GncBuilder,self).__init__()
+        # junky addition for setting a different path
+        self.builder_dir = "/opt/local/share/gnucash/gtkbuilder"
 
-    def add_from_file (self, filename,  root):
+    def set_builder_dir (self, builder_dir):
+        self.builder_dir = builder_dir
+
+    def add_from_file (self, filename,  root, gnc_builder_dir=None):
 
         # find some global directory
         #gnc_builder_dir = gnc_path_get_gtkbuilderdir ()
-        gnc_builder_dir = "/opt/local/share/gnucash/gtkbuilder"
+        #gnc_builder_dir = "/opt/local/share/gnucash/gtkbuilder"
+        if gnc_builder_dir == None:
+            gnc_builder_dir = self.builder_dir
         fname = os.path.join(gnc_builder_dir,filename)
         print "builder loading from %s root %s"%(fname,root)
         buildobjs = [ root ]

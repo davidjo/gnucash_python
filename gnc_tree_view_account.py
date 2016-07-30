@@ -126,6 +126,8 @@ def new_with_root (root, show_root):
 
     newaccview.get_selected_accounts = types.MethodType(get_selected_accounts, newaccview, newaccview.__class__)
 
+    newaccview.get_selected_account = types.MethodType(get_selected_account, newaccview, newaccview.__class__)
+
     return newaccview
 
 
@@ -294,3 +296,35 @@ def get_selected_accounts (self):
     glib_ctypes.libglib.g_list_free(glst_ptr_base)
 
     return acc_lst
+
+
+def get_selected_account (self):
+
+    #pdb.set_trace()
+    #gnucash_log.dbglog("get_selected_accounts",self)
+    #gc.collect()
+
+    trvwptr = hash(self)
+    #gnucash_log.dbglog_err("tree view",self)
+    #gnucash_log.dbglog_err("tree view 0x%x"%trvwptr)
+    print >> sys.stderr, "tree view",self
+    print >> sys.stderr, "tree view 0x%x"%trvwptr
+
+    account_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_get_selected_account(trvwptr)
+
+    acctype = swighelpers.get_swig_type("_p_Account")
+    #gnucash_log.dbglog_err("account_ptr 0x%x"%account_ptr)
+    print >> sys.stderr, "account_ptr 0x%x"%account_ptr
+    accinst = swighelpers.int_to_swig(account_ptr,acctype);
+    print >> sys.stderr, "accinst ",accinst
+    #accinst = swighelpers.int_to_swig(account_ptr,"_p_Account")
+    #qof_ptr = ctypes.cast( account_ptr, ctypes.POINTER( qof_ctypes.QofInstanceOpaque ) )
+    #acc_guid = qof_ctypes.libgnc_qof.qof_instance_get_guid(qof_ptr)
+    #acc_guid_str = "".join([ "%02x"%x for x in acc_guid.contents.data ])
+    #acc_guid = gnucash.GUID.string_to_guid(acc_guid_str)
+    #account = gnucash.GUID.AccountLookup(acc_guid,curbook)
+    account = gnucash.Account(instance=accinst)
+    print >> sys.stderr, "account ",account
+
+    return account
+
