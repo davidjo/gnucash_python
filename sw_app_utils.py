@@ -61,6 +61,24 @@ GncNumeric._fields_ = [ ("num", ctypes.c_int64),
                         ("denom", ctypes.c_int64),
                       ]
 
+class GncPrintAmountInfoNoBitFld(ctypes.Structure):
+    pass
+GncPrintAmountInfoNoBitFld._fields_ = [ ("commodity", ctypes.c_void_p),
+                                        ("max_decimal_places", guint8),
+                                        ("min_decimal_places", guint8),
+                                        ("bitfld", guint8),
+                                      ]
+
+class GncPrintAmountInfoBitFlds(ctypes.Structure):
+    pass
+GncPrintAmountInfoBitFlds._fields_ = [ ("use_separators", ctypes.c_uint, 1), # /* Print thousands separators */
+                                       ("use_symbol", ctypes.c_uint, 1),     # /* Print currency symbol */
+                                       ("use_locale", ctypes.c_uint, 1),     # /* Use locale for some positioning */
+                                       ("monetary", ctypes.c_uint, 1),       # /* Is a monetary quantity */
+                                       ("force_fit", ctypes.c_uint, 1),      # /* Don't print more than max_dp places */
+                                       ("round", ctypes.c_uint, 1),          # /* Round at max_dp instead of truncating */
+                                     ]
+
 class GncPrintAmountInfo(ctypes.Structure):
     pass
 GncPrintAmountInfo._fields_ = [ ("commodity", ctypes.c_void_p),
@@ -130,21 +148,21 @@ libgnc_apputils.gnc_set_default_directory.restype = None
 
 # not available - static symbol
 #libgnc_apputils.gnc_default_print_info_helper.argtypes = [ ctypes.c_int ]
-#libgnc_apputils.gnc_default_print_info_helper.restype = GncPrintAmountInfo
+#libgnc_apputils.gnc_default_print_info_helper.restype = GncPrintAmountInfoNoBitFld
 
 libgnc_apputils.gnc_default_share_print_info.argtypes = []
-libgnc_apputils.gnc_default_share_print_info.restype = GncPrintAmountInfo
+libgnc_apputils.gnc_default_share_print_info.restype = GncPrintAmountInfoNoBitFld
 
 libgnc_apputils.gnc_share_print_info_places.argtypes = [ ctypes.c_int ]
-libgnc_apputils.gnc_share_print_info_places.restype = GncPrintAmountInfo
+libgnc_apputils.gnc_share_print_info_places.restype = GncPrintAmountInfoNoBitFld
 
 libgnc_apputils.gnc_default_print_info.argtypes = [ ctypes.c_bool ]
-libgnc_apputils.gnc_default_print_info.restype = GncPrintAmountInfo
+libgnc_apputils.gnc_default_print_info.restype = GncPrintAmountInfoNoBitFld
 
 libgnc_apputils.gnc_commodity_print_info.argtypes = [ ctypes.POINTER(GncCommodityOpaque), ctypes.c_bool ]
-libgnc_apputils.gnc_commodity_print_info.restype = GncPrintAmountInfo
+libgnc_apputils.gnc_commodity_print_info.restype = GncPrintAmountInfoNoBitFld
 
-libgnc_apputils.xaccPrintAmount.argtypes = [ GncNumeric, GncPrintAmountInfo ]
+libgnc_apputils.xaccPrintAmount.argtypes = [ GncNumeric, GncPrintAmountInfoNoBitFld ]
 libgnc_apputils.xaccPrintAmount.restype = ctypes.c_char_p
 
 
@@ -433,17 +451,27 @@ def locale_default_currency ():
 
     return currency
 
+
 def CommodityPrintInfo (commodity, use_symbol):
     gnccmd_ptr = ctypes.cast( commodity.instance.__long__(), ctypes.POINTER(GncCommodityOpaque) )
-    prtinfo = libgnc_apputils.gnc_commodity_print_info(gnccmd_ptr,use_symbol)
+    prtinfonobitfld = libgnc_apputils.gnc_commodity_print_info(gnccmd_ptr,use_symbol)
+
+    # so far this creates a new ctypes structure around the same memory block
+    prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
+    prtinfo = prtinfo_ptr.contents
+
     return prtinfo
 
 def SharePrintInfoPlaces (dec_places):
-    prtinfo = libgnc_apputils.gnc_share_print_info_places(dec_places)
+    prtinfonobitfld = libgnc_apputils.gnc_share_print_info_places(dec_places)
+    prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
+    prtinfo = prtinfo_ptr.contents
     return prtinfo
 
 def DefaultPrintInfo (use_symbol):
-    prtinfo = libgnc_apputils.gnc_default_print_info(use_symbol)
+    prtinfonobitfld = libgnc_apputils.gnc_default_print_info(use_symbol)
+    prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
+    prtinfo = prtinfo_ptr.contents
     return prtinfo
 
 def PrintAmount (amnt, gnc_print_info=None):
@@ -451,7 +479,9 @@ def PrintAmount (amnt, gnc_print_info=None):
     # should be a method of GncNumeric as first argument is a GncNumeric
     #pdb.set_trace()
     if gnc_print_info == None:
-        prtinfo = libgnc_apputils.gnc_default_print_info(False)
+        prtinfonobitfld = libgnc_apputils.gnc_default_print_info(False)
+        prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
+        prtinfo = prtinfo_ptr.contents
     else:
         prtinfo = gnc_print_info
 
@@ -466,18 +496,24 @@ def PrintAmount (amnt, gnc_print_info=None):
         #print >> sys.stderr, "gncnum_ptr %x"%amnt.instance.this.__long__()
         #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
         # so looks like we can pass by value - and return by value!!
-        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfo)
+        prtinfonobitfld_ptr = ctypes.cast( ctypes.addressof(prtinfo), ctypes.POINTER(GncPrintAmountInfoNoBitFld) )
+        prtinfonobitfld = prtinfonobitfld_ptr.contents
+        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfonobitfld)
     elif hasattr(amnt,"this"):
         gncnum_ptr = ctypes.cast( amnt.this.__long__(), ctypes.POINTER( GncNumeric ) )
         #print >> sys.stderr, "gncnum_ptr %x"%amnt.this.__long__()
         #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
         # so looks like we can pass by value - and return by value!!
-        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfo)
+        prtinfonobitfld_ptr = ctypes.cast( ctypes.addressof(prtinfo), ctypes.POINTER(GncPrintAmountInfoNoBitFld) )
+        prtinfonobitfld = prtinfonobitfld_ptr.contents
+        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfonobitfld)
     else:
         # for direct GncNumeric objects (which ar GObjects) the memory address
         # is given by the id value
         pdb.set_trace()
         gncnum_ptr = ctypes.cast( amnt.id, ctypes.POINTER( GncNumeric ) )
-        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr, prtinfo)
+        prtinfonobitfld_ptr = ctypes.cast( ctypes.addressof(prtinfo), ctypes.POINTER(GncPrintAmountInfoNoBitFld) )
+        prtinfonobitfld = prtinfonobitfld_ptr.contents
+        prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr, prtinfonobitfld)
 
     return prtstr
