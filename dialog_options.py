@@ -76,6 +76,9 @@ class GncOption(object):
     # to interact with an options value through the gtk GUI
 
     def __init__ (self, guile_option, changed=False, widget=None, odb=None):
+        #traceback.print_stack()
+        #print "GncOption",guile_option
+        #print "GncOption",guile_option.option_data
         self.guile_option = guile_option
         self.changed = changed
         self.widget = widget

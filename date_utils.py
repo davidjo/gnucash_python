@@ -197,6 +197,17 @@ def get_end_next_quarter ():
     return newtim.replace(second=59,minute=59,hour=23,day=monrng[1],month=nxtmon,year=nxtyr,tzinfo=None)
 
 
+# new addition for UK!!
+
+def get_start_last_uk_taxyear ():
+    newtim = datetime.datetime.now()
+    return newtim.replace(year=newtim.year-1,second=0,minute=0,hour=0,day=6,month=4,tzinfo=None)
+
+def get_end_last_uk_taxyear ():
+    newtim = datetime.datetime.now()
+    return newtim.replace(second=0,minute=0,hour=0,day=5,month=4,tzinfo=None)
+
+
 def get_today ():
     return datetime.datetime.now()
 
@@ -451,6 +462,15 @@ def reldate_initialize ():
         'one-year-ahead' : { \
             'string' : N_("One Year Ahead"),
             'desc' : N_("One Year Ahead."), },
+
+        # new addition for UK!!
+        'start-last-uk-taxyear' : { \
+            'string' : N_("Start of Last UK Tax Year"),
+            'desc' : N_("Start of Last UK Tax Year."), },
+
+        'end-last-uk-taxyear' : { \
+            'string' : N_("End of Last UK Tax Year"),
+            'desc' : N_("End of Last UK Tax Year."), },
     }
 
     # this also includes the function to compute the date
@@ -543,6 +563,13 @@ def reldate_initialize ():
         'one-year-ahead' : [ date_string_db['one-year-ahead']['string'], 
                                date_string_db['one-year-ahead']['desc'], 
                                get_one_year_ahead ],
+        # new addition for UK!!
+        'start-last-uk-taxyear' : [ date_string_db['start-last-uk-taxyear']['string'], 
+                                    date_string_db['start-last-uk-taxyear']['desc'], 
+                                    get_start_last_uk_taxyear ],
+        'end-last-uk-taxyear' : [ date_string_db['end-last-uk-taxyear']['string'], 
+                                    date_string_db['end-last-uk-taxyear']['desc'], 
+                                    get_end_last_uk_taxyear ],
         }
 
 reldate_initialize()

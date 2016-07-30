@@ -977,6 +977,7 @@ class EndDateOption(DateOption):
                                               'end-cal-year',
                                               'end-prev-year',
                                               'end-accounting-period',
+                                              'end-last-uk-taxyear',
                                              ))
 
 class FromDateOption(DateOption):
@@ -994,6 +995,7 @@ class FromDateOption(DateOption):
                                               'start-cal-year',
                                               'start-prev-year',
                                               'start-accounting-period',
+                                              'start-last-uk-taxyear',
                                              ))
 
 
