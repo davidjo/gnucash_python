@@ -4,7 +4,10 @@ import os
 
 import sys
 
-import gobject
+#import gobject
+
+import gi
+
 
 import pdb
 
@@ -173,10 +176,10 @@ class PyGObjectCAPI(object):
     def __init__(self):
         # for the moment this appears to be the same
         # even with gi
-        #pdb.set_trace()
+        pdb.set_trace()
         print "pygobject addr 1",gobject._PyGObject_API
         addr = pythonapi.PyCObject_AsVoidPtr(
-            py_object(gobject._PyGObject_API))
+            py_object(gi._gobject._PyGObject_API))
         print "pygobject addr %x"%addr
         self._api = _PyGObject_Functions.from_address(addr)
 

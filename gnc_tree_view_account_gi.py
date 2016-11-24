@@ -45,7 +45,8 @@ def string_to_new_guid (cls, str):
 gnucash.GUID.string_to_guid = classmethod(string_to_new_guid)
 
 
-from pygobjectcapi_gi import PyGObjectCAPI
+from pygobjectcapi import PyGObjectCAPI
+#from pygobjectcapi_gi import PyGObjectCAPI
 
 # call like this:
 # Cgobject = PyGObjectCAPI()

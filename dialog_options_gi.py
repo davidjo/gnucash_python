@@ -14,9 +14,15 @@ import numbers
 
 import time
 
+import traceback
+
+import pdb
+
 from operator import attrgetter
 
 from gi.repository import GObject
+
+pdb.set_trace()
 
 from gi.repository import Gtk
 from gi.repository import Gdk
@@ -24,10 +30,6 @@ from gi.repository import Gdk
 
 import ctypes
 
-
-import traceback
-
-import pdb
 
 import gc
 

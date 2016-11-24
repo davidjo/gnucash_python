@@ -42,6 +42,9 @@ try:
         addrep = os.path.join(sys.path[0],"girepository")
         rep.prepend_search_path(addrep)
         print "junk"
+        # new feature - we apparently have no sys.argv
+        # - fake up a null entry
+        sys.argv = [ 'gnucash' ]
 
 
     #print "loading CAPI"
@@ -55,6 +58,13 @@ try:
     #print "system path"
     #print sys.path
 
+    # so this is weird - if we leave the Gdk import till needed
+    # we get import error on Gdk.Color
+    # import here and it works
+    from gi.repository import Gtk
+    from gi.repository import Gdk
+
+    #pdb.set_trace()
 
     # need to load early as we extend some base gnucash classes
     #import gnucash_ext
@@ -62,19 +72,37 @@ try:
 
     import gnc_plugin_manager
 
+    pdb.set_trace()
 
-    #import gnc_plugin_python_example
+    import gnc_plugin
 
-    #myplugin_example = gnc_plugin_python_example.GncPluginPythonExample()
+    myplugin = gnc_plugin.GncPluginPythonTest()
 
-    #gnc_plugin_manager.plugin_manager.add_plugin(myplugin_example)
+    # REMOVE COMMENT
+    #gnc_plugin_manager.plugin_manager.add_plugin(myplugin)
 
 
-    import gnc_plugin_python_tools
+    import gnc_plugin_python_example
 
-    python_tools = gnc_plugin_python_tools.GncPluginPythonTools()
+    myplugin_example = gnc_plugin_python_example.GncPluginPythonExample()
 
-    gnc_plugin_manager.plugin_manager.add_plugin(python_tools)
+    gnc_plugin_manager.plugin_manager.add_plugin(myplugin_example)
+
+    #pdb.set_trace()
+
+    plugins = gnc_plugin_manager.plugin_manager.get_plugins()
+
+    #pdb.set_trace()
+
+    for plugin in plugins:
+        print "plugin loaded",plugin.get_name()
+
+
+    #import gnc_plugin_python_tools
+
+    #python_tools = gnc_plugin_python_tools.GncPluginPythonTools()
+
+    #gnc_plugin_manager.plugin_manager.add_plugin(python_tools)
 
 
     # hmm - we need to instantiate the python report page module here
@@ -89,11 +117,11 @@ try:
     #import python_only_plugin 
     #myplugin = python_only_plugin.MyPlugin()
 
-    import gnc_plugin_python_reports
+    #import gnc_plugin_python_reports
 
-    python_reports = gnc_plugin_python_reports.GncPluginPythonReports()
+    #python_reports = gnc_plugin_python_reports.GncPluginPythonReports()
 
-    gnc_plugin_manager.plugin_manager.add_plugin(python_reports)
+    #gnc_plugin_manager.plugin_manager.add_plugin(python_reports)
 
 
     #pdb.set_trace()

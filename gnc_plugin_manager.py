@@ -16,6 +16,30 @@ from ctypes import CDLL
 from ctypes.util import find_library
 
 
+from pygobjectcapi import PyGObjectCAPI
+#from pygobjectcapi_gi import PyGObjectCAPI
+
+# call like this:
+# Cgobject = PyGObjectCAPI()
+# Cgobject.pygobject_new(memory_address)
+
+# to get memory address from a gobject:
+#  address = hash(obj)
+
+# this doesnt seem to be useful - it seems primarily to be used to
+# define argument or return types in order to introspect higher level
+# libraries - not for GLib functions itself
+# eg GList is defined as a record but all glist functions are set as
+# introspectable=0 - which means they are ignored/not implemented
+#from gi.repository import GLib
+
+# so for the moment use the glib_ctypes wrap
+import glib_ctypes
+
+
+import pdb
+
+
 # use this to gain access to a quit function
 
 libgnccorenm = find_library("libgnc-core-utils")
@@ -69,6 +93,7 @@ class WrapPluginManager(object):
     # be able to call add and remove
 
     def __init__ (self):
+        self.Cgobject = PyGObjectCAPI()
         self.plugin_manager_ptr = self.gnc_plugin_manager_get()
 
 
@@ -90,7 +115,10 @@ class WrapPluginManager(object):
 
         # note pluginobj must be subclass GncPlugin
         pluginobj_ptr = hash(pluginobj)
+        print >> sys.stderr, "plugin_name %s"%pluginobj.get_name()
+        #if pluginobj.get_name() == None: pdb.set_trace()
         print >> sys.stderr, "plugin_ptr %x"%pluginobj_ptr
+        print >> sys.stderr, "plugin_manager_ptr %x"%ctypes.addressof(self.plugin_manager_ptr.contents)
         pluginobj_ptr = ctypes.cast(pluginobj_ptr,GncPluginOpaquePtr)
         libgnc_gnomeutils.gnc_plugin_manager_add_plugin(self.plugin_manager_ptr, pluginobj_ptr)
 
@@ -99,6 +127,7 @@ class WrapPluginManager(object):
         # note pluginobj must be subclass GncPlugin
         pluginobj_ptr = hash(pluginobj)
         print >> sys.stderr, "plugin_ptr %x"%pluginobj_ptr
+        print >> sys.stderr, "plugin_manager_ptr %x"%ctypes.addressof(self.plugin_manager_ptr.contents)
         pluginobj_ptr = ctypes.cast(pluginobj_ptr,GncPluginOpaquePtr)
         libgnc_gnomeutils.gnc_plugin_manager_remove_plugin(self.plugin_manager_ptr, pluginobj_ptr)
 
@@ -112,14 +141,37 @@ class WrapPluginManager(object):
 
         # we need to do something with this
         # we need to convert back to a python instance
+        #pluginobj = self.Cgobject.pygobject_new(pluginobj_ptr)
 
         return pluginobj
 
     def get_plugins (self):
 
-        pluginobj = libgnc_gnomeutils.gnc_plugin_manager_get_plugins(self.plugin_manager_ptr)
+        # this returns a GList
+        pluginlist_ptr = libgnc_gnomeutils.gnc_plugin_manager_get_plugins(self.plugin_manager_ptr)
 
-        # we need to do something with this
+        #pdb.set_trace()
+
+        #gnucash_log.dbglog(pluginlist_ptr)
+        glst_ptr = ctypes.cast( pluginlist_ptr, ctypes.POINTER( glib_ctypes.GListRaw ) )
+        #gnucash_log.dbglog(glst_ptr)
+
+        glst_len = glib_ctypes.libglib.g_list_length(glst_ptr)
+        #gnucash_log.dbglog(glst_ptr)
+        #gnucash_log.dbglog(glst_len)
+
+        plg_lst = []
+        glst_ptr_base = glst_ptr
+        for irng in xrange(glst_len):
+            #gelm1 = glib_ctypes.libglib.g_list_nth_data(glst_ptr_base,irng)
+            gelm = glst_ptr.contents.data
+            glst_ptr = glib_ctypes.g_list_next(glst_ptr)
+            plugin_ptr = gelm
+            #gnucash_log.dbglog_err("plugin_ptr 0x%x"%plugin_ptr)
+            pluginobj = self.Cgobject.pygobject_new(plugin_ptr)
+            plg_lst.append(pluginobj)
+
+        return plg_lst
 
 
 plugin_manager = WrapPluginManager()

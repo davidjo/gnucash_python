@@ -11,14 +11,16 @@ import pdb
 
 import traceback
 
+pdb.set_trace()
 
-from gi.repository import Gtk
 
 from gi.repository import GObject
 
+from gi.repository import Gtk
 
 
-#pdb.set_trace()
+
+pdb.set_trace()
 
 
 import ctypes
@@ -54,7 +56,8 @@ from gnc_html import HtmlView
 from gnucash_log import ENTER
 
 
-from pygobjectcapi_gi import PyGObjectCAPI
+from pygobjectcapi import PyGObjectCAPI
+#from pygobjectcapi_gi import PyGObjectCAPI
 
 
 Cgobject = PyGObjectCAPI()
@@ -122,37 +125,6 @@ if True:
     # is wrong this will fail with a Type Error: must be subclass of GObject
     PluginPage = GncPluginPage.PluginPage
 
-    #import gnc_plugin_page
-
-    gncpluginpagetype = GObject.type_from_name('GncPluginPage')
-
-    gncpluginpagereporttype = GObject.type_from_name('GncPluginPageReport')
-
-
-    # strange  - it is here where the class init function is called
-
-    # this lists the properties
-    #print >> sys.stderr, GObject.list_properties(gncpluginpagetype)
-
-    # this lists the signal names
-    #print >> sys.stderr, GObject.signal_list_names(gncpluginpagetype)
-
-
-
-
-    # OK attempt to create a Python class for gnc_plugin_page
-
-    #pdb.set_trace()
-
-    tmppluginpage = GObject.new(GObject.type_from_name('GncPluginPage'))
-
-    #print "GObject types"
-
-    #print GObject.type_children(GObject.type_from_name('GncPluginPage'))
-    #print GObject.type_children(GObject.type_from_name('QofBook'))
-    #print GObject.type_parent(GObject.type_from_name('GncPluginPage'))
-    #for gtyp in GObject.type_children(GObject.type_from_name('GObject')):
-    #    print gtyp
 
 else:
 
