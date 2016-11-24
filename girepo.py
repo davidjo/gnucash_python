@@ -283,7 +283,10 @@ class GncPluginMeta(gi.types.GObjectMeta):
         #pdb.set_trace()
         if not '__girmetaclass__' in attrs:
             #pdb.set_trace()
-            if isinstance(bases[0], GncPluginMeta):
+            # NOTA BENE - the correct order for multiple classes is base class last
+            if len(bases) > 1:
+                raise AttributeError("__metaclass__ multiple bases not implemented")
+            if isinstance(bases[-1], GncPluginMeta):
                 raise AttributeError("__metaclass__ class attribute MUST be defined")
             raise AttributeError("__girmetaclass__ class attribute MUST be defined")
         # it appears we cannot use other functions defined in the Meta class
@@ -310,8 +313,8 @@ class GncPluginMeta(gi.types.GObjectMeta):
         # do we need to use the parent meta class new here?? or always type??
         # or should we be using init??
         #return type.__new__(mcls, classname, bases, attrs)
-        #return super(GncPluginMeta, mcls).__new__(mcls,classname, bases, attrs)
-        return gi.types.GObjectMeta.__new__(mcls, classname, bases, attrs)
+        return super(GncPluginMeta, mcls).__new__(mcls,classname, bases, attrs)
+        #return gi.types.GObjectMeta.__new__(mcls, classname, bases, attrs)
 
     def __init__ (cls, name, bases, attrs):
         print("GncPluginMeta init called:",str(cls),name,str(bases),str(attrs))
@@ -322,11 +325,14 @@ class GncPluginMeta(gi.types.GObjectMeta):
         print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
         super(GncPluginMeta, cls).__init__(name, bases, attrs)
         print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
-        # we have deleted plugin_name from attrs above!!
-        cls.plugin_name.set_klass_pointer(cls)
-        plugin_name = cls.plugin_name.field_value
-        print("python gtype plugin_name",plugin_name)
-        cls.plugin_name.set_value(plugin_name)
+        #pdb.set_trace()
+        # we delay this till subclass for subclass of subclass
+        ## we have deleted plugin_name from attrs above!!
+        #cls.plugin_name.set_klass_pointer(cls)
+        #plugin_name = cls.plugin_name.field_value
+        #print("python gtype plugin_name",plugin_name)
+        #cls.plugin_name.set_value(plugin_name)
+
 
 # and GncPluginSubClassMeta is used in a subclass of GncPluginPython to actually set the
 # variables - we need __new__ here as we need to substitute the initial definition
@@ -335,10 +341,12 @@ class GncPluginSubClassMeta(GncPluginMeta):
     def __new__ (mcls, classname, bases, attrs):
         print("GncPluginSubClassMeta new called:",str(mcls),classname,str(bases),str(attrs))
         #pdb.set_trace()
+        if len(bases) > 1:
+            raise AttributeError("__metaclass__ multiple bases not implemented")
         if not 'plugin_name' in attrs:
             raise AttributeError("plugin_name not defined for subclass - must be defined")
-        # this assumes no multiple bases - base[0] seems to be immediate superclass
-        bases[0].plugin_name.set_field_value(attrs['plugin_name'])
+        # this assumes no multiple bases - base[-1] seems to be immediate superclass
+        bases[-1].plugin_name.set_field_value(attrs['plugin_name'])
         # we need to delete this from attrs otherwise the new plain string definition
         # overrides the superclass (GncPluginPython) definition
         del attrs['plugin_name']
@@ -346,7 +354,8 @@ class GncPluginSubClassMeta(GncPluginMeta):
         # - but this has already been done - whats the right way??
         # just use type call??
         #return GncPluginMeta.__new__(mcls, classname, bases, attrs)
-        return type.__new__(mcls, classname, bases, attrs)
+        #return type.__new__(mcls, classname, bases, attrs)
+        return gi.types.GObjectMeta.__new__(mcls, classname, bases, attrs)
 
     def __init__ (cls, name, bases, attrs):
         print("GncPluginSubClassMeta init called:",str(cls),name,str(bases),str(attrs))

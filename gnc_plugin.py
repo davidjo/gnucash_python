@@ -17,7 +17,8 @@ try:
     from gi.repository import GObject
     import gnc_plugin_gi
     from gnc_plugin_gi import BaseGncPlugin,BaseGncPluginClass
-    from gnc_plugin_gi import GncPluginPythonMixin
+    from gnc_plugin_gi import GncPluginPython
+    #from gnc_plugin_gi import GncPluginPythonMixin
 except Exception, errexc:
     traceback.print_exc()
     print >> sys.stderr, "Failed to import!!"

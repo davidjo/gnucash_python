@@ -57,7 +57,7 @@ except Exception, errexc:
 
 if True:
 
-    pdb.set_trace()
+    #pdb.set_trace()
 
     # whats the difference between these two items
     # GncPlugin.Plugin and GncPlugin.PluginClass??
@@ -87,16 +87,19 @@ if True:
 python_plugins = {}
 
 
-# lets not use subclasses of subclasses yet
+# lets not use subclasses of subclasses yet - NO
+# - switching back to subclass of subclass - using multiple inheritance with
+# metaclass seems fraught - unless manually merge the various base class attributes
+# in __new__ other base class attributes seem to be ignored
 # - still dont quite understand why a python subclass of a python subclass
 # using __metaclass__ still calls parent metaclass functions if the sub subclass
 # does not define __metaclass__
 
-class GncPluginPythonNoUse(BaseGncPlugin):
+class GncPluginPython(BaseGncPlugin):
 
-    #__metaclass__ = girepo.GncPluginMeta
+    __metaclass__ = girepo.GncPluginMeta
 
-    #__girmetaclass__ = GncPlugin.PluginClass
+    __girmetaclass__ = GncPlugin.PluginClass
 
     # now create a python subclass of the basic GObject
 
@@ -107,6 +110,10 @@ class GncPluginPythonNoUse(BaseGncPlugin):
     # (we need to add the __girmetaclass__ class variable to define the gir class definition to use)
 
     plugin_name = None
+
+    # we use the girepo tricks to 
+    # create accessor functions for all structure items)
+    # (SWIG could access these as wraps both structures (instance and class))
 
     # - this class provides a pure python re-implementation of gnc_plugin
     # - it needs to be a sub-class of GncPlugin in order to use the plugin manager
@@ -123,7 +130,6 @@ class GncPluginPythonNoUse(BaseGncPlugin):
     # calls the class callback - so dont have the same issue as for GncPlugin
     # - just need to assign the callbacks
 
-
     # a plugin is first loaded into the manager
     # (most plugins loaded in top-level.c)
     # the main window (gnc-main-window) gets the list of plugins from the manager
@@ -133,31 +139,9 @@ class GncPluginPythonNoUse(BaseGncPlugin):
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncPluginPython'
 
-    def __init__ (self):
-
-        #pdb.set_trace()
-
-        # do we need to init the parent class - GncPlugin
-        # do this or use gobject.GObject.__init__(self)
-        #super(GncPluginPython,self).__init__()
-        #gncplugin.Plugin.__init__(self)
-        #GncPlugin.Plugin.__init__(self)
-        BaseGncPlugin.__init__(self)
-
-
-
-# make the GncPluginPython class a mixin class for the moment
-# so our python subclasses will be direct subclass of GncPlugin.Plugin
-
-class GncPluginPythonMixin(object):
-
     # for equvalency with C code make these class variables
     # as far as I can see variables in python (class or instance)
     # are independent of those variables in the underlying GType GObject
-    # we use the girepo tricks to 
-    # create accessor functions for all structure items)
-    # (SWIG could access these as wraps both structures (instance and class))
-
 
     actions_name = None
 
@@ -174,7 +158,14 @@ class GncPluginPythonMixin(object):
 
     def __init__ (self):
 
-        pdb.set_trace()
+        #pdb.set_trace()
+
+        # do we need to init the parent class - GncPlugin
+        # do this or use gobject.GObject.__init__(self)
+        super(GncPluginPython,self).__init__()
+        #gncplugin.Plugin.__init__(self)
+        #GncPlugin.Plugin.__init__(self)
+        #BaseGncPlugin.__init__(self)
 
         # we cannot easily get access to the instance private data structure
         # without including the full private data struct
@@ -276,7 +267,9 @@ class GncPluginPythonMixin(object):
 
             if self.plugin_important_actions:
 
-                self.set_important_actions(self.plugin_important_actions)
+                action_group = gnc_main_window.get_action_group(window, self.actions_name)
+
+                set_important_actions(action_group, self.plugin_important_actions)
 
 
 
@@ -310,19 +303,20 @@ class GncPluginPythonMixin(object):
                 print "remove called and no saved window!!"
 
 
-    def set_important_actions (self, action_group, important_actions):
+def set_important_actions (action_group, important_actions):
 
-        # although this function is defined in the gnc-plugin.c file
-        # it actually has nothing to do with the GncPlugin class
-        # (the C first argument is the action_group)
+    # although this function is defined in the gnc-plugin.c file
+    # it actually has nothing to do with the GncPlugin class
+    # (the C first argument is the action_group)
+    # make a module function
 
-        print >> sys.stderr, "called super set_important_actions"
-        pdb.set_trace()
-        print >> sys.stderr, "called super set_important_actions"
+    print >> sys.stderr, "called set_important_actions"
+    pdb.set_trace()
+    print >> sys.stderr, "called set_important_actions"
 
-        for imp_action in important_actions:
-             action = action_group.get_action(imp_action)
-             action.is_important = True
+    for imp_action in important_actions:
+         action = action_group.get_action(imp_action)
+         action.is_important = True
 
 
 if False:
@@ -352,12 +346,12 @@ if True:
     # the plugin_name - only the lowest subclass definition could be used
     # only one level of subclassing makes sense
 
-    class GncPluginPythonTest(BaseGncPlugin):
+    class GncPluginPythonTest(GncPluginPython):
 
-        __metaclass__ = girepo.GncPluginMeta
+        __metaclass__ = girepo.GncPluginSubClassMeta
 
         #__girmetaclass__ = GncPlugin.PluginClass
-        __girmetaclass__ = BaseGncPluginClass
+        #__girmetaclass__ = BaseGncPluginClass
 
         plugin_name = "GncPluginPythonTest"
 

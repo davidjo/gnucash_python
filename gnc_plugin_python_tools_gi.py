@@ -93,6 +93,8 @@ class GncPluginPythonTools(BaseGncPlugin):
         super(GncPluginPythonTools,self).__init__()
         #GncPluginPython.__init__(self)
 
+        #pdb.set_trace()
+
         self.class_init()
 
         # gobjects have constructor function

@@ -35,7 +35,8 @@ import gi
 import gnc_plugin
 
 from gnc_plugin import BaseGncPlugin,BaseGncPluginClass
-from gnc_plugin import GncPluginPythonMixin
+#from gnc_plugin import GncPluginPythonMixin
+from gnc_plugin import GncPluginPython
 
 
 
@@ -55,11 +56,11 @@ def close_handler (arg):
     pass
 
 
-class GncPluginPythonExample(BaseGncPlugin):
+class GncPluginPythonExample(GncPluginPython):
 
-    __metaclass__ = girepo.GncPluginMeta
+    __metaclass__ = girepo.GncPluginSubClassMeta
 
-    __girmetaclass__ = BaseGncPluginClass
+    #__girmetaclass__ = BaseGncPluginClass
 
     plugin_name = "GncPluginPythonExample"
 
@@ -87,6 +88,8 @@ class GncPluginPythonExample(BaseGncPlugin):
 
         print "python gtype obj klass %s address %x"%(str(self.__class__),hash(gi.GObject.type_class_peek(self)))
 
+        #pdb.set_trace()
+
 
         # following the C code we set the parent GncPlugin class variables
         # in the subclass
@@ -98,7 +101,7 @@ class GncPluginPythonExample(BaseGncPlugin):
 
 
         GncPluginPythonExample.plugin_actions = [ \
-               ("exampleAction", None, N_("example description..."), None,
+               ("exampleAction", None, N_("Example Description..."), None,
                 N_("example tooltip"),
                 self.cmd_test,
                ),
@@ -185,28 +188,28 @@ class GncPluginPythonExample(BaseGncPlugin):
         #print >> sys.stderr, "after set_callbacks"
 
 
-    # note that in the C the primary version of these functions are defined in
-    # gnc-plugin.c - and at the end of their code they call the functions saved
-    # in the GncPlugin class private data - if they are defined
-    # in python this gets sort of inverted - we define functions here to call
-    # the parent GncPluginPython class version of these functions - before doing
-    # extra work - and the GncPluginPython version of these functions does not
-    # call functions of the subclass (how could it)
+    ## note that in the C the primary version of these functions are defined in
+    ## gnc-plugin.c - and at the end of their code they call the functions saved
+    ## in the GncPlugin class private data - if they are defined
+    ## in python this gets sort of inverted - we define functions here to call
+    ## the parent GncPluginPython class version of these functions - before doing
+    ## extra work - and the GncPluginPython version of these functions does not
+    ## call functions of the subclass (how could it)
 
-    def do_add_to_window (self, window, window_type):
+    #def do_add_to_window (self, window, window_type):
 
-        print >> sys.stderr, "called add_to_window"
-        pdb.set_trace()
+    #    print >> sys.stderr, "called add_to_window"
+    #    pdb.set_trace()
 
-        #super(GncPluginPythonExample,self).add_to_window(window, window_type)
+    #    #super(GncPluginPythonExample,self).add_to_window(window, window_type)
 
-    def do_remove_from_window (self, window, window_type):
+    #def do_remove_from_window (self, window, window_type):
 
-        print >> sys.stderr, "called remove_from_window"
-        pdb.set_trace()
-        print >> sys.stderr, "called remove_from_window"
+    #    print >> sys.stderr, "called remove_from_window"
+    #    pdb.set_trace()
+    #    print >> sys.stderr, "called remove_from_window"
 
-        #super(GncPluginPythonExample,self).remove_from_window(window, window_type)
+    #    #super(GncPluginPythonExample,self).remove_from_window(window, window_type)
 
 
 
