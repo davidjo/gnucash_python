@@ -83,9 +83,9 @@ try:
     #gnc_plugin_manager.plugin_manager.add_plugin(myplugin)
 
 
-    import gnc_plugin_python_example_gi
+    import gnc_plugin_python_example
 
-    myplugin_example = gnc_plugin_python_example_gi.GncPluginPythonExample()
+    myplugin_example = gnc_plugin_python_example.GncPluginPythonExample()
 
     gnc_plugin_manager.plugin_manager.add_plugin(myplugin_example)
 

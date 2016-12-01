@@ -4,6 +4,13 @@ import os
 
 import sys
 
+# note that the gobject module is a python wrap of basic GObjects and types
+# it is not involved (AFAICT) in either the codegen wrap or introspection wrap of
+# GLib Gtk etc
+# therefore is safe to include with either
+# so far it appears that introspection still uses pygobject_new to create
+# new python wraps of GObject instances (but not if structs or boxed types)
+
 import gobject
 
 import pdb
