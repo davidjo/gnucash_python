@@ -35,16 +35,16 @@ class GncGeneralSelect(Gtk.HBox):
 
     cmtstr = """
     __gproperties__ = {
-                       'mnemonic' : (GObject.TYPE_STRING,                     # type
+                       'mnemonic' : (str,                                     # type
                                       N_("Active currency's mnemonic"),       # nick name
                                       N_("Active currency's mnemonic"),       # description
                                       "USD",                                  # default value
-                                      GObject.PARAM_READWRITE),               # flags
+                                      GObject.ParamFlags.READWRITE),          # flags
                       }
     """
 
     __gsignals__ = {
-                   'changed' : (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (int,))
+                   'changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,))
                    }
 
 

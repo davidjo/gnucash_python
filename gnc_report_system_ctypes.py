@@ -10,7 +10,7 @@ import ctypes
 
 from ctypes.util import find_library
 
-import gobject
+from gi.repository import GObject
 
 import pdb
 

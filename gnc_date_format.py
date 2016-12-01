@@ -1,9 +1,11 @@
 
 # special date widget
 
-import gobject
+from gi.repository import GObject
 
-import gtk
+from gi.repository import GLib
+
+from gi.repository import Gtk
 
 from datetime import datetime
 
@@ -61,7 +63,7 @@ class DateFormat(object):
 
 
 
-class GncDateFormat(gtk.HBox):
+class GncDateFormat(Gtk.HBox):
 
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncDateFormat'
@@ -70,19 +72,19 @@ class GncDateFormat(gtk.HBox):
 
     cmnt = """
     __gproperties__ = {
-                       'report-id' : (gobject.TYPE_INT,                       # type
+                       'report-id' : (int,                                    # type
                                       N_('The numeric ID of the report.'),    # nick name
                                       N_('The numeric ID of the report.'),    # description
                                       -1,                                     # min value
-                                      gobject.G_MAXINT,                       # max value
+                                      GLib.MAXINT32,                          # max value
                                       -1,                                     # default value
-                                      gobject.PARAM_READWRITE),               # flags
-                                      #gobject.PARAM_CONSTRUCT_ONLY | gobject.PARAM_READWRITE),      # flags
+                                      GObject.ParamFlags.READWRITE),         # flags
+                                      #GObject.ParamFlags.CONSTRUCT_ONLY | GObject.ParamFlags.READWRITE),      # flags
                       }
     """
 
     __gsignals__ = {
-                   'format_changed' : (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (int,))
+                   'format_changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,))
                    }
 
 

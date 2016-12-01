@@ -4,9 +4,9 @@ import sys
 
 import os
 
-import gobject
+from gi.repository import GObject
 
-import gtk
+from gi.repository import Gtk
 
 import re
 
@@ -246,8 +246,8 @@ class EditAccountWindow(object):
 
     def response_cb (self, actionobj, response=None):
         print >> sys.stderr, "response_cb",actionobj,response
-        if response == gtk.RESPONSE_OK or \
-           response == gtk.RESPONSE_CLOSE:
+        if response == Gtk.RESPONSE_OK or \
+           response == Gtk.RESPONSE_CLOSE:
             #gnc_save_window_size(GNC_PREFS_GROUP, self.dialog)
             pass
         #gnc_close_gui_component_by_data (DIALOG_FINCALC_CM_CLASS, fcd)
@@ -318,7 +318,7 @@ class EditAccountWindow(object):
 
     def color_default_cb (self, actionobj, userdata=None):
         print >> sys.stderr, "color_default_cb",actionobj,userdata
-        color =  gtk.gdk.color_parse("#ededececebeb")
+        color =  Gtk.Gdk.color_parse("#ededececebeb")
         self.color_entry_button.set_color(color)
 
     def commodity_changed_cb (self, actionobj, selected, userdata=None):
@@ -402,7 +402,7 @@ class EditAccountWindow(object):
         self.type_view.set_model(model)
         # c unrefs model - g_object_unref(model) - do we need to do this??
 
-        renderer = gtk.CellRendererText()
+        renderer = Gtk.CellRendererText()
 
         self.type_view.insert_column_with_attributes(-1,"",renderer,text=gnc_tree_model_account_types.GNC_TREE_MODEL_ACCOUNT_TYPES_COL_NAME)
 
@@ -454,7 +454,7 @@ class EditAccountWindow(object):
         # the C code does not check for Not Set - how does it work??
         if self.account.GetColor() != None and self.account.GetColor() != 'Not Set':
             print >> sys.stderr, "color is",self.account.GetColor()
-            self.color_entry_button.set_color(gtk.gdk.color_parse(self.account.GetColor()))
+            self.color_entry_button.set_color(Gtk.Gdk.color_parse(self.account.GetColor()))
         self.commodity_edit.set_selected(self.account.GetCommodity())
         self.commodity_from_type(False)
         # weird SCU stuff here
@@ -477,21 +477,30 @@ class DialogEditAccount(object):
 
     def __init__ (self):
 
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_position(gtk.WIN_POS_CENTER)
+        #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        #self.window.set_position(gtk.WIN_POS_CENTER)
+        self.window = Gtk.Window()
+        #self.window.set_position(Gtk.WIN_POS_CENTER)
         self.window.set_default_size(300,300)
         self.window.set_border_width(0)
         self.window.connect('destroy-event', self.destroy_cb)
         self.window.connect('delete-event', self.delete_cb)
-        hbox = gtk.HBox(homogeneous=False, spacing=5)
-        label = gtk.Label(str=N_("Enter Account Name:"))
-        hbox.pack_start(label, expand=False, fill=False, padding=0)
-        entry = gtk.Entry()
+        hbox = Gtk.HBox(homogeneous=False, spacing=5)
+        # using str= parameter does not work
+        #label = Gtk.Label(str=N_("Enter Account Name:"))
+        # which one to use??
+        label = Gtk.Label()
+        label.set_text(N_("Enter Account Name:"))
+        #label.set_label(N_("Enter Account Name:"))
+        # no keyword args for introspection??
+        #hbox.pack_start(label, expand=False, fill=False, padding=0)
+        hbox.pack_start(label, False, False, 0)
+        entry = Gtk.Entry()
         entry.set_max_length(50)
         entry.select_region(0,len(entry.get_text()))
         entry.connect_object("activate", self.edit_account_cb, entry)
-        hbox.pack_start(entry, expand=False, fill=False, padding=0)
-        button = gtk.Button(label="My Button")
+        hbox.pack_start(entry, False, False, 0)
+        button = Gtk.Button(label="My Button")
         self.window.add(hbox)
         self.window.show_all()
 

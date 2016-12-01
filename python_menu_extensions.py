@@ -9,9 +9,9 @@
 
 import sys
 
-import gtk
+from gi.repository import GObject
 
-import gobject
+from gi.repository import Gtk
 
 
 import pdb
@@ -19,7 +19,6 @@ import pdb
 
 import gnucash_log
 from gnucash_log import ENTER
-
 
 # these are helper classes for menu creation
 # note that GncActionEntry emulates the GtkActionEntry structure by the variable
@@ -47,8 +46,9 @@ class GncActionEntry(object):
         return (self.name,self.stock_id,self.label,self.accelerator,self.tooltip,self.callback)
 
 
+class PythonMenuAdditions(GObject.GObject):
 
-class PythonMenuAdditions(gobject.GObject):
+    __gtype_name__ = "PythonMenuAdditions"
 
     def __init__ (self, group_name, menu_list):
 
@@ -165,8 +165,7 @@ class PythonMenuAdditions(gobject.GObject):
         info.accel_assigned = True
 
 
-
-class PythonPerWindowMenuAdditions(gobject.GObject):
+class PythonPerWindowMenuAdditions(GObject.GObject):
 
     def __init__ (self, window, menu_additions):
 
@@ -214,7 +213,7 @@ class PythonPerWindowMenuAdditions(gobject.GObject):
         #pdb.set_trace()
 
         ui_manager = self.window.get_uimanager()
-        group = gtk.ActionGroup(self.menu_additions.group_name)
+        group = Gtk.ActionGroup(self.menu_additions.group_name)
 
         window.set_translation_domain(group, "gnucash");
 

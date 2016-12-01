@@ -4,6 +4,8 @@
 
 import gobject
 
+import gnucash_log
+
 from report_options import OptionsDB
 from report_options import StringOption,MultiChoiceOption
 
@@ -12,8 +14,11 @@ import dialog_options
 from gnc_html_document import HtmlDoc
 from gnc_html_document import HtmlDocument
 
+from gnc_report_utilities import report_finished
+
 from stylesheets import Stylesheet
 import stylesheets
+
 
 import xml.etree.ElementTree as ET
 
@@ -43,6 +48,7 @@ def N_(msg):
 
 
 class ParamsData(object):
+
     def __init__ (self):
         self.win = None
         self.db = None
@@ -50,18 +56,18 @@ class ParamsData(object):
         self.cur_report = None
 
     def apply_cb (self):
-        print "paramsdata apply_cb called"
+        gnucash_log.dbglog("paramsdata apply_cb called")
         self.db.commit()
         self.cur_report.set_dirty(True)
     def help_cb (self):
-        print "paramsdata help_cb called"
+        gnucash_log.dbglog("paramsdata help_cb called")
         parent = self.win.dialog
-        dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                Gtk.MessageType.INFO,gtk.ButtonsType.OK,N_("Set the report options you want using this dialog."))
+        dialog = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,
+                gtk.MESSAGE_INFO,gtk.BUTTONS_OK,N_("Set the report options you want using this dialog."))
         dialog.connect("response", self.dialog_destroy)
         dialog.show()
     def close_cb (self):
-        print "paramsdata close_cb called"
+        gnucash_log.dbglog("paramsdata close_cb called")
         self.cur_report.report_editor_widget = None
         self.win.dialog_destroy()
         self.db.destroy()
@@ -70,6 +76,7 @@ class ParamsData(object):
 
 
 class ReportTemplate(object):
+
     def __init__ (self):
         # these are the scheme template data items
 
@@ -115,7 +122,14 @@ class ReportTemplate(object):
 
     def init_gui (self):
         # this is a function to init GUI stuff if needed
+        # not in scheme
         pass
+
+    def cleanup_gui (self):
+        # this is a function to cleanup GUI stuff if report exits
+        # not in scheme
+        # this ensures GUI made sensitive again
+        report_finished()
 
     def get_template_name (self):
         return self.name
@@ -143,7 +157,7 @@ class ReportTemplate(object):
         return options
 
     def options_changed_cb (self):
-        print "reporttemplate options_changed_cb"
+        gnucash_log.dbglog("reporttemplate options_changed_cb")
 
 
 class Report(object):
@@ -255,7 +269,7 @@ class Report(object):
 
     def edit_options (self):
         if self.report_editor_widget != None:
-           print type(self.report_editor_widget)
+           gnucash_log.dbglog(type(self.report_editor_widget))
            self.report_editor_widget.present()
         else:
            if self.options != None:
@@ -264,8 +278,8 @@ class Report(object):
            else:
                # what to do about a parent??
                #parent = self.win.dialog
-               dialog = gtk.MessageDialog(parent,gtk.DialogFlags.DESTROY_WITH_PARENT,
-                       gtk.MessageType.WARNING,gtk.ButtonsType.OK,N_("This report has no options."))
+               dialog = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,
+                       gtk.MESSAGE_WARNING,gtk.BUTTONS_OK,N_("This report has no options."))
                dialog.connect("response", self.dialog_destroy)
                dialog.show()
 
@@ -328,7 +342,7 @@ class Report(object):
 
     def run (self):
         # this is based on gnc:report-run in report/report-system/report.scm
-        print "run_report"
+        gnucash_log.dbglog("run_report")
         #gc.collect()
         #self.set_busy_cursor()
         try:
@@ -356,7 +370,7 @@ class Report(object):
         return stylesheet
 
     def render_html (self, headers=None):
-        print "render_html"
+        gnucash_log.dbglog("render_html")
         # this is based on gnc:report-render-html in report/report-system/report.scm
         #pdb.set_trace()
         # until figure out how self.dirty is set
@@ -423,30 +437,100 @@ def load_python_reports ():
     # cancel the above I now think its a class again
     # not clear what the advantage is in python - we just loose the local variable
     # space with an instance compared to the class
-    python_reports_by_name = {}
-    python_reports_by_guid = {}
 
-    try:
-        from reports.hello_world import HelloWorld
-        python_reports_by_name['HelloWorld'] = HelloWorld()
-        python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+    # we cannot do this as this resets the stored object and any file which imported
+    # these globals BEFORE running load_python_reports will remain with original empty
+    # dict 
+    # the clear method removes all keys so should be equivalent behaviour while
+    # retaining original object pointer
+    #python_reports_by_name = {}
+    #python_reports_by_guid = {}
+    python_reports_by_name.clear()
+    python_reports_by_guid.clear()
 
-    try:
-        from reports.price_scatter import PriceScatter
-        python_reports_by_name['PriceScatter'] = PriceScatter()
-        python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+    if False:
 
-    try:
-        from reports.cash_flow import CashFlow
-        python_reports_by_name['CashFlow'] = CashFlow()
-        python_reports_by_guid[python_reports_by_name['CashFlow'].report_guid] = python_reports_by_name['CashFlow']
-    except Exception, errexc:
-        traceback.print_exc()
-        pdb.set_trace()
+        try:
+            from reports.hello_world import HelloWorld
+            python_reports_by_name['HelloWorld'] = HelloWorld()
+            python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+        try:
+            from reports.price_scatter import PriceScatter
+            python_reports_by_name['PriceScatter'] = PriceScatter()
+            python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+        try:
+            from reports.cash_flow import CashFlow
+            python_reports_by_name['CashFlow'] = CashFlow()
+            python_reports_by_guid[python_reports_by_name['CashFlow'].report_guid] = python_reports_by_name['CashFlow']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+
+        try:
+            from reports.portfolio import Portfolio
+            python_reports_by_name['Portfolio'] = Portfolio()
+            python_reports_by_guid[python_reports_by_name['Portfolio'].report_guid] = python_reports_by_name['Portfolio']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+        try:
+            from reports.advanced_portfolio import AdvancedPortfolio
+            python_reports_by_name['AdvancedPortfolio'] = AdvancedPortfolio()
+            python_reports_by_guid[python_reports_by_name['AdvancedPortfolio'].report_guid] = python_reports_by_name['AdvancedPortfolio']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+        try:
+            from reports.gains import CapitalGains
+            python_reports_by_name['CapitalGains'] = CapitalGains()
+            python_reports_by_guid[python_reports_by_name['CapitalGains'].report_guid] = python_reports_by_name['CapitalGains']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+
+        try:
+            from reports.dividends import Dividends
+            python_reports_by_name['Dividends'] = Dividends()
+            python_reports_by_guid[python_reports_by_name['Dividends'].report_guid] = python_reports_by_name['Dividends']
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+
+    if True:
+
+        # code to try for autoimporting - so can just add new reports
+        # only works assuming always use class name as reports name in python_reports_by_name
+
+        #pdb.set_trace()
+
+        try:
+            import reports
+        except Exception, errexc:
+            traceback.print_exc()
+            pdb.set_trace()
+
+        # if we want to find all new classes another way is to use introspection
+        # and find all classes whose __module__ attribute is the module name it was imported
+        # under
+
+        # this is a very sneaky way to find new classes if all classes you want
+        # are guaranteed to be subclasses of a specific class
+        __all__classes = [ cls for cls in ReportTemplate.__subclasses__() ]
+
+        for report_cls in __all__classes:
+            python_reports_by_name[report_cls.__name__] = report_cls()
+            python_reports_by_guid[python_reports_by_name[report_cls.__name__].report_guid] = python_reports_by_name[report_cls.__name__]
 

@@ -3,8 +3,6 @@
 # this is creating a new general select dialog
 # but the dialog is defined in dialog-commodity.c
 
-import gobject
-
 import traceback
 
 import pdb

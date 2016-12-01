@@ -18,8 +18,6 @@ from gi.repository import GObject
 from gi.repository import GIRepository
 
 
-import gobject
-
 import ctypes
 
 from ctypes.util import find_library
@@ -107,6 +105,10 @@ libgirepository.g_type_info_get_tag.argtypes = [ ctypes.c_void_p ]
 #libgirepository.g_type_info_get_tag.argtypes = [ ctypes.POINTER(GITypeInfoOpaque) ]
 libgirepository.g_type_info_get_tag.restype = ctypes.c_uint
 
+libgirepository.g_type_info_get_array_type.argtypes = [ ctypes.c_void_p ]
+#libgirepository.g_type_info_get_array_type.argtypes = [ ctypes.POINTER(GITypeInfoOpaque) ]
+libgirepository.g_type_info_get_array_type.restype = ctypes.c_uint
+
 libgirepository.g_type_info_is_pointer.argtypes = [ ctypes.c_void_p ]
 #libgirepository.g_type_info_is_pointer.argtypes = [ ctypes.POINTER(GITypeInfoOpaque) ]
 libgirepository.g_type_info_is_pointer.restype = ctypes.c_uint
@@ -123,20 +125,34 @@ libgirepository.g_base_info_get_type.argtypes = [ ctypes.c_void_p ]
 #libgirepository.g_base_info_get_type.argtypes = [ ctypes.POINTER(GIBaseInfoOpaque) ]
 libgirepository.g_base_info_get_type.restype = ctypes.c_uint
 
+class GIStructInfoOpaque(ctypes.Structure):
+    pass
+
+#libgirepository.g_struct_info_set_size.argtypes = [ ctypes.c_void_p ]
+##libgirepository.g_struct_info_set_size.argtypes = [ ctypes.POINTER(GIStructInfoOpaque) ]
+#libgirepository.g_struct_info_set_size.restype = ctypes.c_uint
+
+class GIUnionInfoOpaque(ctypes.Structure):
+    pass
+
+#libgirepository.g_union_info_set_size.argtypes = [ ctypes.c_void_p ]
+##libgirepository.g_union_info_set_size.argtypes = [ ctypes.POINTER(GIUnionInfoOpaque) ]
+#libgirepository.g_union_info_set_size.restype = ctypes.c_uint
+
 
 def get_field_info (field_info):
 
     fieldinfo_ptr = id(field_info)
-    print("fieldinfo 0x%x"%fieldinfo_ptr)
+    #print("fieldinfo 0x%x"%fieldinfo_ptr)
 
     pygibaseinfo_ptr = ctypes.cast( fieldinfo_ptr, ctypes.POINTER(PyGIBaseInfo) )
     #print("baseinfo ptr 0x%x"%pygibaseinfo_ptr)
 
-    print("baseinfo ptr 0x%x"%ctypes.addressof(pygibaseinfo_ptr.contents))
+    #print("baseinfo ptr 0x%x"%ctypes.addressof(pygibaseinfo_ptr.contents))
 
-    print("type %x"%pygibaseinfo_ptr.contents.ob_type)
+    #print("type %x"%pygibaseinfo_ptr.contents.ob_type)
 
-    print("info %x"%pygibaseinfo_ptr.contents.info)
+    #print("info %x"%pygibaseinfo_ptr.contents.info)
 
     return pygibaseinfo_ptr.contents.info
 
@@ -144,7 +160,7 @@ def get_field_type_tag (field_info_obj):
 
     type_info_ptr = libgirepository.g_field_info_get_type(field_info_obj)
 
-    print("type ptr %x"%type_info_ptr)
+    #print("type ptr %x"%type_info_ptr)
 
     chkptr = libgirepository.g_type_info_is_pointer(type_info_ptr)
 
@@ -162,7 +178,7 @@ def get_field_type_tag (field_info_obj):
 
         field_type_tag = libgirepository.g_type_info_get_tag(type_info_ptr)
 
-        print("type tag %d"%field_type_tag)
+        #print("type tag %d"%field_type_tag)
 
         if field_type_tag == GITypeTag.GI_TYPE_TAG_INTERFACE:
 
@@ -297,11 +313,11 @@ class GncPluginMeta(gi.types.GObjectMeta):
         newattr = {}
         for fldobj in flds:
            if fldobj.get_name() in attrs:
-               clsfldobj = GObjectClassField(fldobj, initial_value=attrs[fldobj.get_name()])
+               clsfldobj = GObjectField(fldobj, initial_value=attrs[fldobj.get_name()])
                if hasattr(clsfldobj,'get_value'):
                    newattr[fldobj.get_name()] = clsfldobj
            else:
-               clsfldobj = GObjectClassField(fldobj)
+               clsfldobj = GObjectField(fldobj)
                if hasattr(clsfldobj,'get_value'):
                    newattr[fldobj.get_name()] = clsfldobj
         if not 'plugin_name' in attrs:
@@ -386,6 +402,117 @@ class GncPluginTryMeta(gi.types.GObjectMeta):
         super(GncPluginTryMeta, cls).__init__(name, bases, attrs)
         print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
 
+# this is for the GncPluginPage class - essentially a duplicate of GncPluginMeta
+
+class GncPluginPageMeta(gi.types.GObjectMeta):
+    def __new__ (mcls, classname, bases, attrs):
+        # code to operate on the arguments
+        print("GncPluginPageMeta new called:",str(mcls),classname,str(bases),str(attrs))
+        #pdb.set_trace()
+        if not '__girmetaclass__' in attrs:
+            #pdb.set_trace()
+            # NOTA BENE - the correct order for multiple classes is base class last
+            if len(bases) > 1:
+                raise AttributeError("__metaclass__ multiple bases not implemented")
+            if isinstance(bases[-1], GncPluginPageMeta):
+                raise AttributeError("__metaclass__ class attribute MUST be defined")
+            raise AttributeError("__girmetaclass__ class attribute MUST be defined")
+        # it appears we cannot use other functions defined in the Meta class
+        # - claims need an instance as first argument - mcls is not an instance
+        # (we could of course define functions inside functions I suppose)
+        # Im going to skip virtual functions(callback type - any others??)
+        flds = attrs['__girmetaclass__'].__dict__['__info__'].get_fields()
+        newattr = {}
+        for fldobj in flds:
+           if fldobj.get_name() in attrs:
+               clsfldobj = GObjectField(fldobj, initial_value=attrs[fldobj.get_name()])
+               if hasattr(clsfldobj,'get_value'):
+                   newattr[fldobj.get_name()] = clsfldobj
+           else:
+               clsfldobj = GObjectField(fldobj)
+               if hasattr(clsfldobj,'get_value'):
+                   newattr[fldobj.get_name()] = clsfldobj
+        if not 'plugin_name' in attrs:
+            raise AttributeError("plugin_name class attribute MUST be defined")
+        if not 'tab_icon' in attrs:
+            raise AttributeError("tab_icon class attribute MUST be defined")
+        #pdb.set_trace()
+        attrs['ClassVariables'] = GObjectClass(newattr.items())
+        attrs['plugin_name'] = newattr['plugin_name']
+        attrs['tab_icon'] = newattr['tab_icon']
+        # now generate class
+        # do we need to use the parent meta class new here?? or always type??
+        # or should we be using init??
+        #return type.__new__(mcls, classname, bases, attrs)
+        return super(GncPluginPageMeta, mcls).__new__(mcls,classname, bases, attrs)
+        #return gi.types.GObjectMeta.__new__(mcls, classname, bases, attrs)
+
+    def __init__ (cls, name, bases, attrs):
+        print("GncPluginPageMeta init called:",str(cls),name,str(bases),str(attrs))
+        # NOTA BENE - for GType subclassing the class structure address returned at this point
+        # is STILL the parent GType class structure!!
+        # we need the cls variable AFTER the super call!!
+        # so this is how to get the address of the class structure!!
+        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        super(GncPluginPageMeta, cls).__init__(name, bases, attrs)
+        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        #pdb.set_trace()
+        # we delay this till subclass for subclass of subclass
+        ## we have deleted plugin_name from attrs above!!
+        #cls.plugin_name.set_klass_pointer(cls)
+        #plugin_name = cls.plugin_name.field_value
+        #print("python gtype plugin_name",plugin_name)
+        #cls.plugin_name.set_value(plugin_name)
+        #cls.tab_icon.set_klass_pointer(cls)
+        #tab_icon = cls.tab_icon.field_value
+        #print("python gtype tab_icon",tab_icon)
+        #cls.tab_icon.set_value(tab_icon)
+
+
+# and GncPluginPageSubClassMeta is used in a subclass of GncPluginPagePython to actually set the
+# variables - we need __new__ here as we need to substitute the initial definition
+
+class GncPluginPageSubClassMeta(GncPluginPageMeta):
+    def __new__ (mcls, classname, bases, attrs):
+        print("GncPluginPageSubClassMeta new called:",str(mcls),classname,str(bases),str(attrs))
+        #pdb.set_trace()
+        if len(bases) > 1:
+            raise AttributeError("__metaclass__ multiple bases not implemented")
+        if not 'plugin_name' in attrs:
+            raise AttributeError("plugin_name not defined for subclass - must be defined")
+        # this assumes no multiple bases - base[-1] seems to be immediate superclass
+        bases[-1].plugin_name.set_field_value(attrs['plugin_name'])
+        bases[-1].tab_icon.set_field_value(attrs['tab_icon'])
+        # we need to delete this from attrs otherwise the new plain string definition
+        # overrides the superclass (GncPluginPagePython) definition
+        del attrs['plugin_name']
+        del attrs['tab_icon']
+        # well doing GncPluginPageSubClassMeta.__new__ does call the supermetaclass __new__
+        # - but this has already been done - whats the right way??
+        # just use type call??
+        #return GncPluginPageSubClassMeta.__new__(mcls, classname, bases, attrs)
+        #return type.__new__(mcls, classname, bases, attrs)
+        return gi.types.GObjectMeta.__new__(mcls, classname, bases, attrs)
+
+    def __init__ (cls, name, bases, attrs):
+        print("GncPluginPageSubClassMeta init called:",str(cls),name,str(bases),str(attrs))
+        # NOTA BENE - for GType subclassing the class structure address returned at this point
+        # is STILL the parent GType class structure!!
+        # we need the cls variable AFTER the super call!!
+        # so this is how to get the address of the class structure!!
+        print("python sub gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        super(GncPluginPageSubClassMeta, cls).__init__(name, bases, attrs)
+        print("python sub gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        #pdb.set_trace()
+        # we have deleted plugin_name from attrs above!!
+        cls.plugin_name.set_klass_pointer(cls)
+        plugin_name = cls.plugin_name.field_value
+        cls.plugin_name.set_value(plugin_name)
+        cls.tab_icon.set_klass_pointer(cls)
+        tab_icon = cls.tab_icon.field_value
+        cls.tab_icon.set_value(tab_icon)
+
+
 
 # class definition for python 2.7 using the meta class
 #class NewGObject(object):
@@ -406,17 +533,13 @@ class GObjectClass(object):
             setattr(self, key, val)
 
 
-# this class handles a GType class variable
+# this class handles a GType field variables
 
-class GObjectClassField(object):
+class GObjectField(object):
 
     # this object is instantiated for each field name
-    # hmm - looks like we need both the GType (or a GObject instantiation) and its class structure
-    # definition from the gir file
-    # yes - hash on the klass object is not the same as the
-    # hash on the type_class_peek of the gobject 
 
-    def __init__ (self, fldobj, initial_value=None):
+    def __init__ (self, fldobj, offset_adjust_hack=0, check_adjust_hack=0, initial_value=None):
 
         self.field_name = fldobj.get_name()
         self.field_info = fldobj
@@ -437,12 +560,23 @@ class GObjectClassField(object):
 
         #pdb.set_trace()
 
+        # DANGEROUS - only one of instance_ptr or klass_ptr should be set!!
+        self.instance_ptr = None
         self.klass_ptr = None
         self.value_pointer = None
 
         ## do we assign these as defaults??
         #self.get_value = None
         #self.set_value = None
+
+        # DANGER WILL ROBINSON!!
+        # this is extreme hackery - because of issues of introspection and
+        # bit field sizes which lead to wrong field offsets this allows
+        # the offset to be adjusted when computing field pointer values
+        # the check_adjust_hack is used to try and detect if the offset is
+        # needed - its values is checked against the original offset
+        self.offset_adjust_hack = offset_adjust_hack
+        self.check_adjust_hack = check_adjust_hack
 
 
         # now we need to create the get_value/set_value functions
@@ -457,9 +591,35 @@ class GObjectClassField(object):
             self.get_value = self.get_uint32_value
             self.set_value = self.set_uint32_value
 
+        elif self.field_type_tag == GITypeTag.GI_TYPE_TAG_VOID:
+
+            # so far this seen for a virtual function call recreate_page which
+            # creates a new GncPluginPage in gnc_plugin_page.h
+            # ignore for the moment??
+            pass
+
+        elif self.field_type_tag == GITypeTag.GI_TYPE_TAG_ARRAY:
+
+            type_info_ptr = libgirepository.g_field_info_get_type(field_info_obj)
+
+            print("type ptr %x"%type_info_ptr)
+
+            array_type = libgirepository.g_type_info_get_array_type(type_info_ptr)
+
+            # what to do for this??
+            self.get_value = self.get_object_value
+            self.set_value = self.set_object_value
+
         elif self.field_type_tag >= GITypeTag.GI_TYPE_TAG_INTERFACE*1000:
 
             if self.field_type_tag == GITypeTag.GI_TYPE_TAG_INTERFACE*1000+GIInfoType.GI_INFO_TYPE_STRUCT:
+
+                # this appears to be used for basic GObjects
+
+                self.get_value = self.get_object_value
+                self.set_value = self.set_object_value
+
+            elif self.field_type_tag == GITypeTag.GI_TYPE_TAG_INTERFACE*1000+GIInfoType.GI_INFO_TYPE_OBJECT:
 
                 # this appears to be used for basic GObjects
 
@@ -515,13 +675,28 @@ class GObjectClassField(object):
         raise AttributeError("can't delete GObject class attribute %s"%self.field_name)
 
 
+    def set_instance_pointer (self, ginstance):
+        self.instance_pointer = hash(ginstance)
+        print("python ginstance %s address %x"%(str(ginstance),hash(ginstance)))
+
+        if self.offset_adjust_hack != 0:
+            if self.offset != self.check_adjust_hack:
+                raise ValueError("Field offset is wrong - possible bad version of GType %s - may need to regenerate gir files"%self.field_name)
+
+        self.value_pointer = self.instance_pointer + self.offset_adjust_hack + self.offset
+        print("python value address %x"%self.value_pointer)
+
 
     def set_klass_pointer (self, gtype):
         # so this is how to get the address of the class structure!!
         self.klass_ptr = hash(gi.GObject.type_class_peek(gtype))
         print("python gtype klass %s address %x"%(str(gtype),hash(gi.GObject.type_class_peek(gtype))))
 
-        self.value_pointer = self.klass_ptr + self.offset
+        if self.offset_adjust_hack != 0:
+            if self.offset != self.check_adjust_hack:
+                raise ValueError("Field offset is wrong - possible bad version of GType %s - may need to regenerate gir files"%self.field_name)
+
+        self.value_pointer = self.klass_ptr + self.offset_adjust_hack + self.offset
         print("python value address %x"%self.value_pointer)
 
 
@@ -559,14 +734,20 @@ class GObjectClassField(object):
 
         #pdb.set_trace()
 
-        # typeerror I think is correct exception to raise here
-        if not isinstance(new_value,str):
-            raise TypeError("argument value is not a string type - must be a string type")
+        if new_value == None:
 
-        # what to do about unicode??
-        new_value_str_ptr = ctypes.pythonapi.PyString_AsString(id(new_value))
+            new_value_str_ptr = 0
 
-        print("python str address %x"%new_value_str_ptr)
+        else:
+
+            # typeerror I think is correct exception to raise here
+            if not isinstance(new_value,str):
+                raise TypeError("argument value is not a string type - must be a string type")
+
+            # what to do about unicode??
+            new_value_str_ptr = ctypes.pythonapi.PyString_AsString(id(new_value))
+
+            print("python str address %x"%new_value_str_ptr)
 
         # finally - this is how we do pointer assignment given plain addresses
         # we must cast to a pointer type - its confusing because the pointed to type is also a generic
@@ -582,7 +763,7 @@ class GObjectClassField(object):
 
         print("python value address %x"%self.value_pointer)
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         objval = ctypes.cast(self.value_pointer, ctypes.POINTER(ctypes.c_void_p)).contents.value
 
@@ -640,9 +821,13 @@ class GObjectClassField(object):
 
         return
 
+    # hmm - looks like we need both the GType (or a GObject instantiation) and its class structure
+    # definition from the gir file
+    # yes - hash on the klass object is not the same as the
+    # hash on the type_class_peek of the gobject 
 
     @classmethod
-    def Setup (cls, gtype, klass, field_name):
+    def SetupClass (cls, gtype, klass, field_name, offset_adjust_hack=0, check_adjust_hack=0):
 
         #Try.PluginClass.__dict__['__info__'].get_fields()[2]
 
@@ -657,9 +842,31 @@ class GObjectClassField(object):
         if fndfld == None:
             raise RuntimeError("Class %s does not contain the field name %s"%(str(klass),field_name))
 
-        newobj = cls(fldobj)
+        newobj = cls(fldobj, offset_adjust_hack=offset_adjust_hack, check_adjust_hack=check_adjust_hack)
 
         newobj.set_klass_pointer(gtype)
+
+        return newobj
+
+    @classmethod
+    def Setup (cls, ginstance, field_name, offset_adjust_hack=0, check_adjust_hack=0):
+
+        #pdb.set_trace()
+
+        flds = ginstance.__class__.__info__.get_fields()
+
+        fndfld = None
+        for fldobj in flds:
+            if fldobj.get_name() == field_name:
+                fndfld = fldobj
+                break
+
+        if fndfld == None:
+            raise RuntimeError("Class %s does not contain the field name %s"%(str(klass),field_name))
+
+        newobj = cls(fldobj, offset_adjust_hack=offset_adjust_hack, check_adjust_hack=check_adjust_hack)
+
+        newobj.set_instance_pointer(ginstance)
 
         return newobj
 
@@ -717,13 +924,25 @@ def access_class_data (gtype):
 
 def main ():
 
+    from gi.repository import Gtk
+
     # so this is how to get the address of the class structure!!
     #trymod_klass = hash(gi.GObject.type_class_peek(Try.Plugin))
     #print("python gobject trymod klass address %x"%hash(gi.GObject.type_class_peek(Try.Plugin)))
 
-    #gobjfld = Try.PluginClass.__dict__['__info__'].get_fields()[0]
+    pdb.set_trace()
 
-    #print("gobjfld",gobjfld)
+    gobjflds = Gtk.Bin.__info__.get_fields()
+    #gobjflds = Gtk.Container.__info__.get_fields()
+
+    for gobjfld in gobjflds:
+        print("gobjfld",gobjfld)
+        print("gobjfld",gobjfld.get_name())
+
+        field_info_obj = get_field_info(gobjfld)
+
+        offset = libgirepository.g_field_info_get_offset(field_info_obj)
+        print("gobjfld offset",offset)
 
     #g_field_get_value(gobjfld, trymod_klass)
     #g_field_get_value(Try.PluginClass.__dict__['__info__'].get_fields()[1], trymod_klass)

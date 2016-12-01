@@ -22,7 +22,7 @@ class MyCallbacks(object):
         self.callbacks = {}
 
 
-class MyMenuAdditions(GObject.Object):
+class MyMenuAdditions(GObject.GObject):
 
     def __init__ (self, window):
         self.window = window
@@ -67,7 +67,7 @@ class MyMenuAdditions(GObject.Object):
         # sort list
         # do accelerators
         # then add
-        self.save_callbacks = MyCallbacks()
+        #self.save_callbacks = MyCallbacks()
         for menuitm in menu_list:
             self.add_menu_item(menuitm)
         # ah - this does not update any gtk stuff just gnc stuff handling the menu additions

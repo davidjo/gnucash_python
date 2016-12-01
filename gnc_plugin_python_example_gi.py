@@ -12,9 +12,7 @@ import pdb
 import traceback
 
 
-import gtk
-
-import gobject
+from gi.repository import GObject
 
 import girepo
 
@@ -130,7 +128,7 @@ class GncPluginPythonExample(GncPluginPython):
 
         #print >> sys.stderr, "before access class"
 
-        #priv = girepo.access_class_data()
+        #priv = girepo.access_class_data(self)
 
         #print >> sys.stderr, "after access class"
 
@@ -188,28 +186,28 @@ class GncPluginPythonExample(GncPluginPython):
         #print >> sys.stderr, "after set_callbacks"
 
 
-    ## note that in the C the primary version of these functions are defined in
-    ## gnc-plugin.c - and at the end of their code they call the functions saved
-    ## in the GncPlugin class private data - if they are defined
-    ## in python this gets sort of inverted - we define functions here to call
-    ## the parent GncPluginPython class version of these functions - before doing
-    ## extra work - and the GncPluginPython version of these functions does not
-    ## call functions of the subclass (how could it)
+    # note that in the C the primary version of these functions are defined in
+    # gnc-plugin.c - and at the end of their code they call the functions saved
+    # in the GncPlugin class private data - if they are defined
+    # in python this gets sort of inverted - we define functions here to call
+    # the parent GncPluginPython class version of these functions - before doing
+    # extra work - and the GncPluginPython version of these functions does not
+    # call functions of the subclass (how could it)
 
-    #def do_add_to_window (self, window, window_type):
+    def do_add_to_window (self, window, window_type):
 
-    #    print >> sys.stderr, "called add_to_window"
-    #    pdb.set_trace()
+        print >> sys.stderr, "called do_add_to_window"
+        #pdb.set_trace()
 
-    #    #super(GncPluginPythonExample,self).add_to_window(window, window_type)
+        super(GncPluginPythonExample,self).add_to_window(window, window_type)
 
-    #def do_remove_from_window (self, window, window_type):
+    def do_remove_from_window (self, window, window_type):
 
-    #    print >> sys.stderr, "called remove_from_window"
-    #    pdb.set_trace()
-    #    print >> sys.stderr, "called remove_from_window"
+        print >> sys.stderr, "called do_remove_from_window"
+        pdb.set_trace()
+        print >> sys.stderr, "called do_remove_from_window"
 
-    #    #super(GncPluginPythonExample,self).remove_from_window(window, window_type)
+        super(GncPluginPythonExample,self).remove_from_window(window, window_type)
 
 
 
@@ -222,8 +220,7 @@ class GncPluginPythonExample(GncPluginPython):
         print >> sys.stderr, " entered cmd_test"
 
 
-#pdb.set_trace()
 
-gobject.type_register(GncPluginPythonExample)
+GObject.type_register(GncPluginPythonExample)
 
 

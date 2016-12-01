@@ -1,5 +1,10 @@
 
 
+from gi.repository import Gtk
+
+import pdb
+
+
 import gnucash_log
 from gnucash_log import ENTER
 
@@ -98,7 +103,7 @@ class GncPluginPythonMenuAdditions(GncPluginPython):
 
         per_window = GncPluginMenuAdditionsPerWindow(window)
         per_window.ui_manager = window.ui_merge
-        per_window.group = gtk.ActionGroup('PythonMenuAdditions')
+        per_window.group = Gtk.ActionGroup('PythonMenuAdditions')
         per_window.window.set_translation_domain(per_window.group, "gnucash")
         per_window.merge_id = window.ui_merge.new_merge_id()
         window.ui_merge.insert_action_group(per_window.group, 0);
@@ -168,7 +173,7 @@ class GncPluginPythonMenuAdditions(GncPluginPython):
         cb_data.window = per_window.window
         cb_data.data = ext_info.extension
 
-        if ext_info.type == gtk.UI_MANAGER_MENUITEM:
+        if ext_info.type == Gtk.UIManagerItemType.MENUITEM:
             ext_info.ae.callback = action_cb
 
         # not needed in python - free uses python garbage collection

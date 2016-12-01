@@ -7,6 +7,8 @@ import datetime
 
 from gi.repository import GObject
 
+from gi.repository import GLib
+
 from gi.repository import Gtk
 from gi.repository import Gdk
 
@@ -35,19 +37,20 @@ class GncDateEdit(Gtk.HBox):
     # OK Im now thinking gobject warning messages were happening previously but just did not get the message
 
     __gproperties__ = {
-                       'time' : (GObject.TYPE_INT64,                     # type
+                       # 'time' : (GObject.TYPE_INT64,                     # type
+                       'time' : (long,                                   # type
                                       N_('Date/time (seconds)'),         # nick name
                                       N_('Date/time represented in seconds since January 31st, 1970'),    # description
-                                      GObject.G_MININT64,                # min value
-                                      GObject.G_MAXINT64,                # max value
+                                      GLib.MININT64,                     # min value
+                                      GLib.MAXINT64,                     # max value
                                       0,                                 # default value
-                                      GObject.PARAM_READWRITE),          # flags
+                                      GObject.ParamFlags.READWRITE),     # flags
                       }
 
     __gsignals__ = {
-                   'time_changed' : (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE, (int,)),
-                   'date_changed' : (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE, (int,)),
-                   'format_changed' : (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE, (int,)),
+                   'time_changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,)),
+                   'date_changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,)),
+                   'format_changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,)),
                    }
 
 

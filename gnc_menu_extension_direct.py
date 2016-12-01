@@ -2,7 +2,9 @@
 
 # this is a translation as close as possible to the Scheme/C
 
-from gobject import GObject
+from gi.repository import GObject
+
+from gi.repository import Gtk
 
 # I dont get this yet - for the example plugin this adds GUI menu elements
 # through an .xml file which is loaded on plugin load (a lot through gnc_module_load_common)
@@ -102,7 +104,7 @@ class GncMenuExtensionInfo(object):
             return
         self.name = menu_extension.name
         self.guid = menu_extension.guid
-        # this essentially builds a gtk.ActionEntry
+        # this essentially builds a Gtk.ActionEntry
         self.ae = GncActionEntry()
         self.ae.label = self.name
         self.ae.name = self.guid
@@ -113,9 +115,9 @@ class GncMenuExtensionInfo(object):
         # construct the path for sorting
         # do we need this - should call g_utf8_collate_key
         # self.sort_key = "%s/%s"%(self.path,self.ae.label)
-        if self.type == gtk.Menu:
+        if self.type == Gtk.Menu:
             self.typeStr = "menu"
-        elif self.type == gtk.MenuItem:
+        elif self.type == Gtk.MenuItem:
             self.typeStr = "menuitem"
         else:
             self.typeStr = "unk"
@@ -130,11 +132,11 @@ class GncMenuExtensionInfo(object):
 
     def get_extension_type (self, menu_extension):
         if menu_extension.type == 'menu-item':
-            return gtk.MenuItem
+            return Gtk.MenuItem
         elif menu_extension.type == 'menu':
-            return gtk.Menu
+            return Gtk.Menu
         elif menu_extension.type == 'separator':
-            return gtk.SeparatorMenuItem
+            return Gtk.SeparatorMenuItem
         #PERR("bad type")
         return None
 
@@ -149,7 +151,7 @@ class GncPluginMenuAdditionsPerWindow(object):
     # this is primarily a data storage class
     pass
 
-class GncPluginMenuAdditions(GObject):
+class GncPluginMenuAdditions(GObject.GObject):
 
     def __init__ (self):
         pass
@@ -169,7 +171,7 @@ class GncPluginMenuAdditions(GObject):
         cb_data.data = per_window.extension
 
         # self.action_cb eventually invokes the script item of the MenuExtension
-        if ext_info.type == gtk.MenuItem:
+        if ext_info.type == Gtk.MenuItem:
             ext_info.ae.callback = self.action_cb
 
         # this is an actionentry list of 1
@@ -186,7 +188,7 @@ class GncPluginMenuAdditions(GObject):
         per_window = GncPluginMenuAdditionsPerWindow()
         per_window.window = window
         per_window.ui_manager = window.get_uimanager()
-        per_window.group = gtk.ActionGroup("PythonMenuAdditions")
+        per_window.group = Gtk.ActionGroup("PythonMenuAdditions")
         #per_window.group.set_translation_domain(GETTEXT_PACKAGE)
         per_window.merge_id = per_window.ui_manager.new_merge_id()
 

@@ -288,9 +288,7 @@ class GncPluginPython(BaseGncPlugin):
 
             if self.plugin_important_actions:
 
-                action_group = gnc_main_window.get_action_group(window, self.actions_name)
-
-                set_important_actions(action_group, self.plugin_important_actions)
+                self.set_important_actions(self.plugin_important_actions)
 
 
 
@@ -324,17 +322,12 @@ class GncPluginPython(BaseGncPlugin):
                 print "remove called and no saved window!!"
 
 
-def set_important_actions (action_group, important_actions):
+    def set_important_actions (self, action_group, important_actions):
 
-    # although this function is defined in the gnc-plugin.c file
-    # it actually has nothing to do with the GncPlugin class
-    # (the C first argument is the action_group)
-    # make a module function
+        print >> sys.stderr, "called super set_important_actions"
+        pdb.set_trace()
+        print >> sys.stderr, "called super set_important_actions"
 
-    print >> sys.stderr, "called set_important_actions"
-    pdb.set_trace()
-    print >> sys.stderr, "called set_important_actions"
-
-    for imp_action in important_actions:
-         action = action_group.get_action(imp_action)
-         action.is_important = True
+        for imp_action in important_actions:
+             action = action_group.get_action(imp_action)
+             action.is_important = True

@@ -70,9 +70,9 @@ class ExtensionInfo(object):
         self.ae.callback = None
         self.ae.sort_key = "%s/%s"%(self.path, self.ae.label)
 
-        if self.type == gtk.UI_MANAGER_MENU:
+        if self.type == Gtk.UIManagerItemType.MENU:
             self.typeStr =  "menu"
-        elif self.type == gtk.UI_MANAGER_MENUITEM:
+        elif self.type == Gtk.UIManagerItemType.MENUITEM:
             self.typeStr =  "menuitem"
         else:
             self.typeStr =  "unk"
@@ -106,11 +106,11 @@ class ExtensionInfo(object):
     def extension_type (menu_type):
 
         if menu_type == "menu-item":
-            ext_type = gtk.UI_MANAGER_MENUITEM
+            ext_type = Gtk.UIManagerItemType.MENUITEM
         elif menu_type == "menu":
-            ext_type = gtk.UI_MANAGER_MENU
+            ext_type = Gtk.UIManagerItemType.MENU
         elif menu_type == "separator":
-            ext_type = gtk.UI_MANAGER_SEPARATOR
+            ext_type = Gtk.UIManagerItemType.SEPARATOR
         else:
             raise ValueError("unknown menu type string %s"%menu_type)
 

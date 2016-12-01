@@ -207,7 +207,7 @@ class SelectCommodityWindow(object):
 
         #ENTER("cbwe=%p, user_data=%p", cbwe, user_data)
 
-        # this is actual gtk combobox object
+        # this is actual Gtk ComboBox object
         combobox = args[0]
 
         #DEBUG("namespace=%s", namespace)
@@ -222,7 +222,7 @@ class SelectCommodityWindow(object):
 
         #ENTER("cbwe=%p, user_data=%p", cbwe, user_data)
 
-        # this is actual gtk combobox object
+        # this is actual Gtk ComboBox object
         combobox = args[0]
 
         #DEBUG("namespace=%s", namespace)

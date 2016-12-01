@@ -1,7 +1,7 @@
 
 import types
 
-import gtk
+from gi.repository import Gtk
 
 import pdb
 
@@ -14,7 +14,7 @@ import pdb
 from gnucash.gnucash_core import methods_return_instance,method_function_returns_instance, \
                                  method_function_returns_instance_list
 
-# this is a problem - the gtk functions are wrapped using GObject wrapping
+# this is a problem - the Gtk functions are wrapped using GObject wrapping
 # the gnucash methods are designed to work with swig wrapped functions
 # - so the methods of function_class wont work to return GObject wrapped
 # objects
@@ -102,7 +102,7 @@ def manual_merge_actions (self, group_name, group, merge_id):
 GncMainWindow.add_constructor_and_methods_with_prefix('gnc_main_window_', 'new')
 
 GncMainWindow.get_uimanager = method_function_returns_gobject_instance(
-    GncMainWindow.get_uimanager, gtk.UIManager )
+    GncMainWindow.get_uimanager, Gtk.UIManager )
 
 #setattr(GncMainWindow,"swig_manual_merge_actions") = GncMainWindow.manual_merge_actions
 #setattr(GncMainWindow,"manual_merge_actions") = manual_merge_actions

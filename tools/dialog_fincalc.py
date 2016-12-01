@@ -2,9 +2,9 @@
 
 import sys
 
-import gobject
+from gi.repository import GObject
 
-import gtk
+from gi.repository import Gtk
 
 import re
 
@@ -96,15 +96,15 @@ class FinCalcDialog(object):
 
         self.amounts = {}
 
-        #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #self.window.set_position(gtk.WIN_POS_CENTER)
+        #self.window = Gtk.Window(Gtk.WINDOW_TOPLEVEL)
+        #self.window.set_position(Gtk.WIN_POS_CENTER)
         #self.window.set_default_size(800,600)
         #self.window.set_border_width(0)
 
         #self.window.connect('destroy-event', self.destroy_cb)
         #self.window.connect('delete-event', self.delete_cb)
 
-        #button = gtk.Button(label="My Button")
+        #button = Gtk.Button(label="My Button")
         #self.window.add(button)
         #self.window.show_all()
 
@@ -144,7 +144,7 @@ class FinCalcDialog(object):
 
         hbox = builder.get_object("payment_periods_hbox")
 
-        # this is a subclassed gtk.Entry - just use pure gtk.Entry for now
+        # this is a subclassed Gtk.Entry - just use pure Gtk.Entry for now
         # are we going to map the actual GncAmountEdit or just use a pure python
         # subclass??
         #edit = gnc_amount_edit_new()
@@ -268,8 +268,8 @@ class FinCalcDialog(object):
 
     def response_cb (self, actionobj, response=None):
         print >> sys.stderr, "response_cb",actionobj,response
-        if response == gtk.RESPONSE_OK or \
-           response == gtk.RESPONSE_CLOSE:
+        if response == Gtk.ResponseType.OK or \
+           response == Gtk.ResponseType.CLOSE:
             #gnc_save_window_size(GNC_PREFS_GROUP, self.dialog)
             pass
         #gnc_close_gui_component_by_data (DIALOG_FINCALC_CM_CLASS, fcd)

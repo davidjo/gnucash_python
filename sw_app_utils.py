@@ -12,7 +12,7 @@ import ctypes
 
 from ctypes.util import find_library
 
-import gobject
+#from gi.repository import GObject
 
 import pdb
 
@@ -260,16 +260,20 @@ class QofBookOpaque(ctypes.Structure):
 
 def get_current_book ():
 
-    #print "types at get_current_book"
-    #print gobject.type_children(gobject.type_from_name('GObject'))
+    print "types at get_current_book"
+    #print GObject.type_children(GObject.type_from_name('GObject'))
+
+    #pdb.set_trace()
 
     # not sure what type to convert this to yet
     curbook_inst = _sw_app_utils.gnc_get_current_book()
 
+    print >> sys.stderr, "curbook_inst %x"%curbook_inst.__long__()
+
     curbook_ptr = ctypes.cast( curbook_inst.__long__(), ctypes.POINTER( QofBookOpaque ) )
 
     #pdb.set_trace()
-    #print >> sys.stderr, "curbook_ptr %x"%curbook_inst.__long__()
+    print >> sys.stderr, "curbook_ptr %x"%curbook_inst.__long__()
     #print >> sys.stderr, "curbook_ptr %x"%ctypes.addressof(curbook_ptr.contents)
 
     # will this work - yes!!

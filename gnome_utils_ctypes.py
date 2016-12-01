@@ -6,7 +6,7 @@ import os
 
 import sys
 
-import gobject
+from gi.repository import GObject
 
 
 import pdb
@@ -207,20 +207,21 @@ def ui_get_toplevel ():
 
 # unfortunately gnc_error_dialog uses variable argument lists
 # for the moment lets reimplement in python - its pretty trivial
-# this does mean need to import gtk here
+# this does mean need to import Gtk here
 # also just pass string
 
 
 
-import gtk
+from gi.repository import Gtk
+
 
 def gnc_error_dialog (parent, errmsg):
 
     if parent == None:
         parent = ui_get_toplevel()
 
-    dialog = gtk.MessageDialog(parent,gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                    gtk.MESSAGE_ERROR,gtk.BUTTONS_CLOSE,N_(errmsg))
+    dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.DIALOG_MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                    Gtk.MessageType.ERROR,Gtk.ButtonsType.CLOSE,N_(errmsg))
 
     if parent == None:
         dialog.set_skip_taskbar_hint(False)
@@ -235,17 +236,17 @@ def gnc_verify_dialog (parent, yes_is_default, errmsg):
     if parent == None:
         parent = ui_get_toplevel()
 
-    dialog = gtk.MessageDialog(parent,gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                    gtk.MESSAGE_QUESTION,gtk.BUTTONS_YES_NO,N_(errmsg))
+    dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.MODAL|Gtk.FialogFlags.DESTROY_WITH_PARENT,
+                    Gtk.MessageType.QUESTION,Gtk.ButtonsType.YES_NO,N_(errmsg))
 
     if parent == None:
         dialog.set_skip_taskbar_hint(False)
 
-    dialog.set_default_response(gtk.RESPONSE_YES if yes_is_default else gtk.RESPONSE_NO)
+    dialog.set_default_response(Gtk.ResponseType.YES if yes_is_default else Gtk.ResponseType.NO)
 
     result = dialog.run()
 
     dialog.destroy()
 
-    return result == gtk.RESPONSE_YES
+    return result == Gtk.ResponseType.YES
 

@@ -4,9 +4,9 @@ import sys
 
 import types
 
-import gobject
+from gi.repository import GObject
 
-import gtk
+from gi.repository import Gtk
 
 import ctypes
 
@@ -71,9 +71,9 @@ gboolean = ctypes.c_int
 # only get access to the functions we have mapped for the parent classe(s)
 # looks as though we need to add functions to the python side
 
-# dont know if gobject.new does not work - just in case assuming like
+# dont know if GObject.new does not work - just in case assuming like
 # gnc_tree_view_account that defines specific constructor functions which
-# do things just calling gobject.new does not
+# do things just calling GObject.new does not
 
 
 def new (selected):
@@ -82,12 +82,12 @@ def new (selected):
 
     #pdb.set_trace()
 
-    #tmptreeview = gobject.new(gobject.type_from_name('GncTreeView'))
-    #tmptreeviewaccount = gobject.new(gobject.type_from_name('GncTreeViewAccount'))
+    #tmptreeview = GObject.new(GObject.type_from_name('GncTreeView'))
+    #tmptreeviewaccount = GObject.new(GObject.type_from_name('GncTreeViewAccount'))
     #print "trying 1"
     #print tmptreeviewaccount
     #print "trying 2"
-    #newaccview = gobject.new(gobject.type_from_name('GncTreeViewAccount'))
+    #newaccview = GObject.new(GObject.type_from_name('GncTreeViewAccount'))
 
 
     newtreemdl_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_model_account_types_new(selected)

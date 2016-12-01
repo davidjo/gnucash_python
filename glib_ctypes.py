@@ -55,6 +55,9 @@ if libglibnm is None:
 libglib = cdll.LoadLibrary(libglibnm)
 
 
+libglib.g_strdup.argtypes = [gpointer]
+libglib.g_strdup.restype = c_void_p
+
 libglib.g_date_valid.argtypes = [POINTER(GDateRaw)]
 libglib.g_date_valid.restype = gboolean
 

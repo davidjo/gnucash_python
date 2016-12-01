@@ -35,14 +35,11 @@ import traceback
 import pdb
 
 
-import gnc_main_window
-
-import girepo
-
 import gi
 
-
 # now create a new plugin in python
+
+from gi.repository import Gtk
 
 
 try:
@@ -54,6 +51,14 @@ except Exception, errexc:
     pdb.set_trace()
 
 
+import girepo
+
+import gnc_main_window
+
+
+# define a function equivalent to N_ for internationalization
+def N_(msg):
+    return msg
 
 if True:
 
@@ -79,8 +84,6 @@ if True:
 
     BaseGncPlugin = GncPlugin.Plugin
     BaseGncPluginClass = GncPlugin.PluginClass
-
-#pdb.set_trace()
 
 
 # for the moment save the plugins
@@ -235,8 +238,9 @@ class GncPluginPython(BaseGncPlugin):
     # for doing things in python
     # its important that subclasses of this do not define the C actions_name etc
     # - then the virtual function call they do will call this python function
+    # NOTA BENE - the lowest subclass of this class needs to define the do_ functions
 
-    def do_add_to_window (self, window, window_type):
+    def add_to_window (self, window, window_type):
 
         print >> sys.stderr, "called super add_to_window"
         #pdb.set_trace()
@@ -273,7 +277,7 @@ class GncPluginPython(BaseGncPlugin):
 
 
 
-    def do_remove_from_window (self, window, window_type):
+    def remove_from_window (self, window, window_type):
 
         #print >> sys.stderr, "called super remove_from_window"
         #pdb.set_trace()
@@ -303,21 +307,52 @@ class GncPluginPython(BaseGncPlugin):
                 print "remove called and no saved window!!"
 
 
+
+# re-implement in python these global functions of gnc-plugin.c
+# - they are not part of the GncPlugin GType as do not have GncPlugin GType
+# as first argument - they just call either gtk or gobject functions
+
+def init_short_names (action_group, toolbar_labels):
+
+    #pdb.set_trace()
+
+    # the label is passed through the gettext function call in C
+    # which I think looks for a translation
+
+    for toolbar_label in toolbar_labels:
+        action = action_group.get_action(toolbar_label[0])
+        action.set_short_label(N_(toolbar_label[1]))
+
+
 def set_important_actions (action_group, important_actions):
 
-    # although this function is defined in the gnc-plugin.c file
-    # it actually has nothing to do with the GncPlugin class
-    # (the C first argument is the action_group)
-    # make a module function
-
-    print >> sys.stderr, "called set_important_actions"
-    pdb.set_trace()
-    print >> sys.stderr, "called set_important_actions"
+    #pdb.set_trace()
 
     for imp_action in important_actions:
-         action = action_group.get_action(imp_action)
-         action.is_important = True
+        action = action_group.get_action(imp_action)
+        action.is_important = True
 
+    if len(important_actions) > 3:
+        raise RuntimeError("Too many important actions in set_important_actions!!")
+
+def update_actions (action_group, action_names, property_name, value):
+
+    #pdb.set_trace()
+    if len(action_names) > 0: pdb.set_trace()
+    # still not exactly sure how to set the property here
+
+    for action_name in action_names:
+        action = action_group.get_action(action_name)
+        if action != None:
+            #setattr(action, "set_"+
+            action.set_property(property_name, value)
+        else:
+            #g_warning("No such action with name '%s' in action group %s (size %d)",
+            #          action_names[i], gtk_action_group_get_name(action_group),
+            #          g_list_length(gtk_action_group_list_actions(action_group)));
+            print >> sys.stderr, "No such action with name '%s' in action group %s (size %d)"%( \
+                      action_name, action_group.get_name(),
+                      len(action_group.list_actions()))
 
 if False:
 

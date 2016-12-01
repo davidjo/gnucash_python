@@ -21,8 +21,12 @@ try:
     # at Py_EnterRecursiveCall (which gets bad thread data for checking recursion limit)
     # did I remove this when trying out importing webkit python module?
     # (now using gnucash functions that call webkit)
-    import gobject
-    gobject.threads_init()
+    try:
+        from gi.repository import GObject
+        GObject.threads_init()
+    except ImportError:
+        import gobject
+        gobject.threads_init()
 
     # see if can turn off g_log handlers installed by pygobject
     # note need to do this AFTER importing gobject
@@ -64,15 +68,12 @@ try:
     from gi.repository import Gtk
     from gi.repository import Gdk
 
-    #pdb.set_trace()
 
     # need to load early as we extend some base gnucash classes
     #import gnucash_ext
 
 
     import gnc_plugin_manager
-
-    pdb.set_trace()
 
     import gnc_plugin
 
@@ -82,13 +83,12 @@ try:
     #gnc_plugin_manager.plugin_manager.add_plugin(myplugin)
 
 
-    import gnc_plugin_python_example
+    import gnc_plugin_python_example_gi
 
-    myplugin_example = gnc_plugin_python_example.GncPluginPythonExample()
+    myplugin_example = gnc_plugin_python_example_gi.GncPluginPythonExample()
 
     gnc_plugin_manager.plugin_manager.add_plugin(myplugin_example)
 
-    #pdb.set_trace()
 
     plugins = gnc_plugin_manager.plugin_manager.get_plugins()
 
@@ -98,12 +98,15 @@ try:
         print "plugin loaded",plugin.get_name()
 
 
-    #import gnc_plugin_python_tools
+    import gnc_plugin_python_tools
 
-    #python_tools = gnc_plugin_python_tools.GncPluginPythonTools()
 
-    #gnc_plugin_manager.plugin_manager.add_plugin(python_tools)
+    python_tools = gnc_plugin_python_tools.GncPluginPythonTools()
 
+    gnc_plugin_manager.plugin_manager.add_plugin(python_tools)
+
+
+    import gnc_plugin_page
 
     # hmm - we need to instantiate the python report page module here
     # - other wise the callbacks wont exist when restoring pages saved on normal shutdown
@@ -112,16 +115,17 @@ try:
     # essentially we need to define the GType now and figure out how to set the callback
     # actually do we need the instantiation - maybe the import is enough??
     # yes - looks like the import is enough
-    #import gnc_plugin_page_python_report
+    import gnc_plugin_page_python_report
 
     #import python_only_plugin 
     #myplugin = python_only_plugin.MyPlugin()
 
-    #import gnc_plugin_python_reports
+    import gnc_plugin_python_reports
 
-    #python_reports = gnc_plugin_python_reports.GncPluginPythonReports()
 
-    #gnc_plugin_manager.plugin_manager.add_plugin(python_reports)
+    python_reports = gnc_plugin_python_reports.GncPluginPythonReports()
+
+    gnc_plugin_manager.plugin_manager.add_plugin(python_reports)
 
 
     #pdb.set_trace()

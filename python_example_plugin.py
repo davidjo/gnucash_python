@@ -18,7 +18,7 @@ try:
     #import _sw_app_utils
     #from gnucash import *
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
-    import gtk
+    #from gi.repository import Gtk
     pass
 except Exception, errexc:
     print >> sys.stderr, "Failed to import!!"

@@ -16,8 +16,6 @@ from gi.repository import GObject
 
 from gi.repository import Gtk
 
-import girepo
-
 
 #pdb.set_trace()
 
@@ -33,17 +31,20 @@ from gnucash_log import ENTER
 
 import gnc_plugin
 
-#from gnc_plugin import BaseGncPlugin,BaseGncPluginClass
 from gnc_plugin import GncPluginPython
 
+import girepo
 
 import gnc_main_window
+
+import gnc_plugin_page_python_report
 
 import python_menu_extensions
 
 from python_menu_extensions import GncMenuItem, GncActionEntry
 
-import tool_objects
+import report_objects
+
 
 
 #
@@ -58,6 +59,7 @@ GTK_UI_MANAGER_TOOLITEM = 64
 GTK_UI_MANAGER_SEPARATOR = 128
 GTK_UI_MANAGER_ACCELERATOR = 256
 GTK_UI_MANAGER_POPUP_WITH_ACCELS = 512
+
 
 # define a function equivalent to N_ for internationalization
 def N_(msg):
@@ -74,20 +76,22 @@ def close_handler (arg):
     pdb.set_trace()
     pass
 
+dir(GncPluginPython)
+print type(GncPluginPython)
+#pdb.set_trace()
 
 
-class GncPluginPythonTools(GncPluginPython):
-
+class GncPluginPythonReports(GncPluginPython):
 
     __metaclass__ = girepo.GncPluginSubClassMeta
 
     #__girmetaclass__ = BaseGncPluginClass
 
-    plugin_name = "GncPluginPythonTools"
+    plugin_name = "GncPluginPythonReports"
 
 
     # ah - this is something I think Ive missed - we can name the GType here
-    __gtype_name__ = 'GncPluginPythonTools'
+    __gtype_name__ = 'GncPluginPythonReports'
 
     # add properties/signals here
     #__gproperties__ =
@@ -103,10 +107,8 @@ class GncPluginPythonTools(GncPluginPython):
 
         #pdb.set_trace()
 
-        super(GncPluginPythonTools,self).__init__()
+        super(GncPluginPythonReports,self).__init__()
         #GncPluginPython.__init__(self)
-
-        #pdb.set_trace()
 
         self.class_init()
 
@@ -116,10 +118,10 @@ class GncPluginPythonTools(GncPluginPython):
 
         # load the report classes and create instances
         # first import the report definitions
-        tool_objects.load_python_tools()
+        report_objects.load_python_reports()
 
         # now setup the menus
-        self.load_python_tools_menu()
+        self.load_python_reports_menu()
 
 
 
@@ -149,31 +151,30 @@ class GncPluginPythonTools(GncPluginPython):
         # dont quite see why these are class variables - this just follows the
         # C code currently
 
-        GncPluginPythonTools.actions_name = "GncPluginPythonToolsActions"
+        GncPluginPythonReports.actions_name = "GncPluginPythonReportsActions"
 
 
-        GncPluginPythonTools.plugin_actions = [ \
-            ("PythonToolsAction", None, "Python Tools...", None, "python tools tooltip", None),
-            ("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
+        GncPluginPythonReports.plugin_actions = [ \
+            ("PythonReportsAction", None, "Python Reports...", None, "python reports tooltip", None),
+            ("pythongenericAction", None, "Python reports description...", None, "python reports tooltip", self.reports_cb),
             #("exampleAction", None, N_("example description..."), None,
             # N_("example tooltip"),
             # self.cmd_test,
             #),
             ]
 
-        GncPluginPythonTools.plugin_toggle_actions = []
+        GncPluginPythonReports.plugin_toggle_actions = []
 
-        GncPluginPythonTools.plugin_important_actions = []
+        GncPluginPythonReports.plugin_important_actions = []
 
-        GncPluginPythonTools.ui_filename = None
+        GncPluginPythonReports.ui_filename = None
 
-        GncPluginPythonTools.ui_xml_str = """
-<ui>
+        GncPluginPythonReports.ui_xml_str = """<ui>
   <menubar>
-    <menu name="Tools" action="ToolsAction" >
-      <placeholder name="ToolsPlaceholder">
-        <menu name="PythonTools" action="PythonToolsAction">
-          <placeholder name="PythonToolsholder">
+    <menu name="Reports" action="ReportsAction">
+      <placeholder name="OtherReports">
+        <menu name="PythonReports" action="PythonReportsAction">
+          <placeholder name="PythonReportsholder">
           </placeholder>
         </menu>
      </placeholder>
@@ -181,8 +182,7 @@ class GncPluginPythonTools(GncPluginPython):
   </menubar>
 </ui>
 """
-
-        #fdes = open("/Users/djosg/.gnucash/ui/python-tools-plugin.xml",'w')
+        #fdes = open("/Users/djosg/.gnucash/ui/python-example-plugin.xml",'w')
         #fdes.write(ui_xml)
         #fdes.close()
 
@@ -191,7 +191,7 @@ class GncPluginPythonTools(GncPluginPython):
         # if we add the parent class_init call to the parent __init__
         # we will call the subclass class_init at that time
         # watch positioning!! - do after class variable defines for safety
-        #super(GncPluginPythonTools,self).class_init()
+        #super(GncPluginPythonReports,self).class_init()
 
 
         #pdb.set_trace()
@@ -201,6 +201,19 @@ class GncPluginPythonTools(GncPluginPython):
         #priv = girepo.access_class_data(self)
 
         #print >> sys.stderr, "after access class"
+
+        #print >> sys.stderr, "after set_callbacks"
+
+
+    def plugin_init (self):
+        gnucash_log.dbglog_err("python only plugin_init called")
+
+    # unfortunately looks as though this wont work because of GIL issues
+    # - in the python C plugin we lock the callback and plugin_finalize
+    # this is crashing when we try a second call
+
+    def plugin_finalize (self):
+        gnucash_log.dbglog_err("python only plugin_finalize called")
 
 
     # note that in the C the primary version of these functions are defined in
@@ -215,9 +228,9 @@ class GncPluginPythonTools(GncPluginPython):
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "called do_add_to_window"
+        print >> sys.stderr, "called add_to_window"
 
-        super(GncPluginPythonTools,self).add_to_window(window, window_type)
+        super(GncPluginPythonReports,self).add_to_window(window, window_type)
 
         # need to map the window somehow to a window object
         window = gnc_main_window.main_window_wrap(window)
@@ -227,7 +240,7 @@ class GncPluginPythonTools(GncPluginPython):
 
     def do_remove_from_window (self, window, window_type):
 
-        #pdb.set_trace()
+        pdb.set_trace()
 
         # need to map the window somehow to a window object
         save_window = window
@@ -235,59 +248,58 @@ class GncPluginPythonTools(GncPluginPython):
 
         self.menu_extensions.remove_from_window(window, window_type)
 
-        #print >> sys.stderr, "called do_remove_from_window"
+        #print >> sys.stderr, "called remove_from_window"
         #pdb.set_trace()
-        #print >> sys.stderr, "called do_remove_from_window"
+        #print >> sys.stderr, "called remove_from_window"
 
-        super(GncPluginPythonTools,self).remove_from_window(save_window, window_type)
+        super(GncPluginPythonReports,self).remove_from_window(save_window, window_type)
 
 
 
-    def add_menuitems (self, name, tool):
-
-        # this function needs to be defined in this module as it varies per python module
-
+    def add_menuitems (self, name, rpt):
         # create the data needed for Gtk.ActionGroup.add_actions
-        title = N_("Tools")+": "+N_(name)
+        title = N_("Report")+": "+N_(name)
 
         menuitm = GncMenuItem()
         ae = GncActionEntry()
 
-        ae.name = tool.tool_guid
-        if tool.menu_name:
-            ae.label = tool.menu_name
-        elif tool.name:
-            ae.label = tool.name
+        ae.name = rpt.report_guid
+        if rpt.menu_name:
+            ae.label = rpt.menu_name
+        elif rpt.name:
+            ae.label = rpt.name
         else:
             ae.label = name
-        if tool.menu_tip:
-            ae.tooltip = tool.menu_tip
+        if rpt.menu_tip:
+            ae.tooltip = rpt.menu_tip
         else:
-            ae.tooltip = N_("Run the %s tool"%name)
-        if tool.stock_id:
-            ae.stock_id = tool.stock_id
-        else:
-            ae.stock_id = None
+            ae.tooltip = N_("Display the %s report"%name)
+        ae.stock_id = None
         ae.accelerator = None
-        ae.callback = self.tools_cb
+        ae.callback = self.reports_cb
         menuitm.ae = ae
-        if tool.menu_path:
-            #menuitm.path = "ui/menubar/Tools/"+tool.menu_path
-            menuitm.path = "ui/menubar/Tools/ToolsPlaceholder/PythonTools/PythonToolsholder/"
+        if rpt.menu_path:
+            #menuitm.path = "ui/menubar/Reports/StandardReports/"+rpt.menu_path
+            menuitm.path = "ui/menubar/Reports/OtherReports/PythonReports/PythonReportsholder/"
         else:
-            menuitm.path = "ui/menubar/Tools/ToolsPlaceholder/PythonTools/PythonToolsholder/"
+            menuitm.path = "ui/menubar/Reports/OtherReports/PythonReports/PythonReportsholder/"
         menuitm.name = ae.label
         menuitm.action = ae.name
         menuitm.type = Gtk.UIManagerItemType.MENUITEM
+
         return menuitm
 
-    def load_python_tools_menu (self):
+
+    def load_python_reports_menu (self):
+
+        # this is effectively the replacement for gnc:add-report-template-menu-items
+        # in report-gnome.scm
 
         #pdb.set_trace()
 
         menu_list = []
-        for tool in sorted(tool_objects.python_tools_by_name.keys()):
-            menu_list.append(self.add_menuitems(tool,tool_objects.python_tools_by_name[tool]))
+        for rpt in sorted(report_objects.python_reports_by_name.keys()):
+            menu_list.append(self.add_menuitems(rpt,report_objects.python_reports_by_name[rpt]))
 
         group_name = self.actions_name+'MenuItems'
 
@@ -295,37 +307,48 @@ class GncPluginPythonTools(GncPluginPython):
         self.menu_extensions = python_menu_extensions.PythonMenuAdditions(group_name, menu_list)
 
 
-    def tools_cb (self, actionobj, user_data=None):
-
-        pdb.set_trace()
-
-        gnucash_log.dbglog_err("tools_cb",actionobj,user_data)
-	gnucash_log.dbglog_err("tools_cb",actionobj.get_name())
-
+    def reports_cb (self, actionobj, user_data=None):
+        gnucash_log.dbglog_err("report_cb",actionobj,user_data)
+        gnucash_log.dbglog_err("report_cb",actionobj.get_name())
+        #(lambda (window)
+        #  (let ((report (gnc:make-report
+        #        (gnc:report-template-report-guid template))))
+        #    (gnc-main-window-open-report report window)))))
         window = user_data
 
-        print "tools_cb",actionobj
-        print "tools_cb",actionobj.get_name()
-
-        #pdb.set_trace()
-
         # junk test
-        #trybook = sw_app_utils.get_current_book()
-
-        print "tools_cb","after book"
+        trybook = sw_app_utils.get_current_book()
 
         try:
-            tool_guid = actionobj.get_name()
-            tool_obj = tool_objects.python_tools_by_guid[tool_guid]
-            tool_obj.run()
+            # so we need either the report instance, guid or key name here
+            # in scheme/C implementation what is passed here is an integer representing the scheme
+            # report object - which is an "instance" of a report template
+            # so finally understood the scheme process - the report is instantiated here
+            # by the gnc:make-report - which returns the report id rather than an instance pointer
+            # so question is do we maintain passing the id integer or go with passing the instance
+            # pointer
+            report_guid = actionobj.get_name()
+            report_type = report_objects.python_reports_by_guid[report_guid]
+            report = report_objects.Report(report_type=report_type)
+            #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(report,window)
+            gnc_plugin_page_python_report.OpenReport(report,window)
+            #gc.collect()
             gnucash_log.dbglog("call back done")
         except Exception, errexc:
             traceback.print_exc()
-            print >> sys.stderr, "error in tools_cb callback for ",str(errexc)
+            print >> sys.stderr, "error in reports_cb callback",str(errexc)
 
 
-#pdb.set_trace()
+# gdb call back for report
+#0  0x0000000100040898 in gnc_html_report_stream_cb ()
+#1  0x00000001001c853e in load_to_stream ()
+#2  0x00000001001c8d97 in impl_webkit_show_url ()
+#3  0x00000001001c5fb1 in gnc_html_show_url ()
+#4  0x000000010003e8d6 in gnc_plugin_page_report_create_widget ()
+#5  0x000000010021e981 in gnc_plugin_page_create_widget ()
+#6  0x0000000100214220 in gnc_main_window_open_page ()
 
-GObject.type_register(GncPluginPythonTools)
+
+GObject.type_register(GncPluginPythonReports)
 
 

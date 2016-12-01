@@ -4,6 +4,8 @@
 # needed because dialog-options.c has functions with SCM data
 # which need to be replaced
 
+# some functions also taken from option-util.c in app-utils
+
 import os
 
 import sys
@@ -21,8 +23,6 @@ import pdb
 from operator import attrgetter
 
 from gi.repository import GObject
-
-pdb.set_trace()
 
 from gi.repository import Gtk
 from gi.repository import Gdk
@@ -131,17 +131,17 @@ class GncOption(object):
         widget = self.widget
         if widget == None:
             return None
-        type = self.guile_option.type
+        option_type = self.guile_option.type
         if use_default:
             value = self.guile_option.default_getter()
         else:
             value = self.guile_option.getter()
-        option_def = self.ui_get_option(type)
+        option_def = self.ui_get_option(option_type)
         if option_def:
             bad_value = option_def.set_value(self,use_default,widget,value)
             if bad_value:
                 PERR(log_module,"bad value")
-                print "bad value for option", type,self.guile_option.name,value
+                print "bad value for option", option_type,self.guile_option.name,value
                 pdb.set_trace()
                 pass
         else:
@@ -497,8 +497,9 @@ class GncOption(object):
         # need to figure what goes on with packed - is it pass through??
         return (value, enclosing, None)
     def set_ui_value_multichoice (self, use_default, widget, value):
-        if value >= 0 and value < len(self.guile_option.option_data):
-            widget.set_active(value)
+        indx_value = self.guile_option.lookup_key(value)
+        if indx_value >= 0 and indx_value < len(self.guile_option.option_data):
+            widget.set_active(indx_value)
             return False
         else:
             return True
@@ -506,7 +507,14 @@ class GncOption(object):
         # big question is whether to base from 0 or 1 - now going with 0
         # raw indexes are base 0
         newmulti = widget.get_active()
-        return newmulti
+        # lots of options use the function (in option-util.c)
+        # gnc_option_permissible_value that checks in value in range
+        if newmulti >= 0 and newmulti < len(self.guile_option.option_data):
+            newval = self.guile_option.option_data[newmulti][0]
+        else:
+            newval = None
+        #pdb.set_trace()
+        return newval
     def set_ui_widget_date (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_date"
 
@@ -1181,7 +1189,7 @@ class GncOption(object):
         widget = self.gnc_combott(store)
         # not seeing where this is done in scheme/C
         # note this is making the default value the index
-        widget.set_active(self.guile_option.default_value)
+        widget.set_active(self.guile_option.option_data_dict[self.guile_option.default_value])
         #widget.set_model(store)
         widget.connect("changed",self.multichoice_cb)
 

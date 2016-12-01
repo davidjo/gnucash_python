@@ -12,7 +12,7 @@ from ctypes import Structure
 from ctypes import c_int64
 from ctypes import c_long
 
-import gobject
+#from gi.repository import GObject
 
 import pdb
 

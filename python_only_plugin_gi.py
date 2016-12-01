@@ -106,7 +106,7 @@ class MyCallbacks(object):
         self.callbacks = {}
 
 
-class MyPlugin(GObject.Object):
+class MyPlugin(GObject.GObject):
 
     def __init__(self):
         self.plugin_class_init()

@@ -35,16 +35,16 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
     # but we have model and has-entry on the g_object_new which are also properties??
 
     __gproperties__ = {
-                       'mnemonic' : (GObject.TYPE_STRING,                     # type
+                       'mnemonic' : (str,                                     # type
                                       N_("Active currency's mnemonic"),       # nick name
                                       N_("Active currency's mnemonic"),       # description
                                       "USD",                                  # default value
-                                      GObject.PARAM_READWRITE),               # flags
+                                      GObject.ParamFlags.READWRITE),          # flags
                       }
 
     cmtstr = """
     __gsignals__ = {
-                   'format_changed' : (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (int,))
+                   'format_changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,))
                    }
     """
 

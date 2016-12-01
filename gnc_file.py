@@ -1,7 +1,7 @@
 
 import sys
 
-import gtk
+from gi.repository import Gtk
 
 
 import pdb
@@ -29,12 +29,13 @@ class GncFileDialog(object):
 
     def gnc_gtk_dialog_add_button (self, dialog, label, stock_id, response):
 
-        button = gtk.Button(label=label)
+        #button = Gtk.Button(label=label)
+        button = Gtk.Button(label)
 
         if stock_id:
 
-            image = gtk.Image()
-            image.set_from_stock(stock_id, gtk.ICON_SIZE_BUTTON)
+            image = Gtk.Image()
+            image.set_from_stock(stock_id, Gtk.IconSize.BUTTON)
 
             button.set_image(image)
 
@@ -47,48 +48,49 @@ class GncFileDialog(object):
 
     def gnc_file_dialog (self, title, filters, starting_dir, dialog_type):
 
-        okbutton = gtk.STOCK_OPEN
+        okbutton = Gtk.STOCK_OPEN
         ok_icon = None
-        action = gtk.FILE_CHOOSER_ACTION_OPEN
+        action = Gtk.FileChooserAction.OPEN
 
         if dialog_type == GncFileDialog.GNC_FILE_DIALOG_OPEN:
 
-            action = gtk.FILE_CHOOSER_ACTION_OPEN
-            okbutton = gtk.STOCK_OPEN
+            action = Gtk.FileChooserAction.OPEN
+            okbutton = Gtk.STOCK_OPEN
             if title == None:
                 title = N_("Open")
 
         elif dialog_type == GncFileDialog.GNC_FILE_DIALOG_IMPORT:
 
-            action = gtk.FILE_CHOOSER_ACTION_OPEN
+            action = Gtk.FileChooserAction.OPEN
             okbutton = N_("_Import")
             if title == None:
                 title = N_("Import")
 
         elif dialog_type == GncFileDialog.GNC_FILE_DIALOG_SAVE:
 
-            action = gtk.FILE_CHOOSER_ACTION_SAVE
-            okbutton = gtk.STOCK_SAVE
+            action = Gtk.FileChooserAction.SAVE
+            okbutton = Gtk.STOCK_SAVE
             if title == None:
                 title = N_("Save")
 
         elif dialog_type == GncFileDialog.GNC_FILE_DIALOG_EXPORT:
 
-            action = gtk.FILE_CHOOSER_ACTION_SAVE
+            action = Gtk.FileChooserAction.SAVE
             okbutton = N_("_Export")
-            ok_icon = gtk.STOCK_CONVERT
+            ok_icon = Gtk.STOCK_CONVERT
             if title == None:
                 title = N_("Export")
 
         print >> sys.stderr, "doing dialog type",dialog_type,okbutton
 
 
-        file_box = gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL), backend=None)
+        #file_box = Gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL), backend=None)
+        file_box = Gtk.FileChooserDialog(title, None, action, (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL), None)
 
         if ok_icon:
-            self.gnc_gtk_dialog_add_button(file_box, okbutton, ok_icon, gtk.RESPONSE_ACCEPT)
+            self.gnc_gtk_dialog_add_button(file_box, okbutton, ok_icon, Gtk.ResponseType.ACCEPT)
         else:
-            file_box.add_button(okbutton, gtk.RESPONSE_ACCEPT)
+            file_box.add_button(okbutton, Gtk.ResponseType.ACCEPT)
 
         if starting_dir:
             file_box.set_current_folder(starting_dir)
@@ -103,7 +105,7 @@ class GncFileDialog(object):
 
         response = file_box.run()
 
-        if response == gtk.RESPONSE_ACCEPT:
+        if response == Gtk.ResponseType.ACCEPT:
 
             internal_name = file_box.get_uri()
 

@@ -2,9 +2,16 @@
 
 import sys
 
-import gobject
+#import gobject
 
-import gtk
+from gi.repository import GObject
+
+#import gtk
+
+from gi.repository import Gtk
+from gi.repository import Gdk
+
+
 
 import re
 
@@ -27,15 +34,14 @@ def N_(msg):
     return msg
 
 
-
-class GNCAmountEditPython(gtk.Entry):
+class GNCAmountEditPython(Gtk.Entry):
 
     # we must make this a new GObject type to allow for original gnucash definition
 
     __gtype_name__ = 'GNCAmountEditPython'
 
     __gsignals__ = {
-                   'amount_changed' : (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (int,))
+                   'amount_changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,))
                    }
 
 
@@ -74,7 +80,7 @@ class GNCAmountEditPython(gtk.Entry):
     def key_press_event (self, widget, event):
         print "key_press_event", widget, event
         # this code changes keypad decimal key for currencies
-        if event.keyval == gtk.keysyms.KP_Decimal:
+        if event.keyval == Gdk.KEY_KP_Decimal:
             #if self.print_info.monetary:
             #    event.keyval = gnc_localeconv.mon_deciman_point[0]
             #    event.string[0] = gnc_localeconv.mon_deciman_point[0]
@@ -87,11 +93,11 @@ class GNCAmountEditPython(gtk.Entry):
         # returning True from this function means stop processing key event now
         result = False
 
-        if event.keyval == gtk.keysyms.Return:
+        if event.keyval == Gdk.KEY_Return:
             if not self.evaluate_on_enter:
-                if not (event.state & (gtk.gdk.CONTROL_MASK | gtk.gdk.MOD1_MASK | gtk.gdk.SHIFT_MASK)):
+                if not (event.state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK | Gdk.ModifierType.SHIFT_MASK)):
                     return result
-        elif event.keyval == gtk.keysyms.KP_Enter:
+        elif event.keyval == Gdk.KEY_KP_Enter:
             pass
         else:
             return result
