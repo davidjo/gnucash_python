@@ -1,0 +1,441 @@
+
+PREFIX=/opt/local
+
+PYTHONPREFIX=/opt/local/Library/Frameworks/Python.framework/Versions/2.7
+#PYTHONPREFIX=/usr
+PYTHONVER=python2.7
+PYTHONLIB=${PYTHONPREFIX}/lib
+PYTHONINC=${PYTHONPREFIX}/include/${PYTHONVER}
+PYTHONBIN=${PYTHONPREFIX}/bin/${PYTHONVER}
+
+GNUCASH_SRC = ../../..
+
+SWIG=/opt/local/bin/swig
+#SWIG=/usr/bin/swig
+
+# Set the C flags to include the GTK+ and Python libraries
+CFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gtk+-2.0 webkit-1.0` -I${PYTHONINC} -I${GNUCASH_SRC}/libqof/qof -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/html -I${GNUCASH_SRC}/engine -I. -I../.. -I../../..
+LDFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs gtk+-2.0 ` -L${PYTHONLIB} -l${PYTHONVER}
+
+
+build: gir/GncGUID-0.1.gir \
+	gir/GncNumeric-0.1.gir \
+	gir/GncDateFormat-0.1.gir \
+	gir/GncDate-0.1.gir \
+	gir/QofIdType-0.1.gir \
+	gir/KvpFrame-0.1.gir \
+	gir/QofCollection-0.1.gir \
+	gir/QofBook-0.1.gir \
+	gir/Qof-0.1.gir \
+	gir/GncPluginPage-0.1.gir \
+	gir/GncMainWindow-0.1.gir \
+	gir/GncPlugin-0.1.gir \
+	gir/URLType-1.0.gir \
+	gir/GncURLResult-0.1.gir \
+	gir/GncHtmlHistory-0.1.gir \
+	gir/GncHtml-0.1.gir \
+	gir/GncHtmlWebkit-0.1.gir \
+	gir/GncTreeView-0.1.gir \
+	gir/GncAccount-0.1.gir \
+	gir/GncTreeViewAccount-0.1.gir
+	gir/GncTreeModelAccountTypes-0.1.gir
+	# define the build order
+	#gir/GNCNumericError-0.1.gir
+	#gir/QofInstance-0.1.gir 
+
+
+# what I have learned about gir so far:
+# you need the header file and a link library which contains the GType
+# to get the <class /> definition - with --header-only the <class /> definition is not done
+# (a dummy program is created which links to the library and dumps the GType)
+# the g-ir-scanner requires a very specific format - only 1 blank between the * and the
+# next symbol - two blanks and symbol is ignored!!
+# types can be dummied by creating a "fake" .gir - for example see libxml2-2.0.gir in
+# the main gobject-instrospection source
+# note that .gir filenames have a specific required format - the name, hyphen and version
+# you need a .gir for all types used in the header being introspected - added using --include
+# you need a C header for all includes in the header being introspected - added using --cflags-begin
+# (in order to create the dummy program)
+# and another "feature" - virtual functions need same argument variable names
+# as the actual procedure - otherwise complains at actual procedure about differing names
+# ah - need to --include the .gir file for any type included - this adds it as an <include../>
+# to the current gir
+
+# OK - looks as though I had these listed in build order here
+
+girepository/GncGUID-0.1.typelib: gir/GncGUID-0.1.gir
+	#g-ir-compiler -l /opt/local/lib/libpango-1.0.0.dylib,/opt/local/lib/libpangocairo-1.0.0.dylib -o PangoCairo-1.0.typelib PangoCairo-1.0.gir
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+gir/GncGUID-0.1.gir: ${GNUCASH_SRC}/libqof/qof/guid.h
+	g-ir-scanner -v --warn-all -n GncGUID --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./guid.h -o $@
+
+
+#girepository/GNCNumericError-0.1.typelib: gir/GNCNumericError-0.1.gir
+#	#g-ir-compiler -l /opt/local/lib/libpango-1.0.0.dylib,/opt/local/lib/libpangocairo-1.0.0.dylib -o PangoCairo-1.0.typelib PangoCairo-1.0.gir
+#	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+#gir/GNCNumericError-0.1.gir: gnc-numeric-error.h
+#	g-ir-scanner -v --warn-all -n GNCNumericError --nsversion 0.1 --identifier-prefix="GNC" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./gnc-numeric-error.h -o $@
+
+
+girepository/GncNumeric-0.1.typelib: gir/GncNumeric-0.1.gir
+	#g-ir-compiler -l /opt/local/lib/libpango-1.0.0.dylib,/opt/local/lib/libpangocairo-1.0.0.dylib -o PangoCairo-1.0.typelib PangoCairo-1.0.gir
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+#gir/GncNumeric-0.1.gir: gir/GNCNumericError-0.1.gir ${GNUCASH_SRC}/libqof/qof/gnc-numeric.h
+#	g-ir-scanner -v --warn-all -n GncNumeric --nsversion 0.1 --identifier-prefix="gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --add-include-path=./gir --include=GNCNumericError-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./gnc-numeric.h -o $@
+
+gir/GncNumeric-0.1.gir: ${GNUCASH_SRC}/libqof/qof/gnc-numeric.h
+	g-ir-scanner -v --warn-all -n GncNumeric --nsversion 0.1 --identifier-prefix="gnc" --identifier-prefix="GNC" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./gnc-numeric.h -o $@
+
+girepository/Timespec-0.1.typelib: gir/Timespec-0.1.gir
+	#g-ir-compiler -l /opt/local/lib/libpango-1.0.0.dylib,/opt/local/lib/libpangocairo-1.0.0.dylib -o PangoCairo-1.0.typelib PangoCairo-1.0.gir
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+gir/Timespec-0.1.gir: timespec.h
+	g-ir-scanner -v --warn-all -n Timespec --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I. --cflags-end --header-only -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./timespec.h -o $@
+
+
+girepository/GncDateFormat-0.1.typelib: gir/GncDateFormat-0.1.gir
+	#g-ir-compiler -l /opt/local/lib/libpango-1.0.0.dylib,/opt/local/lib/libpangocairo-1.0.0.dylib -o PangoCairo-1.0.typelib PangoCairo-1.0.gir
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+gir/GncDateFormat-0.1.gir: gnc-date-format.h
+	g-ir-scanner -v --warn-all -n GncDateFormat --nsversion 0.1 --identifier-prefix="GNC" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --cflags-begin -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./gnc-date-format.h -o $@
+
+
+girepository/GncDate-0.1.typelib: gir/GncDate-0.1.gir
+	#g-ir-compiler -l /opt/local/lib/libpango-1.0.0.dylib,/opt/local/lib/libpangocairo-1.0.0.dylib -o PangoCairo-1.0.typelib PangoCairo-1.0.gir
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+gir/GncDate-0.1.gir: gir/GncDateFormat-0.1.gir  ${GNUCASH_SRC}/libqof/qof/gnc-date.h
+	g-ir-scanner -v --warn-all -n GncDate --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --add-include-path=./gir --include=GncDateFormat-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./gnc-date.h -o $@
+
+
+
+# we dont need this for QofCollection as we define the QofId type in qofcollection.h
+# and its a base GType (gchar *) 
+girepository/QofIdType-0.1.typelib: gir/QofIdType-0.1.gir
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+gir/QofIdType-0.1.gir:
+	g-ir-scanner -v --warn-all -n QofIdType --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GObject-2.0 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofidtype.h -o $@
+
+# we never make a typelib of the bootstrap girs
+
+# build a dummy library defining QofCollection as a BOXED GType
+# we use this to generate the .gir file then replace the library with the gnucash libqof library
+# note that QofCollection is part of qofid.h - it is not a separate include file
+# we split the two for gir
+qofcollection.o: qofcollection_bootstrap.c
+	#cc `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. -E ./qofcollection_bootstrap.c >qofcollection_bootstrap.E
+	cc `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. -c ./qofcollection_bootstrap.c
+	cp -p qofcollection_bootstrap.o qofcollection.o
+
+libqofcollection.dylib: qofcollection.o
+	cc -shared `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs glib-2.0 gobject-2.0 ` -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof -o libqofcollection.dylib ./qofcollection.o
+
+
+gir_bootstrap/QofCollection-0.1.gir: libqofcollection.dylib
+	g-ir-scanner -v --warn-all -n QofCollection --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L. -lqofcollection ./qofcollection_bootstrap.h -o $@
+	#mv $@ gir_bootstrap/QofCollection-0.1.gir.orig
+	#sed -e 's?libqofcollection.dylib?libgnc-qof.1.dylib?' <gir_bootstrap/QofCollection-0.1.gir.orig >$@
+
+
+
+girepository/QofCollection-0.1.typelib: gir/QofCollection-0.1.gir
+	# no its confirmed we DO need the bootstrap versions here
+	#g-ir-compiler --includedir=gir_bootstrap --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+#gir/QofCollection-0.1.gir: gir_bootstrap/Qof-0.1.gir gir/QofIdType-0.1.gir libqofcollection.dylib
+gir/QofCollection-0.1.gir: gir/QofIdType-0.1.gir libqofcollection.dylib
+	#g-ir-scanner -v --warn-all -n QofCollection --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --add-include-path=./gir --include=QofIdType-0.1  --include=GncGUID-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L. -lqofcollection ./qofcollection.h -o $@
+	#g-ir-scanner -v --warn-all -n QofCollection --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --add-include-path=./gir_bootstrap --include=Qof-0.1  --add-include-path=./gir --include=QofIdType-0.1  --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L. -lqofcollection ./qofcollection.h -o $@
+	g-ir-scanner -v --warn-all -n QofCollection --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --add-include-path=./gir --include=GncGUID-0.1 --include=QofIdType-0.1  --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L. -lqofcollection ./qofcollection.h -o $@
+	mv $@ gir/QofCollection-0.1.gir.orig
+	sed -e 's?libqofcollection.dylib?libgnc-qof.1.dylib?' <gir/QofCollection-0.1.gir.orig >$@
+	touch -r gir/QofCollection-0.1.gir.orig gir/QofCollection-0.1.gir
+
+
+girepository/KvpFrame-0.1.typelib: gir/KvpFrame-0.1.gir
+	g-ir-compiler --includedir=gir -o $@ $^
+
+# KvpFrame is not a gobject structure
+#gir/KvpFrame-0.1.gir: ${GNUCASH_SRC}/libqof/qof/kvp_frame.h
+gir/KvpFrame-0.1.gir: gir/GncGUID-0.1.gir gir/GncNumeric-0.1.gir gir/GncDate-0.1.gir kvp_frame.h
+	g-ir-scanner -v --warn-all -n KvpFrame --nsversion 0.1 --identifier-prefix="Kvp" --symbol-prefix="kvp" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir --include=GncGUID-0.1 --include=GncNumeric-0.1 --include=GncDate-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./kvp_frame.h -o $@
+	# for some reason the Timespec type of GncDate is not resolved
+	# patch the gir file!!
+	patch -p0 -b <patch-KvpFrame.diff
+
+
+# we never make a typelib of the bootstrap girs
+
+gir_bootstrap/Qof-0.1.gir: ./qofinstance_bootstrap.h
+	g-ir-scanner -v --warn-all -n Qof --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir --include=QofIdType-0.1 --include=KvpFrame-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofinstance_bootstrap.h -o $@
+
+
+girepository/Qof-0.1.typelib: gir/Qof-0.1.gir
+	# no its confirmed we DO need the bootstrap versions here
+	#g-ir-compiler --includedir=gir_bootstrap --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+# curiouser and curiouser - some functions return a GList to arbitrary objects
+# adding gpointer as the element-type fails
+#gir/Qof-0.1.gir: ${GNUCASH_SRC}/libqof/qof/qofinstance.h
+#gir/Qof-0.1.gir: gir_bootstrap/QofCollection-0.1.gir gir/QofBook-0.1.gir qofinstance.h
+gir/Qof-0.1.gir: qofinstance.h
+	# hacked to deal with circular/cylic reference with QofId, QofCollection, QofBook
+	#g-ir-scanner -v --warn-all -n Qof --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir_bootstrap --include=KvpFrame-0.1 --add-include-path=./gir --include=QofCollection-0.1 --include=GncGUID-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 gobject-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. -DGI_QOFIDTYPE --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofinstance.h -o $@
+	#g-ir-scanner -v --warn-all -n Qof --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir_bootstrap --include=QofCollection-0.1 --add-include-path=./gir --include=GncGUID-0.1 --include=QofIdType-0.1 --include=KvpFrame-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 gobject-2.0 ` -I. -I${GNUCASH_SRC}/libqof/qof --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofinstance.h -o $@
+	# removed QofCollection because of circular reference issues
+	g-ir-scanner -v --warn-all -n Qof --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir --include=GncGUID-0.1 --include=QofIdType-0.1 --include=KvpFrame-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 gobject-2.0 ` -I. -I${GNUCASH_SRC}/libqof/qof --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofinstance.h -o $@
+	#patch -p0 -b <patch-Qof.diff
+	mv $@ gir/Qof-0.1.gir.orig1
+	sed -e 's/type name="Book"/type name="QofBook.Book"/' -e 's/method name="instance_/method name="/' <gir/Qof-0.1.gir.orig1 >$@
+
+#
+# qofid.h seems to be mix of QofIdType definitions and QofCollection definitions
+# - split out into separate includes and use separately
+#girepository/QofId-0.1.typelib: gir/QofId-0.1.gir
+#	g-ir-compiler --includedir=gir_bootstrap --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+##gir/QofId-0.1.gir: ${GNUCASH_SRC}/libqof/qof/qofid.h gir/QofInstanceType-0.1.gir
+#gir/QofId-0.1.gir: ${GNUCASH_SRC}/libqof/qof/qofid.h
+#	# must be run after Qof generated
+#	# hacked to deal with circular/cylic reference with Qof
+#	#g-ir-scanner -v --warn-all -n QofId --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GObject-2.0 --include=GLib-2.0 --add-include-path=./gir --include=QofCollection-0.1 --include=GncGUID-0.1 --include=QofInstanceType-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -DGI_QOFCOLLECTION -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofid.h -o $@
+#	g-ir-scanner -v --warn-all -n QofId --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GObject-2.0 --include=GLib-2.0 --add-include-path=./gir_bootstrap --add-include-path=./gir --include=QofCollection-0.1 --include=GncGUID-0.1 --include=Qof-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -DGI_QOFCOLLECTION -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofid.h -o $@
+
+
+gir_bootstrap/QofBook-0.1.gir: gir/QofIdType-0.1.gir gir_bootstrap/Qof-0.1.gir ${GNUCASH_SRC}/libqof/qof/qofbook.h
+	# apparently if we define a typedef in Qof for QofBook
+	# this overrides the definition here - books become type Qof.Book
+	#g-ir-scanner -v --warn-all -n QofBook --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir_bootstrap --include=QofInstanceType-0.1 --add-include-path=./gir --include=QofId-0.1 --include=QofCollection-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofbook.h -o $@
+	g-ir-scanner -v --warn-all -n QofBook --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir_bootstrap --include=Qof-0.1 --add-include-path=./gir --include=QofIdType-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofbook_bootstrap.h -o $@
+
+
+girepository/QofBook-0.1.typelib: gir/QofBook-0.1.gir
+	# no its confirmed we DO need the bootstrap versions here
+	g-ir-compiler --includedir=gir_bootstrap --includedir=gir -l ${PREFIX}/lib/libgnc-qof.1.dylib -o $@ $^
+
+gir/QofBook-0.1.gir: gir/QofIdType-0.1.gir gir/KvpFrame-0.1.gir gir_bootstrap/Qof-0.1.gir ${GNUCASH_SRC}/libqof/qof/qofbook.h
+	# apparently if we define a typedef in Qof for QofBook
+	# this overrides the definition here - books become type Qof.Book
+	#g-ir-scanner -v --warn-all -n QofBook --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir_bootstrap --include=QofInstanceType-0.1 --add-include-path=./gir --include=QofId-0.1 --include=QofCollection-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofbook.h -o $@
+	g-ir-scanner -v --warn-all -n QofBook --nsversion 0.1 --identifier-prefix="Qof" --symbol-prefix="qof" --accept-unprefixed --include=GLib-2.0 --include=GObject-2.0 --add-include-path=./gir_bootstrap --include=Qof-0.1 --add-include-path=./gir --include=QofIdType-0.1 --include=QofCollection-0.1 --include=KvpFrame-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 ` -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/libqof/qof/.libs/ -lgnc-qof ./qofbook.h -o $@
+
+
+gir_bootstrap/GncPluginPage-0.1.gir: ${GNUCASH_SRC}/gnome-utils/gnc-plugin-page.h
+	g-ir-scanner -v --warn-all -n GncPluginPage --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I../../.. -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/libqof/qof -DHAVE_SCANF_LLD=1 --cflags-end -L${GNUCASH_SRC}/gnome-utils/.libs/ -lgncmod-gnome-utils  ./gnc-plugin-page-bootstrap.h -o $@
+
+girepository/GncPluginPage-0.1.typelib: gir/GncPluginPage-0.1.gir
+	# no its confirmed we DO need the bootstrap versions here
+	g-ir-compiler --includedir=gir_bootstrap --includedir=gir -l ${PREFIX}/lib/gnucash/libgncmod-gnome-utils.dylib -o $@ $^
+
+gir/GncPluginPage-0.1.gir: gir/QofBook-0.1.gir ${GNUCASH_SRC}/gnome-utils/gnc-plugin-page.h
+	#g-ir-scanner -v --warn-all -n GncPluginPage --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --include=Gtk-2.0 --include=Gdk-2.0 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I../../.. -I${GNUCASH_SRC}/libqof/qof --cflags-end   --library  ${GNUCASH_SRC}/gnome-utils/libgncmod-gnome-utils.la ${GNUCASH_SRC}/gnome-utils/gnc-plugin-page.h ${GNUCASH_SRC}/gnome-utils/gnc-plugin-page.c -o GncPluginPage.gir
+	#env GI_SCANNER_DEBUG='save-temps' g-ir-scanner -v --warn-all -n GncPluginPage --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --include=Gtk-2.0 --include=Gdk-2.0 --include=Gio-2.0 --add-include-path=./gir --include=QofBook-0.1 --cflags-begin -I/opt/local/include/glib-2.0 -I/opt/local/lib/glib-2.0/include -I/opt/local/include -D_REENTRANT -I/opt/local/include/gtk-2.0 -I/opt/local/lib/gtk-2.0/include -I/opt/local/include/atk-1.0 -I/opt/local/include/cairo -I/opt/local/include/gdk-pixbuf-2.0 -I/opt/local/include/pango-1.0 -I/opt/local/include/gio-unix-2.0/ -I/opt/local/include -I/opt/local/include/glib-2.0 -I/opt/local/lib/glib-2.0/include -I/opt/local/include/pixman-1 -I/opt/local/include/freetype2 -I/opt/local/include/libpng14 -I../../.. -I${GNUCASH_SRC}/libqof/qof -I. --cflags-end -L${GNUCASH_SRC}/gnome-utils/.libs/ -lgncmod-gnome-utils ./gnc-plugin-page.h -o gir/GncPluginPage-0.1.gir 
+	g-ir-scanner -v --warn-all -n GncPluginPage --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --include=Gtk-2.0 --include=Gdk-2.0 --include=Gio-2.0 --cflags-begin -I/opt/local/include/glib-2.0 -I/opt/local/lib/glib-2.0/include -I/opt/local/include -D_REENTRANT -I/opt/local/include/gtk-2.0 -I/opt/local/lib/gtk-2.0/include -I/opt/local/include/atk-1.0 -I/opt/local/include/cairo -I/opt/local/include/gdk-pixbuf-2.0 -I/opt/local/include/pango-1.0 -I/opt/local/include/gio-unix-2.0/ -I/opt/local/include -I/opt/local/include/glib-2.0 -I/opt/local/lib/glib-2.0/include -I/opt/local/include/pixman-1 -I/opt/local/include/freetype2 -I/opt/local/include/libpng14 -I${GNUCASH_SRC}/libqof/qof -I. -DHAVE_SCANF_LLD=1 --cflags-end -L${GNUCASH_SRC}/gnome-utils/.libs/ -lgncmod-gnome-utils ./gnc-plugin-page.h -o gir/GncPluginPage-0.1.gir 
+	patch -p0 -b <patch-GncPluginPage.diff
+	mv $@ gir/GncPluginPage-0.1.gir.orig1
+	sed -e 's/type name="QofBook"/type name="QofBook.Book"/' <gir/GncPluginPage-0.1.gir.orig1 >$@
+	touch -r gir/GncPluginPage-0.1.gir.orig gir/GncPluginPage-0.1.gir
+
+
+gir_bootstrap/GncMainWindow-0.1.gir: ${GNUCASH_SRC}/gnome-utils/gnc-main-window.h ${GNUCASH_SRC}/gnome-utils/gnc-main-window.c
+	g-ir-scanner -v --warn-all -n GncMainWindow --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I../../.. -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/libqof/qof -DHAVE_SCANF_LLD=1 --cflags-end -L${GNUCASH_SRC}/gnome-utils/.libs/ -lgncmod-gnome-utils  ./gnc-main-window-bootstrap.h -o $@
+
+
+girepository/GncMainWindow-0.1.typelib: gir/GncMainWindow-0.1.gir
+	# no its confirmed we DO need the bootstrap versions here
+	g-ir-compiler --includedir=gir_bootstrap --includedir=gir -o $@ $^
+
+gir/GncMainWindow-0.1.gir: gir_bootstrap/GncPluginPage-0.1.gir ${GNUCASH_SRC}/gnome-utils/gnc-main-window.h ${GNUCASH_SRC}/gnome-utils/gnc-main-window.c
+	#g-ir-scanner -v --warn-all -n GncMainWindow --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0 --add-include-path=./gir_bootstrap --include=GncPluginPage-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/libqof/qof -DHAVE_SCANF_LLD=1 --cflags-end -L${GNUCASH_SRC}/gnome-utils/.libs/ -lgncmod-gnome-utils  ./gnc-main-window.h -o $@
+	g-ir-scanner -v --warn-all -n GncMainWindow --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0 --add-include-path=./gir_bootstrap --include=GncPluginPage-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/libqof/qof -DHAVE_SCANF_LLD=1 --cflags-end -L${GNUCASH_SRC}/gnome-utils/.libs/ -lgncmod-gnome-utils  ./gnc-main-window.h -o $@
+
+
+girepository/GncPlugin-0.1.typelib: gir/GncPlugin-0.1.gir
+	# no its confirmed we DO need the bootstrap versions here
+	g-ir-compiler --includedir=gir_bootstrap --includedir=gir -l ${PREFIX}/lib/gnucash/libgncmod-gnome-utils.dylib -o $@ $^
+
+gir/GncPlugin-0.1.gir: gir_bootstrap/GncMainWindow-0.1.gir ${GNUCASH_SRC}/gnome-utils/gnc-plugin.h
+	g-ir-scanner -v --warn-all -n GncPlugin --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --include=Gtk-2.0 --include=Gdk-2.0 --include=Gio-2.0 --add-include-path=./gir_bootstrap --include=GncMainWindow-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 gtk+-2.0 ` -I../../.. -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/libqof/qof -I. -DHAVE_SCANF_LLD=1 --cflags-end -L${GNUCASH_SRC}/gnome-utils/.libs/ -lgncmod-gnome-utils ./gnc-plugin.h -o gir/GncPlugin-0.1.gir 
+
+
+
+girepository/URLType-1.0.typelib: gir/URLType-1.0.gir
+	g-ir-compiler --includedir=gir -o $@ $^
+
+
+gir/URLType-1.0.gir:
+	# this is manually constructed
+	cp -p gir_base/URLType-1.0.gir gir
+
+
+girepository/GncHtmlHistory-0.1.typelib: gir/GncHtmlHistory-0.1.gir
+	g-ir-compiler --includedir=gir -o $@ $^
+
+
+gir/GncHtmlHistory-0.1.gir:
+	g-ir-scanner -v --warn-all -n GncHtmlHistory --nsversion 0.1 --identifier-prefix="GNC" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --add-include-path=./gir --include=URLType-1.0 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I${GNUCASH_SRC}/html -I. --cflags-end --header-only ./gnc-html-history.h -o $@
+
+
+girepository/GncURLResult-0.1.typelib: gir/GncURLResult-0.1.gir
+	g-ir-compiler --includedir=gir -o $@ $^
+
+gir/GncURLResult-0.1.gir:
+	# this has been split from gnc-html.h as separate gir/typelib files
+	g-ir-scanner -v --warn-all -n GncURLResult --nsversion 0.1 --identifier-prefix="GNC" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --add-include-path=./gir --include=URLType-1.0 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 ` -I${GNUCASH_SRC}/html -I. --cflags-end --header-only ./gnc-urlresult.h -o $@
+
+
+girepository/GncHtml-0.1.typelib: gir/GncHtml-0.1.gir
+	g-ir-compiler --includedir=gir -l ${PREFIX}/lib/gnucash/libgncmod-html.dylib -o $@ $^
+
+gir/GncHtml-0.1.gir: gir/URLType-1.0.gir gir/GncURLResult-0.1.gir gir/GncHtmlHistory-0.1.gir ${GNUCASH_SRC}/html/gnc-html.h
+	g-ir-scanner -v --warn-all -n GncHtml --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --include=Gtk-2.0 --add-include-path=./gir --include=URLType-1.0 --include=GncHtmlHistory-0.1 --include=GncURLResult-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 gtk+-2.0 glib-2.0 ` -I${GNUCASH_SRC}/html -I. --cflags-end -L${GNUCASH_SRC}/html/.libs/ -lgncmod-html ./gnc-html.h -o $@
+
+
+girepository/GncHtmlWebkit-0.1.typelib: gir/GncHtmlWebkit-0.1.gir
+	g-ir-compiler --debug --includedir=gir -l ${PREFIX}/lib/gnucash/libgncmod-html.dylib -o $@ $^
+
+gir/GncHtmlWebkit-0.1.gir: ${GNUCASH_SRC}/html/gnc-html-webkit.h gir/GncHtml-0.1.gir
+	#libgncmod-html.dylib
+	g-ir-scanner -v --warn-all -n GncHtmlWebkit --nsversion 0.1 --identifier-prefix="Gnc" --symbol-prefix="gnc" --accept-unprefixed --include=GObject-2.0 --include=Gtk-2.0 --add-include-path=./gir --include=GncHtml-0.1 --cflags-begin `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 gtk+-2.0 glib-2.0 webkit-1.0` -I${GNUCASH_SRC}/html -I. --cflags-end -L${GNUCASH_SRC}/html/.libs/ -lgncmod-html ./gnc-html-webkit.h -o $@
+
+
+girepository/GncTreeView-0.1.typelib: gir/GncTreeView-0.1.gir
+	g-ir-compiler --debug --includedir=gir -l /opt/local/lib/gnucash/libgncmod-gnome-utils.dylib $^ -o $@
+
+gir/GncTreeView-0.1.gir: ${GNUCASH_SRC}/gnome-utils/gnc-tree-view.h
+	g-ir-scanner -v --warn-all -n GncTreeView --nsversion 0.1  --identifier-prefix=Gnc --symbol-prefix=gnc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/libqof/qof --cflags-end  -L${GNUCASH_SRC}/gnome-utils/.libs -lgncmod-gnome-utils ./gnc-tree-view.h  -o $@
+
+
+# this is truncated Account definition for the moment
+# annoying - GnuCash does not follow gobject naming schemes
+# and cant figure out any way to tell g-ir-scanner to modify the gir function names
+# punting and editing names later
+girepository/GncAccount-0.1.typelib: gir/GncAccount-0.1.gir
+	g-ir-compiler --debug --includedir=gir -l /opt/local/lib/gnucash/libgncmod-engine.dylib $^ -o $@
+
+gir/GncAccount-0.1.gir: ${GNUCASH_SRC}/engine/Account.h
+	#g-ir-scanner -v --warn-all -n GncAccount --nsversion 0.1  --identifier-prefix=Gnc --symbol-prefix=gnc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0  --add-include-path=./gir --include=Qof-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I../../.. -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof  -DHAVE_SCANF_LLD=1 --cflags-end  -L${GNUCASH_SRC}/engine/.libs -lgncmod-engine ./Account.h  -o $@
+	g-ir-scanner -v --warn-all -n GncAccount --nsversion 0.1  --identifier-prefix=GNC --identifier-prefix=xacc --symbol-prefix=gnc --symbol-prefix=xacc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0  --add-include-path=./gir --include=Qof-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I../../.. -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof  -DHAVE_SCANF_LLD=1 --cflags-end  -L${GNUCASH_SRC}/engine/.libs -lgncmod-engine ./Account.h  -o $@
+	# well I cant figure out how to get xaccMallocAccount to occur as MallocAccount
+	# punting - change gir names after scanning
+	mv $@ gir/GncAccount-0.1.gir.orig
+	sed -e 's?name="xaccAccount?name="?' -e 's?name="xacc?name="?' <gir/GncAccount-0.1.gir.orig >$@
+
+
+girepository/GncTreeViewAccount-0.1.typelib: gir/GncTreeViewAccount-0.1.gir
+	g-ir-compiler --debug --includedir=gir -l /opt/local/lib/gnucash/libgncmod-gnome-utils.dylib $^ -o $@
+
+gir/GncTreeViewAccount-0.1.gir: ${GNUCASH_SRC}/gnome-utils/gnc-tree-view-account.h
+	#g-ir-scanner -v --warn-all -n GncTreeViewAccount --nsversion 0.1  --identifier-prefix=Gnc --symbol-prefix=gnc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0  --add-include-path=./gir --include=GncTreeView-0.1 --include=GncPluginPage-0.1 --include=GncGUID-0.1 --include=GncAccount-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I../../.. -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof --cflags-end  -L${GNUCASH_SRC}/gnome-utils/.libs -lgncmod-gnome-utils ./gnc-tree-view-account.h  -o $@
+	#env GI_SCANNER_DEBUG='save-temps' g-ir-scanner -v --warn-all -n GncTreeViewAccount --nsversion 0.1  --identifier-prefix=Gnc --symbol-prefix=gnc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0  --add-include-path=./gir --include=GncTreeView-0.1 --include=GncPluginPage-0.1 --include=GncGUID-0.1 --include=GncAccount-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof -I. -DHAVE_SCANF_LLD=1 --cflags-end  -L${GNUCASH_SRC}/gnome-utils/.libs -lgncmod-gnome-utils ./gnc-tree-view-account.h  -o $@
+	g-ir-scanner -v --warn-all -n GncTreeViewAccount --nsversion 0.1  --identifier-prefix=Gnc --symbol-prefix=gnc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0  --add-include-path=./gir --include=GncTreeView-0.1 --include=GncPluginPage-0.1 --include=GncGUID-0.1 --include=GncAccount-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof -I. -DHAVE_SCANF_LLD=1 --cflags-end  -L${GNUCASH_SRC}/gnome-utils/.libs -lgncmod-gnome-utils ./gnc-tree-view-account.h  -o $@
+
+
+girepository/GncTreeModelAccountTypes-0.1.typelib: gir/GncTreeModelAccountTypes-0.1.gir
+	g-ir-compiler --debug --includedir=gir -l /opt/local/lib/gnucash/libgncmod-gnome-utils.dylib $^ -o $@
+
+gir/GncTreeModelAccountTypes-0.1.gir: ${GNUCASH_SRC}/gnome-utils/gnc-tree-model-account-types.h
+	#env GI_SCANNER_DEBUG='save-temps' g-ir-scanner -v --warn-all -n GncTreeModelAccountTypes --nsversion 0.1  --identifier-prefix=Gnc --symbol-prefix=gnc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0  --add-include-path=./gir --include=GncTreeView-0.1 --include=GncPluginPage-0.1 --include=GncGUID-0.1 --include=GncAccount-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof -I. -DHAVE_SCANF_LLD=1 --cflags-end  -L${GNUCASH_SRC}/gnome-utils/.libs -lgncmod-gnome-utils ./gnc-tree-model-account-types.h  -o $@
+	g-ir-scanner -v --warn-all -n GncTreeModelAccountTypes --nsversion 0.1  --identifier-prefix=Gnc --symbol-prefix=gnc --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0   --add-include-path=./gir --include=GncAccount-0.1  --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof -I. -DHAVE_SCANF_LLD=1 --cflags-end  -L${GNUCASH_SRC}/gnome-utils/.libs -lgncmod-gnome-utils ./gnc-tree-model-account-types.h  -o $@
+
+
+girepository/AccountFilterDialog-0.1.typelib: gir/AccountFilterDialog-0.1.gir
+	g-ir-compiler --debug --includedir=gir -l /opt/local/lib/gnucash/libgncmod-gnome-utils.dylib $^ -o $@
+
+gir/AccountFilterDialog-0.1.gir: ${GNUCASH_SRC}/gnome-utils/gnc-tree-view-account.h
+	g-ir-scanner -v --warn-all -n AccountFilterDialog --nsversion 0.1  --identifier-prefix=AccountFilter --symbol-prefix=account_filter --accept-unprefixed --include=Gtk-2.0 --include=Gdk-2.0  --add-include-path=./gir --include=Account-0.1 --cflags-begin `pkg-config --cflags gtk+-2.0 glib-2.0` -I../../.. -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/engine -I${GNUCASH_SRC}/libqof/qof --cflags-end  -L${GNUCASH_SRC}/gnome-utils/.libs -lgncmod-gnome-utils ./gnc-tree-view-account.h  -o $@
+
+
+
+swig-runtime-python.h:
+	$(SWIG) -python -external-runtime $@
+
+glib-helpers-python.o: glib-helpers-python.c swig-runtime-python.h
+	$(CC) $(CFLAGS) -c glib-helpers-python.c -o $@
+
+glib-helpers-python.so: glib-helpers-python.o
+	#$(CC) $(LDFLAGS) ${GNUCASH_SRC}/gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) -shared $^ -o $@
+
+
+# not needed with introspection
+#pygkeyfile.so : 
+#	#$(CC) $(CFLAGS) -c $^ -o $@
+#	${PYTHONBIN} setup.py --verbose build_ext -i
+
+# dont add glib-helpers-python.o as need to include swig-runtime-python.h in module
+# and so swig functions will be defined and cant figure out how to ignore them
+swighelpers.so: swighelpers.o 
+	$(CC) -L${PYTHONLIB} -l${PYTHONVER} -shared $^ -o $@
+
+swighelpers.o: swighelpers.c swig-runtime-python.h
+	$(CC) $(CFLAGS) -c swighelpers.c -o $@
+
+
+# helpers for GObject introspection
+# this is big problem - the library is a module not a shared library
+# so at least on OSX cant link to it
+pygihelpers.so: pygihelpers.o 
+	# ${PYTHONLIB}/python2.7/site-packages/gi/_gi.so
+	$(CC) $(LDFLAGS) -shared $^ -o $@
+
+pygihelpers.o: pygihelpers.c
+	$(CC) -g $(CFLAGS) `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags pygobject-2.0 ` -c $^ -o $@
+
+pygigtkhelpers.so: pygigtkhelpers.o 
+	#$(CC) $(LDFLAGS) ${GNUCASH_SRC}/gnome-utils/.libs/libgncmod-gnome-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) -L/opt/local/lib/gnucash -lgncmod-gnome-utils -shared $^ -o $@
+
+pygigtkhelpers.o: pygigtkhelpers.c
+	env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags pygobject-2.0
+	$(CC) `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 gtk+-2.0 pygobject-2.0 ` -I${PYTHONINC} -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/libqof/qof -c $^ -o $@
+
+pygignchelpers.so: pygignchelpers.o 
+	#$(CC) $(LDFLAGS) ${GNUCASH_SRC}/html/.libs/libgncmod-html.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) -L/opt/local/lib/gnucash -lgncmod-html -shared $^ -o $@
+
+pygignchelpers.o: pygignchelpers.c
+	env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags pygobject-2.0
+	$(CC) `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gobject-2.0 pygobject-2.0 webkit-1.0 ` -I${PYTHONINC} -I${GNUCASH_SRC}/html -I${GNUCASH_SRC}/libqof/qof -c $^ -o $@
+
+
+#release: gnchtml.so gnchtmlwebkit.so gncpluginpage.so gncmainwindow.so 
+
+repository: girepository/GncGUID-0.1.typelib \
+	girepository/GncDateFormat-0.1.typelib \
+	girepository/GncDate-0.1.typelib \
+	girepository/GncNumeric-0.1.typelib \
+	girepository/QofIdType-0.1.typelib \
+	girepository/KvpFrame-0.1.typelib \
+	girepository/QofCollection-0.1.typelib \
+	girepository/QofBook-0.1.typelib \
+	girepository/Qof-0.1.typelib \
+	girepository/GncPluginPage-0.1.typelib \
+	girepository/GncMainWindow-0.1.typelib \
+	girepository/GncPlugin-0.1.typelib \
+	girepository/URLType-1.0.typelib \
+	girepository/GncURLResult-0.1.typelib \
+	girepository/GncHtmlHistory-0.1.typelib \
+	girepository/GncHtml-0.1.typelib \
+	girepository/GncHtmlWebkit-0.1.typelib \
+	girepository/GncTreeView-0.1.typelib \
+	girepository/GncAccount-0.1.typelib \
+	girepository/GncTreeViewAccount-0.1.typelib \
+	girepository/GncTreeModelAccountTypes-0.1.typelib
+	#girepository/GNCNumericError-0.1.typelib 
+	#girepository/QofInstance-0.1.typelib 
+
+
+# A rule to clean the generated files
+clean:
+	rm -f gncpluginpage.so gncpluginpage.o gncpluginpage-methods.c
+
+.PHONY: clean

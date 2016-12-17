@@ -1,0 +1,14 @@
+--- gir_fixup/GncAccount-0.1.gir.orig	2016-12-12 10:34:23.000000000 +0000
++++ gir_fixup/GncAccount-0.1.gir	2016-12-12 13:17:52.000000000 +0000
+@@ -14,6 +14,9 @@
+              shared-library="/opt/local/lib/gnucash/libgncmod-engine.dylib"
+              c:identifier-prefixes="GNC,xacc"
+              c:symbol-prefixes="gnc,xacc">
++    <alias name="Account" c:type="Account">
++      <type name="Account" c:type="Account"/>
++    </alias>
+     <constant name="ACCOUNT_BALANCE_"
+               value="balance"
+               c:type="ACCOUNT_BALANCE_">
+
+

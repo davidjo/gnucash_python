@@ -1,0 +1,38 @@
+--- gir/KvpFrame-0.1.gir.orig	2016-12-03 18:35:34.000000000 +0000
++++ gir/KvpFrame-0.1.gir	2016-12-03 18:38:27.000000000 +0000
+@@ -293,7 +293,7 @@
+               c:identifier="kvp_frame_get_timespec"
+               introspectable="0">
+         <return-value>
+-          <type c:type="Timespec"/>
++          <type name="GncDate.Timespec" c:type="Timespec"/>
+         </return-value>
+         <parameters>
+           <instance-parameter name="frame" transfer-ownership="none">
+@@ -586,7 +586,7 @@
+             <type name="utf8" c:type="const gchar*"/>
+           </parameter>
+           <parameter name="ts" transfer-ownership="none">
+-            <type c:type="Timespec"/>
++            <type name="GncDate.Timespec" c:type="Timespec"/>
+           </parameter>
+         </parameters>
+       </method>
+@@ -842,7 +842,7 @@
+               c:identifier="kvp_value_get_timespec"
+               introspectable="0">
+         <return-value>
+-          <type c:type="Timespec"/>
++          <type name="GncDate.Timespec" c:type="Timespec"/>
+         </return-value>
+         <parameters>
+           <instance-parameter name="value" transfer-ownership="none">
+@@ -1075,7 +1075,7 @@
+         </return-value>
+         <parameters>
+           <parameter name="timespec" transfer-ownership="none">
+-            <type c:type="Timespec"/>
++            <type name="GncDate.Timespec" c:type="Timespec"/>
+           </parameter>
+         </parameters>
+       </function>

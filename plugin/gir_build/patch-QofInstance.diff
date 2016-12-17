@@ -1,0 +1,11 @@
+--- gir/QofInstance-0.1.gir.orig	2016-12-05 09:28:43.000000000 +0000
++++ gir/QofInstance-0.1.gir	2016-12-05 09:52:53.000000000 +0000
+@@ -18,8 +18,6 @@
+              shared-library="/opt/local/lib/libgnc-qof.1.dylib"
+              c:identifier-prefixes="Qof"
+              c:symbol-prefixes="qof">
+-    <record name="Book" c:type="QofBook" disguised="1">
+-    </record>
+     <class name="Instance"
+            c:symbol-prefix="instance"
+            c:type="QofInstance"

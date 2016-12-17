@@ -1,0 +1,12 @@
+--- gir/GncTreeViewAccount-0.1.gir.orig	2016-12-12 13:35:25.000000000 +0000
++++ gir/GncTreeViewAccount-0.1.gir	2016-12-12 13:36:46.000000000 +0000
+@@ -17,6 +17,9 @@
+              shared-library="/opt/local/lib/gnucash/libgncmod-gnome-utils.dylib"
+              c:identifier-prefixes="Gnc"
+              c:symbol-prefixes="gnc">
++    <alias name="Account" c:type="Account">
++      <type name="Account" c:type="Account"/>
++    </alias>
+     <record name="AccountFilterDialog" c:type="AccountFilterDialog">
+       <field name="dialog" writable="1">
+         <type name="Gtk.Widget" c:type="GtkWidget*"/>
