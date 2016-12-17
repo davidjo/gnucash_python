@@ -185,7 +185,11 @@ class PyGObjectCAPI(object):
         self._api = _PyGObject_Functions.from_address(addr)
 
     def pygobject_new(self, addr):
-        return self._api.newgobj(addr)
+        try:
+            retval = self._api.newgobj(addr)
+        except Exception, errexc:
+            retval = None
+        return retval
 
     def disable_warning_redirections(self):
         return self._api.disable_warning_redirections()

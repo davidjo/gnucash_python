@@ -27,8 +27,6 @@ except Exception, errexc:
 
 import gnucash_log
 
-from gnome_utils_ctypes import libgnc_gnomeutils
-
 from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
@@ -59,13 +57,6 @@ GncMainWindowActionData._fields_ = [
                                     ('window', POINTER(GncMainWindowOpaque)),
                                     ('data', gpointer),
                                    ]
-
-libgnc_gnomeutils.gnc_main_window_open_page.argtypes = [ c_void_p, c_void_p ]
-libgnc_gnomeutils.gnc_main_window_open_page.restype = None
-
-libgnc_gnomeutils.gnc_main_window_close_page.argtypes = [ c_void_p ]
-libgnc_gnomeutils.gnc_main_window_close_page.restype = None
-
 
 if False:
 
@@ -115,7 +106,7 @@ elif False:
         return main_window
 
 
-else:
+elif False:
 
     # use pygobject and ctypes access to gnc_main_window
 
@@ -129,6 +120,14 @@ else:
     import types
 
     from pygobjectcapi import PyGObjectCAPI
+
+    from gnome_utils_ctypes import libgnc_gnomeutils
+
+    libgnc_gnomeutils.gnc_main_window_open_page.argtypes = [ c_void_p, c_void_p ]
+    libgnc_gnomeutils.gnc_main_window_open_page.restype = None
+
+    libgnc_gnomeutils.gnc_main_window_close_page.argtypes = [ c_void_p ]
+    libgnc_gnomeutils.gnc_main_window_close_page.restype = None
 
 
     class GtkUIManagerOpaque(Structure):
@@ -172,7 +171,7 @@ else:
 
     def main_window_wrap (main_window):
 
-        #pdb.set_trace()
+        pdb.set_trace()
 
         # this argument must be a GObject wrapped Gtk.Window
 
@@ -343,4 +342,172 @@ else:
         main_ui_merge.remove_ui(merge_id)
 
         main_ui_merge.ensure_update()
+
+
+else:
+
+
+    # use pygobject and introspection
+
+    # call the gnome_utils gnc_gui_init
+    # then wrap as appropriate
+    # do it this way so dont get circular imports - gnc_gui_init needs
+    # the gnc_main_window type and this module needs gnome_utils
+
+    #pdb.set_trace()
+
+    import types
+
+    from pygobjectcapi import PyGObjectCAPI
+
+    from gi.repository import GncMainWindow
+
+
+    class GtkUIManagerOpaque(Structure):
+        pass
+
+    GtkUiManagerOpaquePtr = POINTER(GtkUIManagerOpaque)
+
+    Cgobject = PyGObjectCAPI()
+
+
+    def gnc_gui_init ():
+
+        global Cgobject
+
+        pdb.set_trace()
+
+        main_window_ptr = libgnc_gnomeutils.gnc_gui_init()
+        gnucash_log.dbglog_err("main_window_ptr %x"%main_window_ptr)
+
+        # call like this:
+        #Cgobject = PyGObjectCAPI()
+        main_window = Cgobject.pygobject_new(main_window_ptr)
+
+        #return main_window_wrap(main_window)
+        return main_window
+
+
+    def main_window_extend (main_window):
+
+        #pdb.set_trace()
+
+        # this argument must be a GObject wrapped Gtk.Window
+
+        gnucash_log.dbglog_err("main_window ",main_window)
+
+        # we now need to add functions to the GncMainWindow object - mainly get_uimanager
+        # using PyGObject/GTypes just gets storage - does not associate the functions with an object
+
+        #main_window.get_uimanager = types.MethodType(get_uimanager, main_window, main_window.__class__)
+
+        #main_window.manual_merge_actions = types.MethodType(manual_merge_actions, main_window, main_window.__class__)
+
+        #main_window.merge_actions = types.MethodType(merge_actions, main_window, main_window.__class__)
+
+        #main_window.unmerge_actions = types.MethodType(unmerge_actions, main_window, main_window.__class__)
+
+        #main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window, main_window.__class__)
+
+        #main_window.get_action_group = types.MethodType(get_action_group, main_window, main_window.__class__)
+
+
+        main_window.py_merge_actions = types.MethodType(py_merge_actions, main_window, main_window.__class__)
+
+        main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window, main_window.__class__)
+
+
+        # do we need to return it??
+        return main_window
+
+
+    def py_merge_actions (self, group_name, actions, toggle_actions, ui_xml_str, user_data):
+
+        #pdb.set_trace()
+
+        # self is a GObject wrapped Gtk.Window runthrough main_window_extend
+
+        # this is a re-implementation of gnc_main_window_merge_actions - because
+        # rather than calling the gnucash version its easier to call the gtk functions
+        # directly - saves converting the input data
+
+        # passing the ui_xml_str as a string and use directly
+        # this code moved to external code
+        # assuming pass full path directly for the moment
+        #pathname = gnc_main_window.gnc_filepath_locate_ui_file(filename)
+
+        # this is based on the code in python_only_plugin
+
+        # yes - we now can add menu items in python
+        # we simply need the main window object wrapped either using
+        # a gncmainwindow module or ctypes and pygobject_new from gobject module
+        # (ctypes works now got right argument and return types)
+        # currently using ctypes version
+        # we apparently have to use the main window ui_merge object
+
+        main_ui_merge = self.get_uimanager()
+
+        merge_id = 0
+
+        #accelgroup = main_ui_merge.get_accel_group()
+        #self.add_accel_group(accelgroup)
+
+
+        # Create an ActionGroup
+        actiongroup = Gtk.ActionGroup(group_name)
+        #self.actiongroup = actiongroup
+
+        # call the gnucash function - domain is a string
+        # or direct call of gtk_action_group_set_translate_func??
+        # domain is GETTEXT_PACKAGE which appears to be the name "gnucash"
+        #GncMainWindow.gtk_action_group_set_translation_domain(actiongroup, "gnucash")
+        self.set_translation_domain(actiongroup, "gnucash")
+
+        print "actions",actions
+
+
+        #actiongroup.add_actions([ 
+        #    ("PythonReportsAction", None, "Python Reports...", None, "python reports tooltip", None),
+        #    ("PythonToolsAction", None, "Python Tools...", None, "python tools tooltip", None),
+        #    ("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
+        #         ], user_data=self.main_window)
+
+        #    #("pythonreportsAction", None, "Python reports description...", None, "python reports tooltip", self.reports_cb),
+        #    #("pythongenericAction", None, "Python tools description...", None, "python tools tooltip", self.tools_cb),
+        #    #     ], user_data=self.main_window)
+
+        actiongroup.add_actions(actions,user_data=user_data)
+
+        main_ui_merge.insert_action_group(actiongroup,0)
+
+        merge_id = main_ui_merge.add_ui_from_string(ui_xml_str)
+
+        if merge_id != None:
+
+             main_ui_merge.ensure_update()
+
+             # merge_actions essentially does the same code as this function - so just call it!!
+             # wait a bit we have decided not to call this - if we do then we need to remove
+             # entry it creates
+             # - we are returning the actiongroup and merge_id for saving externally
+             #self.manual_merge_actions(group_name, actiongroup, merge_id)
+
+        gnucash_log.dbglog("merge_id",merge_id)
+
+        # in the gnucash code the groupname and merge_id are stored in an entry structure
+        # stored in a merged_actions_table
+        # so far looks as though this is merely used to remove these actions
+        # - so return them to be saved somewhere in gnucash
+
+        return (actiongroup, merge_id)
+
+
+    def set_translation_domain (self, group, domain_name):
+
+        # this function not really part of the window but this isolates the function
+        # so not too many includes
+
+        #pdb.set_trace()
+
+        GncMainWindow.gtk_action_group_set_translation_domain(group, domain_name)
 

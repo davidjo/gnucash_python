@@ -5,6 +5,8 @@ from gi.repository import Gtk
 
 import pdb
 
+pdb.set_trace()
+
 #from function_class import \
 #     ClassFromFunctions, extract_attributes_with_prefix, \
 #     default_arguments_decorator, method_function_returns_instance, \

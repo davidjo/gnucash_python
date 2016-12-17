@@ -233,7 +233,7 @@ class GncPluginPythonReports(GncPluginPython):
         super(GncPluginPythonReports,self).add_to_window(window, window_type)
 
         # need to map the window somehow to a window object
-        window = gnc_main_window.main_window_wrap(window)
+        window = gnc_main_window.main_window_extend(window)
 
         self.menu_extensions.add_to_window(window, window_type)
 
@@ -244,7 +244,7 @@ class GncPluginPythonReports(GncPluginPython):
 
         # need to map the window somehow to a window object
         save_window = window
-        window = gnc_main_window.main_window_wrap(window)
+        window = gnc_main_window.main_window_extend(window)
 
         self.menu_extensions.remove_from_window(window, window_type)
 

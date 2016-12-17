@@ -72,6 +72,7 @@ try:
     # need to load early as we extend some base gnucash classes
     #import gnucash_ext
 
+    #pdb.set_trace()
 
     import gnc_plugin_manager
 
@@ -82,6 +83,7 @@ try:
     # REMOVE COMMENT
     #gnc_plugin_manager.plugin_manager.add_plugin(myplugin)
 
+    #pdb.set_trace()
 
     import gnc_plugin_python_example
 

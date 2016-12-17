@@ -162,19 +162,30 @@ class ReportTemplate(object):
 
 class Report(object):
 
+    # this implements the functionality of scheme reports
+    # this object is instantiated for each report generated
+    # it is passed the report template in the report_type argument
+    # note that the report_type is an instantiation of a ReportTemplate subclass
+    # not simply the subclass
+    # the Report instance also encapsulates the specific options for
+    # the report
+
     # this encodes the scheme report id functionality
     # do this as class variables or module globals??
-    report_next_serial_id = 0;
+    report_next_serial_id = 0
     report_ids = {}
 
     def __init__ (self, report_type, options=None):
 
         # this is the equivalent of the following scheme
-        # except currently we are 
         # ;; gnc:make-report instantiates a report from a report-template.
         # ;; The actual report is stored away in a hash-table -- only the id is returned.
+        # the report-template class is passed in report_type and we instantiate that class
+        # we store the instantiated reports in the current class dict variable report_ids by id
+        # however we pass the instance around in python rather than
+        # the report id as in the scheme version
 
-        #pdb.set_trace()
+        pdb.set_trace()
 
         # something about template parents here which dont understand
         # apparently the passed report type could a child of a report
@@ -261,7 +272,7 @@ class Report(object):
 
     def options_editor (self):
         # this changes the editor for some report type
-        if self.report_type == 'd8ba4a2e89e8479ca9f6eccdeb164588':
+        if self.report_type.report_guid == 'd8ba4a2e89e8479ca9f6eccdeb164588':
             #gnc-column-view-edit-options
             pass
         else:
@@ -380,6 +391,11 @@ class Report(object):
         # think Im seeing how the scheme is working
         # - a report can generate either an html string or
         # a list of action objects which when executed generate the html string
+
+        # I think the idea behind the following is you can (in scheme)
+        # generate a document object which contains all the data read from
+        # gnucash which can then be rendered using differing style sheets
+        # without re-reading data??
 
         # something about getting the template??
         # for us this is the report_type object

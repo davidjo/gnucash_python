@@ -174,11 +174,15 @@ class GncOption(object):
     def changed_internal (self, widget, sensitive):
         # this needs to start in this class
 
+        print "GncOption changed_internal",str(widget),type(widget)
         #pdb.set_trace()
 
         #oldwidget = widget.get_ancestor(Gtk.Dialog)
+        print "changed_internal 1a",str(widget),isinstance(widget, Gtk.Dialog)
         while widget and not isinstance(widget, Gtk.Dialog):
+            print "changed_internal 1a",str(widget),isinstance(widget, Gtk.Dialog)
             widget = widget.get_parent()
+        print "changed_internal 2",str(widget),isinstance(widget, Gtk.Dialog)
         if widget == None:
             return
 
@@ -193,7 +197,8 @@ class GncOption(object):
                 self.widget_changed_proc(value)
 
     def changed_widget_cb (self, entry):
-        print "changed_widget_cb"
+        print "changed_widget_cb",str(entry)
+        #pdb.set_trace()
         #gc.collect()
         self.changed = True
         #self.call_widget_changed_proc()
@@ -649,12 +654,12 @@ class GncOption(object):
     def set_ui_value_account_list (self, use_default, widget, value):
         print "set_ui_value_account_list"
         #pdb.set_trace()
-        gnc_tree_view_account.set_selected_accounts(widget,value,True)
+        gnc_tree_view_account.do_set_selected_accounts(widget,value,True)
         return False
     def get_ui_value_account_list (self, widget):
         print "get_ui_value_account_list"
         #pdb.set_trace()
-        acc_lst = gnc_tree_view_account.get_selected_accounts(widget)
+        acc_lst = gnc_tree_view_account.do_get_selected_accounts(widget)
         return acc_lst
     def set_ui_widget_account_sel (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_account_sel"
@@ -953,8 +958,8 @@ class GncOption(object):
         frame.add(vbox)
 
         tree = gnc_tree_view_account.new(False)
-        tree.set_headers_visible(False)
-        selection = tree.get_selection()
+        tree.do_set_headers_visible(False)
+        selection = tree.do_get_selection()
         if multiple_selection:
             selection.set_mode(Gtk.SelectionMode.MULTIPLE)
         else:
@@ -964,7 +969,7 @@ class GncOption(object):
         #gc.collect()
 
         if len(acct_type_list) > 0:
-            avi = tree.get_view_info()
+            avi = tree.do_get_view_info()
             for i in xrange(NUM_ACCOUNT_TYPES):
                 avi.include_type[i] = False
             avi.show_hidden = False
@@ -973,13 +978,13 @@ class GncOption(object):
                 gacctyp = node.data
                 avi.include_type[gacctyp] = True
 
-            tree.set_view_info(avi)
+            tree.do_set_view_info(avi)
         else:
-            avi = tree.get_view_info()
+            avi = tree.do_get_view_info()
             for i in xrange(NUM_ACCOUNT_TYPES):
                 avi.include_type[i] = True
             avi.show_hidden = False
-            tree.set_view_info(avi)
+            tree.do_set_view_info(avi)
 
         #print "collect in create_account_widget 3"
         #gc.collect()
@@ -1105,7 +1110,7 @@ class GncOption(object):
 
     def account_select_all_cb (self, selection):
         print "select_all_cb"
-        pdb.set_trace()
+        #pdb.set_trace()
         view = self.widget
         selection = view.get_selection()
         selection.select_all()
@@ -1113,19 +1118,20 @@ class GncOption(object):
 
     def account_clear_all_cb (self, selection):
         print "clear_all_cb"
-        pdb.set_trace()
+        #pdb.set_trace()
         view = self.widget
         selection = view.get_selection()
         selection.unselect_all()
         self.changed_widget_cb(view)
 
     def account_select_children_cb (self, selection):
+        print "account_select_children_cb"
         #pdb.set_trace()
         view = self.widget
-        account = view.get_cursor_account()
+        account = view.do_get_cursor_account()
         if account == None:
             return
-        view.select_subaccounts(account)
+        view.do_select_subaccounts(account)
 
 
     def show_hidden_toggled_cb (self, widget):
@@ -1168,7 +1174,7 @@ class GncOption(object):
         self.changed_widget_cb(view)
 
     def default_cb (self, widget):
-        pdb.set_trace()
+        #pdb.set_trace()
         self.set_ui_value(True)
         self.changed = True
         self.changed_internal(widget,True)
@@ -1669,13 +1675,18 @@ class DialogOption(object):
     def changed_internal (self, widget, sensitive):
 
         #pdb.set_trace()
+        print "DialogOption changed_internal",str(widget),type(widget)
 
         #oldwidget = widget.get_ancestor(Gtk.Dialog)
+        print "changed_internal 1a",str(widget),isinstance(widget, Gtk.Dialog)
         while widget and not isinstance(widget, Gtk.Dialog):
+            print "changed_internal 1a",str(widget),isinstance(widget, Gtk.Dialog)
             widget = widget.parent
+        print "changed_internal 1",str(widget)
         if widget == None:
             return
 
+        print "changed_internal 2",str(widget)
         widget.set_response_sensitive(Gtk.ResponseType.OK, sensitive)
         widget.set_response_sensitive(Gtk.ResponseType.APPLY, sensitive)
 

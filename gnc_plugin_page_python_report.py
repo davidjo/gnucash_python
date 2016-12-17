@@ -48,7 +48,7 @@ except Exception, errexc:
 #from gi.repository import GLib
 
 
-import gnc_main_window
+#import gnc_main_window
 
 import gnc_plugin
 
@@ -1068,7 +1068,8 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
             #pdb.set_trace()
 
-            gnc_main_window.libgnc_gnomeutils.gnc_main_window_open_page(windowp,myreportp)
+            #gnc_main_window.libgnc_gnomeutils.gnc_main_window_open_page(windowp,myreportp)
+            window.open_page(myreportpage)
 
             #pdb.set_trace()
 

@@ -34,6 +34,7 @@ import os
 import traceback
 import pdb
 
+#pdb.set_trace()
 
 import gi
 
@@ -53,6 +54,14 @@ except Exception, errexc:
 
 import girepo
 
+#pdb.set_trace()
+
+# with introspection GncPlugin needs a GncMainWindow definition
+# we now have a proper GncMainWindow introspection gir/typelib
+# thus when add_to_window is called the argument passed is
+# a fully wrapped GncMainWindow object
+# however this does not solve the issue of passing eg action entries
+# as tuples - GncMainWindow is passing the C structures
 import gnc_main_window
 
 
@@ -261,17 +270,18 @@ class GncPluginPython(BaseGncPlugin):
 
         if self.actions_name != None:
 
-            # need to map the window somehow to a window object
-            window = gnc_main_window.main_window_wrap(window)
+            # extend the functionality of the main window
+            window = gnc_main_window.main_window_extend(window)
 
-            (action_group, merge_id) = window.merge_actions(self.actions_name, self.plugin_actions, self.plugin_toggle_actions, self.ui_xml_str, self)
+            (action_group, merge_id) = window.py_merge_actions(self.actions_name, self.plugin_actions, self.plugin_toggle_actions, self.ui_xml_str, self)
 
             # do we need to save window object - for safety lets not for the moment
             self.saved_windows[hash(window)] = (action_group, merge_id)
 
             if self.plugin_important_actions:
 
-                action_group = gnc_main_window.get_action_group(window, self.actions_name)
+                #action_group = gnc_main_window.get_action_group(window, self.actions_name)
+                action_group = window.get_action_group(self.actions_name)
 
                 set_important_actions(action_group, self.plugin_important_actions)
 
@@ -283,8 +293,9 @@ class GncPluginPython(BaseGncPlugin):
         #pdb.set_trace()
         #print >> sys.stderr, "called super remove_from_window"
 
-        # need to map the window somehow to a window object
-        window = gnc_main_window.main_window_wrap(window)
+
+        # extend the functionality of the main window
+        window = gnc_main_window.main_window_extend(window)
 
         if hash(window) in self.saved_windows:
 
@@ -292,8 +303,7 @@ class GncPluginPython(BaseGncPlugin):
 
             del self.saved_windows[hash(window)]
 
-            # need to map the window somehow to a window object
-            window = gnc_main_window.main_window_wrap(window)
+            pdb.set_trace()
 
             if self.actions_name != None:
                 window.unmerge_actions(self.actions_name, action_group, merge_id)
@@ -326,7 +336,7 @@ def init_short_names (action_group, toolbar_labels):
 
 def set_important_actions (action_group, important_actions):
 
-    #pdb.set_trace()
+    pdb.set_trace()
 
     for imp_action in important_actions:
         action = action_group.get_action(imp_action)

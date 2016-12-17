@@ -1,5 +1,5 @@
 
-# we need a wrapper around _sw_app_utils.py
+# we need a wrapper around _sw_app_utils (libgncmod-app-utils-python.dylib)
 # also need to import the python bindings for wrapping
 # some returns in reasonable type
 # - at the moment the app_utils bindings are very crude
