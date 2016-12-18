@@ -53,7 +53,7 @@
 {'st_mtime': '1412675052', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1962'}  ;  gnucash_log.py
 {'st_mtime': '1409667420', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1322'}  ;  html_webkit.py
 {'st_mtime': '1480542752', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5690'}  ;  init.py
-{'st_mtime': '1481281331', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3811'}  ;  local_init.py
+{'st_mtime': '1482061277', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3954'}  ;  local_init.py
 {'st_mtime': '1399935708', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1539'}  ;  old_gnc_python_report.py
 {'st_mtime': '1481986029', 'st_mode': '41453', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16'}  ;  plugin/gir_build/Account.h
 {'st_mtime': '1481192206', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '59137'}  ;  plugin/gir_build/Account.h.full
