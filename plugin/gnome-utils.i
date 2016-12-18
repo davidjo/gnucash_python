@@ -47,6 +47,8 @@ SWIG_init (void);
 
 %import "../../base-typemaps.i"
 
+#if defined(SWIGPYTHON)
+
 // including glib.h gives rise to errors
 // define these here
 
@@ -57,7 +59,7 @@ SWIG_init (void);
 
 %include "../../gnome-utils/gnc-plugin.h"
 
-//%include "../../gnome-utils/gnc-plugin-page.h"
+%include "../../gnome-utils/gnc-plugin-page.h"
 
 
 // and again here
@@ -71,6 +73,5 @@ struct GtkActionEntry {
   GCallback  callback;
 };
 
-#if defined(SWIGPYTHON)
 
 #endif
