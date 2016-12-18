@@ -44,6 +44,10 @@ try:
     # need to load early as we extend some base gnucash classes
     #import gnucash_ext
 
+    # probably need to add the following to the python module c
+    # - otherwise sys.argv is not set at all
+    # PySys_SetArgv(argc, argv);
+
 
     import gnc_plugin_manager
 
