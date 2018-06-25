@@ -79,17 +79,21 @@ GncPrintAmountInfoBitFlds._fields_ = [ ("use_separators", ctypes.c_uint, 1), # /
                                        ("round", ctypes.c_uint, 1),          # /* Round at max_dp instead of truncating */
                                      ]
 
+# note we need to use ctypes.c_uint8 for the bitfld - if we use ctypes.c_uint we get
+# bad data - probably byte swapping issues - ie it allocates 32 bits and we start at wrong end
+# of the 32 bits - but if we use ctypes.c_uint8 the bit data is in the right order
+
 class GncPrintAmountInfo(ctypes.Structure):
     pass
 GncPrintAmountInfo._fields_ = [ ("commodity", ctypes.c_void_p),
                                 ("max_decimal_places", guint8),
                                 ("min_decimal_places", guint8),
-                                ("use_separators", ctypes.c_uint, 1), # /* Print thousands separators */
-                                ("use_symbol", ctypes.c_uint, 1),     # /* Print currency symbol */
-                                ("use_locale", ctypes.c_uint, 1),     # /* Use locale for some positioning */
-                                ("monetary", ctypes.c_uint, 1),       # /* Is a monetary quantity */
-                                ("force_fit", ctypes.c_uint, 1),      # /* Don't print more than max_dp places */
-                                ("round", ctypes.c_uint, 1),          # /* Round at max_dp instead of truncating */
+                                ("use_separators", guint8, 1), # /* Print thousands separators */
+                                ("use_symbol", guint8, 1),     # /* Print currency symbol */
+                                ("use_locale", guint8, 1),     # /* Use locale for some positioning */
+                                ("monetary", guint8, 1),       # /* Is a monetary quantity */
+                                ("force_fit", guint8, 1),      # /* Don't print more than max_dp places */
+                                ("round", guint8, 1),          # /* Round at max_dp instead of truncating */
                               ]
 
 
@@ -260,7 +264,7 @@ class QofBookOpaque(ctypes.Structure):
 
 def get_current_book ():
 
-    print "types at get_current_book"
+    #print "types at get_current_book"
     #print GObject.type_children(GObject.type_from_name('GObject'))
 
     #pdb.set_trace()
@@ -268,13 +272,13 @@ def get_current_book ():
     # not sure what type to convert this to yet
     curbook_inst = _sw_app_utils.gnc_get_current_book()
 
-    print >> sys.stderr, "curbook_inst %x"%curbook_inst.__long__()
+    #print >> sys.stderr, "curbook_inst %x"%curbook_inst.__long__()
 
     curbook_ptr = ctypes.cast( curbook_inst.__long__(), ctypes.POINTER( QofBookOpaque ) )
 
     #pdb.set_trace()
-    print >> sys.stderr, "curbook_ptr %x"%curbook_inst.__long__()
-    #print >> sys.stderr, "curbook_ptr %x"%ctypes.addressof(curbook_ptr.contents)
+    #print >> sys.stderr, "curbook_ptr 0x%x"%curbook_inst.__long__()
+    #print >> sys.stderr, "curbook_ptr 0x%x"%ctypes.addressof(curbook_ptr.contents)
 
     # will this work - yes!!
     curbook = gnucash.Book(instance=curbook_inst)
@@ -286,7 +290,7 @@ def get_current_book ():
     #self.add_book(curbook.__long__())
 
 def get_current_root_account ():
-    # re-implement in python rather can calling C function??
+    # re-implement in python rather than calling C function??
     return get_current_book().get_root_account()
 
 
@@ -312,7 +316,7 @@ def default_report_currency_old ():
 
     def_curr_ptr = libgnc_apputils.gnc_default_report_currency()
 
-    print >> sys.stderr, "curr ptr %x"%ctypes.addressof(def_curr_ptr.contents)
+    print >> sys.stderr, "curr ptr 0x%x"%ctypes.addressof(def_curr_ptr.contents)
 
     def_fullname = engine_ctypes.libgnc_engine.gnc_commodity_get_fullname(def_curr_ptr)
     print >> sys.stderr, "curr fullname %s"%def_fullname
@@ -361,7 +365,7 @@ def default_report_currency ():
 
     # we have confirmed that this gives the address of the raw C object
     # when the function return is defined as a POINTER type
-    print >> sys.stderr, "curr ptr %x"%ctypes.addressof(def_curr_ptr.contents)
+    print >> sys.stderr, "curr ptr 0x%x"%ctypes.addressof(def_curr_ptr.contents)
 
     # to do this we need to convert the ctypes pointer to a low-level swig pointer
     # - which we can now do via swighelpers!!
@@ -400,7 +404,7 @@ def convert_to_euro (currency, value):
 
     euro_val = libgnc_apputils.gnc_convert_to_euro(currency_ptr, value)
 
-    print >> sys.stderr, "euro_val %x"%euro_val
+    print >> sys.stderr, "euro_val 0x%x"%euro_val
 
     new_euro_inst = swighelpers.int_to_swig(ctypes.addressof(euro_val.value),"_p_gnc_numeric")
     new_euro = gnucash.GncNumeric(instance=new_euro_inst)
@@ -430,7 +434,9 @@ def locale_default_currency_nodefault ():
 
     currency = table.lookup('CURRENCY', code)
 
-    currency_ptr = ctypes.cast( currency.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
+    print "locale_default_currency_nodefault",currency
+
+    currency_ptr = ctypes.cast( currency.instance.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
 
     is_euro = libgnc_apputils.gnc_is_euro_currency(currency_ptr)
 
@@ -460,34 +466,62 @@ def CommodityPrintInfo (commodity, use_symbol):
     gnccmd_ptr = ctypes.cast( commodity.instance.__long__(), ctypes.POINTER(GncCommodityOpaque) )
     prtinfonobitfld = libgnc_apputils.gnc_commodity_print_info(gnccmd_ptr,use_symbol)
 
-    # so far this creates a new ctypes structure around the same memory block
+    #print "CommodityPrintInfo", commodity.get_mnemonic(), "0x%x"%ctypes.addressof(prtinfonobitfld), prtinfonobitfld
+    #print "CommodityPrintInfo", commodity.get_mnemonic(), "0x%x"%ctypes.addressof(prtinfonobitfld), prtinfonobitfld.bitfld
+
+    # I tried just creating a ctypes structure object from the return here  but had problems
+    # - some seemingly random data changes occurring at some random later point
+    # the C gnc_commodity_print_info function returns a structure (not pointer to structure!) from a stack allocated
+    # version - the C compiler does some magic to ensure this works - which may be getting messed up when calling from
+    # ctypes (note there are other functions in gnc-ui-util.c which do this)
+    # at this point the returned structure seems correct - so lets make an explicit copy here
     prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
-    prtinfo = prtinfo_ptr.contents
+    #prtinfo = prtinfo_ptr.contents
+    prtinfo = GncPrintAmountInfo()
+    ctypes.pointer(prtinfo)[0] = prtinfo_ptr[0]
+
+    #print "CommodityPrintInfo", commodity.get_mnemonic(), prtinfo.use_separators, prtinfo.use_symbol, prtinfo.use_locale, prtinfo.monetary, prtinfo.force_fit, prtinfo.round
 
     return prtinfo
 
 def SharePrintInfoPlaces (dec_places):
     prtinfonobitfld = libgnc_apputils.gnc_share_print_info_places(dec_places)
     prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
-    prtinfo = prtinfo_ptr.contents
+    #prtinfo = prtinfo_ptr.contents
+    # make explicit copy - see above
+    prtinfo = GncPrintAmountInfo()
+    ctypes.pointer(prtinfo)[0] = prtinfo_ptr[0]
     return prtinfo
 
 def DefaultPrintInfo (use_symbol):
     prtinfonobitfld = libgnc_apputils.gnc_default_print_info(use_symbol)
     prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
-    prtinfo = prtinfo_ptr.contents
+    #prtinfo = prtinfo_ptr.contents
+    # make explicit copy - see above
+    prtinfo = GncPrintAmountInfo()
+    ctypes.pointer(prtinfo)[0] = prtinfo_ptr[0]
     return prtinfo
 
 def PrintAmount (amnt, gnc_print_info=None):
     # this is defined in gnc-ui-util.c
     # should be a method of GncNumeric as first argument is a GncNumeric
     #pdb.set_trace()
+
+    #print "PrintAmount  ", gnc_print_info, "0x%x"%ctypes.addressof(gnc_print_info)
+    #if gnc_print_info != None:
+    #   print "PrintAmount  ", gnc_print_info.use_separators, gnc_print_info.use_symbol, gnc_print_info.use_locale, gnc_print_info.monetary, gnc_print_info.force_fit, gnc_print_info.round
+
     if gnc_print_info == None:
         prtinfonobitfld = libgnc_apputils.gnc_default_print_info(False)
         prtinfo_ptr = ctypes.cast( ctypes.addressof(prtinfonobitfld), ctypes.POINTER(GncPrintAmountInfo) )
         prtinfo = prtinfo_ptr.contents
     else:
         prtinfo = gnc_print_info
+
+    #print "PrintAmount 1", prtinfo, "0x%x"%ctypes.addressof(prtinfo)
+    #print "PrintAmount 1", prtinfo.use_separators, prtinfo.use_symbol, prtinfo.use_locale, prtinfo.monetary, prtinfo.force_fit, prtinfo.round
+
+    #pdb.set_trace()
 
     # I still dont understand why some gnucash objects the instance is the swig object
     # but for others the instance object has a this pointer which is the swig object
@@ -496,20 +530,26 @@ def PrintAmount (amnt, gnc_print_info=None):
     # language
     # this is also labelled as shadow objects in the swig code
     if hasattr(amnt,"instance"):
-        gncnum_ptr = ctypes.cast( amnt.instance.this.__long__(), ctypes.POINTER( GncNumeric ) )
-        #print >> sys.stderr, "gncnum_ptr %x"%amnt.instance.this.__long__()
-        #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
+        #print "PrintAmount 2", prtinfo, "0x%x"%ctypes.addressof(prtinfo)
+        #print "PrintAmount 2", prtinfo.use_separators, prtinfo.use_symbol, prtinfo.use_locale, prtinfo.monetary, prtinfo.force_fit, prtinfo.round
         # so looks like we can pass by value - and return by value!!
+        gncnum_ptr = ctypes.cast( amnt.instance.this.__long__(), ctypes.POINTER( GncNumeric ) )
+        #print >> sys.stderr, "gncnum_ptr 0x%x"%amnt.instance.this.__long__()
+        #print >> sys.stderr, "gncnum_ptr 0x%x"%ctypes.addressof(gncnum_ptr.contents)
         prtinfonobitfld_ptr = ctypes.cast( ctypes.addressof(prtinfo), ctypes.POINTER(GncPrintAmountInfoNoBitFld) )
         prtinfonobitfld = prtinfonobitfld_ptr.contents
+        #print "PrintAmount 6", prtinfo.use_separators, prtinfo.use_symbol, prtinfo.use_locale, prtinfo.monetary, prtinfo.force_fit, prtinfo.round
         prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfonobitfld)
     elif hasattr(amnt,"this"):
+        #print "PrintAmount 2", prtinfo, "0x%x"%ctypes.addressof(prtinfo)
+        #print "PrintAmount 2", prtinfo.use_separators, prtinfo.use_symbol, prtinfo.use_locale, prtinfo.monetary, prtinfo.force_fit, prtinfo.round
+        # so looks like we can pass by value - and return by value!!
         gncnum_ptr = ctypes.cast( amnt.this.__long__(), ctypes.POINTER( GncNumeric ) )
         #print >> sys.stderr, "gncnum_ptr %x"%amnt.this.__long__()
         #print >> sys.stderr, "gncnum_ptr %x"%ctypes.addressof(gncnum_ptr.contents)
-        # so looks like we can pass by value - and return by value!!
         prtinfonobitfld_ptr = ctypes.cast( ctypes.addressof(prtinfo), ctypes.POINTER(GncPrintAmountInfoNoBitFld) )
         prtinfonobitfld = prtinfonobitfld_ptr.contents
+        #print "PrintAmount 6", prtinfo.use_separators, prtinfo.use_symbol, prtinfo.use_locale, prtinfo.monetary, prtinfo.force_fit, prtinfo.round
         prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr.contents, prtinfonobitfld)
     else:
         # for direct GncNumeric objects (which ar GObjects) the memory address
@@ -519,5 +559,9 @@ def PrintAmount (amnt, gnc_print_info=None):
         prtinfonobitfld_ptr = ctypes.cast( ctypes.addressof(prtinfo), ctypes.POINTER(GncPrintAmountInfoNoBitFld) )
         prtinfonobitfld = prtinfonobitfld_ptr.contents
         prtstr = libgnc_apputils.xaccPrintAmount(gncnum_ptr, prtinfonobitfld)
+
+    #print "Print Amount", prtstr
+
+    #pdb.set_trace()
 
     return prtstr
