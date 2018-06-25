@@ -346,7 +346,7 @@ class CapitalGains(ReportTemplate):
                     elif cmpval == 1:
 
                         # ;; Sold more than the first lot, delete it and recurse
-                        pdb.set_trace()
+                        #pdb.set_trace()
                         newblst = blist[1:]
                         blist = self.basis_builder(newblst, bunits.add(blist[0][0],units_denom,GNC_HOW_RND_ROUND), 
                                      bvalue, # ;; Only the sign of b-value matters since the new b-units is negative

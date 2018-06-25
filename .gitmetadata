@@ -129,7 +129,7 @@
 {'st_mtime': '1510767457', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '74716'}  ;  reports/advanced_portfolio.py
 {'st_mtime': '1444827522', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '21701'}  ;  reports/cash_flow.py
 {'st_mtime': '1490883128', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '25825'}  ;  reports/dividends.py
-{'st_mtime': '1469650342', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '91759'}  ;  reports/gains.py
+{'st_mtime': '1510589090', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '91760'}  ;  reports/gains.py
 {'st_mtime': '1412677008', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15987'}  ;  reports/hello_world.py
 {'st_mtime': '1508167724', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '25642'}  ;  reports/interest.py
 {'st_mtime': '1436913604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16343'}  ;  reports/portfolio.py
