@@ -11,10 +11,10 @@ from stylesheets import StyleTable
 class HtmlDoc(object):
 
     def __init__ (self):
-        self.docobj = None
         self.dtdstr = None
         self.engine_supports_css = True
         self.header = None
+        self.docobj = None
 
     def dtd (self, dtdstr):
         self.dtdstr = dtdstr
@@ -30,7 +30,8 @@ class HtmlDoc(object):
             self.docobj = ET.Element(tag, attrib, **extra)
             return self.docobj
         else:
-            subobj = ET.SubElement(self.docobj,tag, attrib, **extra)
+            subobj = ET.Element(tag, attrib, **extra)
+            self.docobj.append(subobj)
             return subobj
 
     def SubElement (self, parent, tag, attrib={}, **extra):
@@ -62,6 +63,9 @@ class HtmlDocument(object):
         self.title = None
         self.headline = None
         self.doc = HtmlDoc()
+        tmpobj = self.doc.Element("body")
+        tmpobj.text = "\n"
+        tmpobj.tail = "\n"
 
     def get_doc (self):
         return self.doc
@@ -195,9 +199,11 @@ class HtmlDocument(object):
                 # ;; attributes like bgcolor get included
                 # (push ((gnc:html-markup/open-tag-only "body") doc))))
 
-                # we now let the report add the body with attributes
-                # leave this in as dummy if not replaced
-                bodyobj = docxml.SubElement(htmlobj,"body")
+
+                # now added in HtmlDoc
+                ## we now let the report add the body with attributes
+                ## leave this in as dummy if not replaced
+                bodyobj = ET.Element("body")
                 bodyobj.text = "\n"
                 bodyobj.tail = "\n"
 
@@ -263,14 +269,16 @@ class HtmlDocument(object):
                                 subdoc.doc.docobj.text = None
                         else:
                             bodyobj.append(hdrobj)
+                            bodyobj.append(subdoc.doc.docobj)
 
             try:
                 # assume body not added if not first element
                 if subdoc.doc.docobj.tag == "body":
-                    htmlobj.remove(bodyobj)
+                    #htmlobj.remove(bodyobj)
                     htmlobj.append(subdoc.doc.docobj)
                 else:
-                    bodyobj.append(subdoc.doc.docobj)
+                    htmlobj.append(bodyobj)
+                    #bodyobj.append(subdoc.doc.docobj)
             except Exception, errexc:
                 traceback.print_exc()
                 pdb.set_trace()
@@ -282,8 +290,11 @@ class HtmlDocument(object):
                 #docstr = ET.tostring(htmlobj, encoding="utf-8", method="html")
                 docstr = docxml.tostring(encoding="utf-8")
             except Exception, errexc:
-                ET.dump(htmlobj)
                 traceback.print_exc()
+                try:
+                    ET.dump(htmlobj)
+                except Exception, errexc1:
+                    pass
                 pdb.set_trace()
 
 
