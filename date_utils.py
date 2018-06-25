@@ -205,7 +205,10 @@ def get_start_last_uk_taxyear ():
 
 def get_end_last_uk_taxyear ():
     newtim = datetime.datetime.now()
-    return newtim.replace(second=0,minute=0,hour=0,day=5,month=4,tzinfo=None)
+    # bugger - it doesnt appear that using the last minute of the 5th matches for some reason
+    # - we have to use the start of the 6th
+    #return newtim.replace(second=59,minute=59,hour=23,day=5,month=4,tzinfo=None)
+    return newtim.replace(second=0,minute=0,hour=0,day=6,month=4,tzinfo=None)
 
 
 def get_today ():
