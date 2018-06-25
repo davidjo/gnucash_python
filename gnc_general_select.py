@@ -89,7 +89,8 @@ class GncGeneralSelect(Gtk.HBox):
  
         self.entry = Gtk.Entry()
         self.entry.set_editable(False)
-        self.pack_start(self.entry,expand=True,fill=True,padding=0)
+        #self.pack_start(self.entry,expand=True,fill=True,padding=0)
+        self.pack_start(self.entry,True,True,0)
         self.entry.show()
 
         if type == GncGeneralSelect.GNC_GENERAL_SELECT_TYPE_SELECT:
@@ -99,7 +100,8 @@ class GncGeneralSelect(Gtk.HBox):
         elif type == GncGeneralSelect.GNC_GENERAL_SELECT_TYPE_VIEW:
             self.button = Gtk.Button(label=N_("View..."))
 
-        self.pack_start(self.button,expand=False,fill=False,padding=0)
+        #self.pack_start(self.button,expand=False,fill=False,padding=0)
+        self.pack_start(self.button,False,False,0)
 
         self.button.connect("clicked",self.select_cb)
 
