@@ -464,7 +464,7 @@ class GncOption(object):
 
         value.entry.connect("changed",self.changed_widget_cb)
 
-        enclosin.gpack_start(label, False, False, 0)
+        enclosing.pack_start(label, False, False, 0)
         enclosing.pack_start(value, False, False, 0)
         enclosing.show_all()
 
@@ -725,6 +725,7 @@ class GncOption(object):
         return newlst
     def set_ui_widget_number_range (self, page_box,  name, documentation, enclosing=None, packed=None):
         print "set_ui_widget_number_range"
+        #pdb.set_trace()
         colon_name = name + ":"
         label = Gtk.Label(colon_name)
         label.set_alignment(1.0, 0.5)
@@ -733,7 +734,10 @@ class GncOption(object):
 
         (lower_bound, upper_bound, num_decimals, step_size) = self.get_range_info()
 
-        adj = Gtk.Adjustment(lower_bound, upper_bound, step_size, step_size*5,0)
+        # note in python the 1st argument is the adjustment value - we can set it later
+        # so just use a default here
+        # NOTA BENE - skipping this 1st argument leads to strange non-errors
+        adj = Gtk.Adjustment(0.0, lower_bound, upper_bound, step_size, step_size*5,0)
 
         value = Gtk.SpinButton.new(adj,step_size, int(num_decimals))
         value.set_numeric(True)

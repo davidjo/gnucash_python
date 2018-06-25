@@ -329,7 +329,7 @@ def match_commodity_splits (currency_accounts, end_date_tp, commodity=None):
     # ;; Get the query result, i.e. all splits in currency
     # ;; accounts.
     spltlst = qry.Run(gnucash.Split)
-    print "spltlst",spltlst
+    #print "spltlst",spltlst
     # ;; Filter such that we get only those splits
     # ;; which have two *different* commodities
     # ;; involved.
@@ -354,15 +354,15 @@ def match_commodity_splits (currency_accounts, end_date_tp, commodity=None):
 
 def match_commodity_splits_sorted (currency_accounts, end_date_tp, commodity=None):
 
-    newaccs = match_commodity_splits(currency_accounts, end_date_tp, commodity)
+    newsplits = match_commodity_splits(currency_accounts, end_date_tp, commodity)
 
     # need to sort by date
     # try makeing list of dates then sorting - using a cmp function likely slower
-    srtlst = [ (x.GetParent().RetDatePostedTS(), x) for x in newaccs ]
+    srtlst = [ (x.GetParent().RetDatePostedTS(), x) for x in newsplits ]
     srtlst.sort()
 
     #if len(srtlst) > 0: pdb.set_trace()
-    print srtlst
+    #print srtlst
 
     return [ x[1] for x in srtlst ]
 
@@ -471,10 +471,16 @@ class GncMonetary(object):
         return newgncmon
 
     # this is defined in html-style-info.scm
+    # (gnc:default-html-gnc-monetary-renderer - which calls xaccPrintAmount)
     # where should this go???
     def to_currency_string (self):
         #pdb.set_trace()
         prtinfo = sw_app_utils.CommodityPrintInfo(self.commodity,True)
+        #print "to_currency_string", self.commodity.get_mnemonic(), prtinfo.use_separators, prtinfo.use_symbol, prtinfo.use_locale, prtinfo.monetary, prtinfo.force_fit, prtinfo.round
         prtstr = sw_app_utils.PrintAmount(self.amount,prtinfo)
-	return prtstr
+        #try:
+        #    jnkstr = prtstr.decode('utf-8')
+        #except Exception, errexc:
+        #    pdb.set_trace()
+	return unicode(prtstr)
 
