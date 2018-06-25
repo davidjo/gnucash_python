@@ -40,7 +40,7 @@
 {'st_mtime': '1481292747', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10813'}  ;  gnc_plugin_python_reports.py
 {'st_mtime': '1481294374', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9120'}  ;  gnc_plugin_python_tools.py
 {'st_mtime': '1480526892', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1074'}  ;  gnc_report_system_ctypes.py
-{'st_mtime': '1437063622', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11492'}  ;  gnc_report_utilities.py
+{'st_mtime': '1510742051', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12160'}  ;  gnc_report_utilities.py
 {'st_mtime': '1480601911', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4446'}  ;  gnc_tree_model_account_types.py
 {'st_mtime': '1481914851', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1508'}  ;  gnc_tree_view_account.py
 {'st_mtime': '1481880152', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9396'}  ;  gnc_tree_view_account_ctypes.py

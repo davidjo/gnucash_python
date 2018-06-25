@@ -66,6 +66,7 @@ def account_get_balance_at_date (account, date, include_children=False):
 def account_get_comm_balance_at_date (account, date, include_children=False):
 
     #pdb.set_trace()
+    #if account.GetName().find('WFM') >= 0: pdb.set_trace()
 
     balance_collector = CommodityCollector()
 
@@ -80,6 +81,12 @@ def account_get_comm_balance_at_date (account, date, include_children=False):
     # end up (presumably) with the latest split of that day
     # Im assuming setting the max results and sorting in increasing order
     # means the last split of split list is returned (not first!!)
+
+    # so it looks as though there is an issue here - if we set the date to
+    # the day when eg we sell all the shares it appears this is returning
+    # the number of units at the "beginning" of the day (or end of previous day)
+    # should we assume this is general and always search for the next day
+    # (unless thats the current day)
 
     curbook = sw_app_utils.get_current_book()
     tmpqry = gnucash.Query.CreateFor(curbook.GNC_ID_SPLIT)
@@ -344,7 +351,12 @@ def sum_collector_commodity (foreign_commodityclctr, domestic, exchange_fn):
         if curr.equiv(domestic):
             balance.add(domestic,val)
         else:
-            tmpval = exchange_fn(gnc_commodity_utilities.GncMonetary(curr,val), domestic)
+            #pdb.set_trace()
+            print "type exchange",callable(exchange_fn),str(type(exchange_fn))
+            if callable(exchange_fn):
+                tmpval = exchange_fn(gnc_commodity_utilities.GncMonetary(curr,val), domestic)
+            else:
+                tmpval = exchange_fn.run(gnc_commodity_utilities.GncMonetary(curr,val), domestic)
             balance.add(domestic,tmpval.amount)
 
     foreign_commodityclctr.format(commodity_fn)
