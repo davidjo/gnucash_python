@@ -17,6 +17,7 @@ import gnucash
 
 import qof_ctypes
 
+#import gnc_utils
 from gnc_utils import GncCBWEMixin
 
 
@@ -24,6 +25,7 @@ def N_(msg):
     return msg
 
 
+#class GncCurrencyEdit(Gtk.ComboBoxEntry):
 class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
 
     # ah - this is something I think Ive missed - we can name the GType here
@@ -63,7 +65,11 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
         self.connect("changed",self.active_changed)
 
 
+        # weird - I appear to need BOTH of these
+        # without set_entry_text_column get a crash
+        # without set_text_column no display of column!!
         self.set_entry_text_column(0)
+        self.set_text_column(0)
 
         # this is where it is in 
         self.require_list_item()
@@ -76,6 +82,7 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
     def add_item (self, commodity):
         model = self.get_model()
         prtstr = commodity.get_printname()
+        #print "currency added",prtstr
         model.append((prtstr,))
 
     def fill_currencies (self):
@@ -96,6 +103,8 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
             raise AttributeError, 'unknown property %s' % property.name
 
     def get_currency (self):
+
+        #pdb.set_trace()
 
         iter = self.get_active_iter()
         if iter != None:
@@ -145,4 +154,11 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
         self.set_currency(currency)
         self.handler_unblock_by_func(self.mnemonic_changed)
 
+
+#GncCurrencyEdit.set_by_string = gnc_utils.set_by_string
+#GncCurrencyEdit.add_completion = gnc_utils.add_completion
+#GncCurrencyEdit.require_list_item = gnc_utils.require_list_item
+#GncCurrencyEdit.focus_out_cb = gnc_utils.focus_out_cb
+#GncCurrencyEdit.changed_cb = gnc_utils.changed_cb
+#GncCurrencyEdit.match_selected_cb = gnc_utils.match_selected_cb
 
