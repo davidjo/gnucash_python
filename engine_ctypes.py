@@ -73,6 +73,45 @@ libgnc_engine.gnc_commodity_is_currency.argtypes = [ ctypes.c_void_p ]
 libgnc_engine.gnc_commodity_is_currency.restype = ctypes.c_bool
 
 
+# add in gnc_get_account_separator_string
+
+gcharp = ctypes.c_char_p
+
+libgnc_engine.gnc_get_account_separator_string.argtypes = []
+libgnc_engine.gnc_get_account_separator_string.restype = gcharp
+
+
+
+# these really should be Account functions
+# GNCAccountType is an enum
+GNCAccountType = ctypes.c_uint
+libgnc_engine.xaccParentAccountTypesCompatibleWith.argtypes = [ GNCAccountType ]
+libgnc_engine.xaccParentAccountTypesCompatibleWith.restype = ctypes.c_uint
+
+libgnc_engine.xaccAccountTypesValid.argtypes = []
+libgnc_engine.xaccAccountTypesValid.restype = ctypes.c_uint
+
+
+# for some reason a lot of the Query.h functions are not included in the swig bindings
+# for python (but are for guile)
+
+libgnc_engine.xaccQueryAddSingleAccountMatch.argtypes = [ ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddSingleAccountMatch.restype = None
+
+libgnc_engine.xaccQueryAddDateMatch.argtypes = [ ctypes.c_void_p, ctypes.c_bool, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddDateMatch.restype = None
+
+# to pass structs by value need to define struct
+class Timespec(Structure):
+    _fields_ = [ ("tv_sec", c_int64),      # seconds
+                 ("tv_nsec", c_long),      # nanoseconds
+               ]
+
+libgnc_engine.xaccQueryAddDateMatchTS.argtypes = [ ctypes.c_void_p, ctypes.c_bool, Timespec, ctypes.c_bool, Timespec, ctypes.c_uint ]
+libgnc_engine.xaccQueryAddDateMatchTS.restype = None
+
+
+
 # for some reason a lot of the Query.h functions are not included in the swig bindings
 # for python (but are for guile)
 
@@ -114,6 +153,21 @@ def CommodityIsCurrency (a):
     a_ptr = ctypes.cast( a.instance.__long__(), ctypes.POINTER( GncCommodityOpaque ) )
     retval = libgnc_engine.gnc_commodity_is_currency(a_ptr)
     # this is returning a ctypes.c_bool type  - convert to basic python type??
+    return retval
+
+
+def GetAccountSeparatorString ():
+    # note that the return here should be a simple python string
+    # auto magic conversion from c_char_p
+    sepstr = libgnc_engine.gnc_get_account_separator_string()
+    return sepstr
+
+def ParentAccountTypesCompatibleWith (account_type):
+    retval = libgnc_engine.xaccParentAccountTypesCompatibleWith(account_type)
+    return retval
+
+def AccountTypesValid ():
+    retval = libgnc_engine.xaccAccountTypesValid()
     return retval
 
 

@@ -29,7 +29,8 @@ import gnucash
 
 import gnucash_ext
 
-import sw_engine
+#import sw_engine
+import engine_ctypes
 
 from gnucash import GncNumeric
 
@@ -266,7 +267,7 @@ class EditAccountWindow(object):
     def name_insert_text_cb (self, actionobj, text, text_length_or_position, userdata=None):
         print >> sys.stderr, "name_insert_text_cb",actionobj,text,text_length_or_position,userdata
         editable = actionobj
-        separator = sw_engine.gnc_get_account_separator_string()
+        separator = engine_ctypes.GetAccountSeparatorString()
         strsplt = text.split(separator)
         if len(strsplt) > 1:
             result = "".join(strsplt)
@@ -285,7 +286,8 @@ class EditAccountWindow(object):
     def fee_insert_text_cb (self, actionobj, text, text_length_or_position, userdata=None):
         print >> sys.stderr, "fee_insert_text_cb",actionobj,text,text_length_or_position,userdata
         editable = actionobj
-        separator = sw_engine.gnc_get_account_separator_string()
+        #separator = sw_engine.gnc_get_account_separator_string()
+        separator = engine_ctypes.GetAccountSeparatorString()
         strsplt = text.split(separator)
         if len(strsplt) > 1:
             result = "".join(strsplt)
@@ -304,7 +306,8 @@ class EditAccountWindow(object):
     def income_insert_text_cb (self, actionobj, text, text_length_or_position, userdata=None):
         print >> sys.stderr, "income_insert_text_cb",actionobj,text,text_length_or_position,userdata
         editable = actionobj
-        separator = sw_engine.gnc_get_account_separator_string()
+        #separator = sw_engine.gnc_get_account_separator_string()
+        separator = engine_ctypes.GetAccountSeparatorString()
         strsplt = text.split(separator)
         if len(strsplt) > 1:
             result = "".join(strsplt)
@@ -345,7 +348,8 @@ class EditAccountWindow(object):
         if parent_account.is_root():
             acc_types = self.valid_types
         else:
-            acc_types = self.valid_types & sw_engine.xaccParentAccountTypesCompatibleWith(parent_account.GetType())
+            #acc_types = self.valid_types & sw_engine.xaccParentAccountTypesCompatibleWith(parent_account.GetType())
+            acc_types = self.valid_types & engine_ctypes.ParentAccountTypesCompatibleWith(parent_account.GetType())
 
         type_model = self.type_view.get_model()
 
@@ -384,7 +388,8 @@ class EditAccountWindow(object):
     def type_view_create (self):
 
         if self.valid_types == 0:
-            self.valid_types = sw_engine.xaccAccountTypesValid() | (1 << self.acc_type)
+            #self.valid_types = sw_engine.xaccAccountTypesValid() | (1 << self.acc_type)
+            self.valid_types = engine_ctypes.AccountTypesValid() | (1 << self.acc_type)
             self.preferred_account_type = self.acc_type
         elif (self.valid_types & (1 << self.acc_type)) != 0:
             self.preferred_account_type = self.acc_type
@@ -426,7 +431,8 @@ class EditAccountWindow(object):
 
         commodity = self.commodity_edit.get_selected()
 
-        retval = sw_engine.gnc_commodity_equiv(account.GetCommodity(), commodity)
+        #retval = sw_engine.gnc_commodity_equiv(account.GetCommodity(), commodity)
+        retval = engine_ctypes.CommodityEquiv(account.GetCommodity(), commodity)
 
         return retval
 
