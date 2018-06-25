@@ -1,6 +1,8 @@
 
 import sys
 
+#import gi
+#gi.require_version('Gtk', '2.0')
 from gi.repository import Gtk
 
 
@@ -29,8 +31,7 @@ class GncFileDialog(object):
 
     def gnc_gtk_dialog_add_button (self, dialog, label, stock_id, response):
 
-        #button = Gtk.Button(label=label)
-        button = Gtk.Button(label)
+        button = Gtk.Button(label=label)
 
         if stock_id:
 
@@ -84,8 +85,8 @@ class GncFileDialog(object):
         print >> sys.stderr, "doing dialog type",dialog_type,okbutton
 
 
-        #file_box = Gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL), backend=None)
-        file_box = Gtk.FileChooserDialog(title, None, action, (Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL), None)
+        #file_box = Gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL), backend=None)
+        file_box = Gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
 
         if ok_icon:
             self.gnc_gtk_dialog_add_button(file_box, okbutton, ok_icon, Gtk.ResponseType.ACCEPT)
@@ -104,6 +105,8 @@ class GncFileDialog(object):
             pass
 
         response = file_box.run()
+
+        file_name = ""
 
         if response == Gtk.ResponseType.ACCEPT:
 
