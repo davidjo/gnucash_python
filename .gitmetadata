@@ -45,7 +45,7 @@
 {'st_mtime': '1481914851', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1508'}  ;  gnc_tree_view_account.py
 {'st_mtime': '1481880152', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9396'}  ;  gnc_tree_view_account_ctypes.py
 {'st_mtime': '1481916991', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16596'}  ;  gnc_tree_view_account_gi.py
-{'st_mtime': '1469893780', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4728'}  ;  gnc_utils.py
+{'st_mtime': '1511175737', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5557'}  ;  gnc_utils.py
 {'st_mtime': '1481281320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4714'}  ;  gnome_utils.py
 {'st_mtime': '1484252914', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8189'}  ;  gnome_utils_ctypes.py
 {'st_mtime': '1456474217', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12459'}  ;  gnucash_ctypes.py

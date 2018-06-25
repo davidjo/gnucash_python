@@ -46,6 +46,14 @@ if True:
                      break
                  continue
             id = self.get_data("changed_id")
+            # we have an issue that something doesnt seem to be initialized right in the
+            # currency text box - which leads to "random" numbers being returned for id
+            # (once a currency has been selected things seem to work rightset)
+            # also have an issue that cannot delete in the currency text chooser drops
+            # immediately 
+            # apparently you cannot edit the currency text in c code - MUST choose from drop down
+            # list - except the text box doesnt seem to be properly disabled
+            if not type(id) == int and not type(id) == long: pdb.set_trace()
             self.handler_block(id)
             self.set_active_iter(iter)
             self.handler_unblock(id)
@@ -70,6 +78,8 @@ if True:
 
     def require_list_item (self):
 
+        print "gnc_cbwe_require_list_item",self
+
         self.add_completion()
 
         entry = self.get_child()
@@ -85,7 +95,11 @@ if True:
         completion.connect("match_selected", self.match_selected_cb)
         entry.connect("focus-out-event", self.focus_out_cb)
 
+        print "gnc_cbwe_require_list_item",self,"changed_id",id
+
         self.set_data("changed_id", id)
+
+        print "gnc_cbwe_require_list_item",self,"changed_id",id,self.get_data("changed_id")
 
     def focus_out_cb (self, entry, event):
         print "gnc_cbwe_focus_out_cb"
