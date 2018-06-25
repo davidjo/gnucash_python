@@ -209,6 +209,9 @@ class Report(object):
         self.ctext = None
         self.custom_template = None
 
+        # new python feature - allow for storing per report data
+        self.report_data = None
+
         # this follows the scheme more closely
         if options != None:
             self.options = options
