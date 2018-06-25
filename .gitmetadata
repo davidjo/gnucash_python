@@ -19,7 +19,7 @@
 {'st_mtime': '1480586043', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8308'}  ;  gnc_date_format.py
 {'st_mtime': '1480586421', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3022'}  ;  gnc_file.py
 {'st_mtime': '1480591152', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3446'}  ;  gnc_general_select.py
-{'st_mtime': '1480428699', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '20660'}  ;  gnc_html.py
+{'st_mtime': '1484252486', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '20928'}  ;  gnc_html.py
 {'st_mtime': '1407509289', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1939'}  ;  gnc_html_ctypes.py
 {'st_mtime': '1436861094', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11157'}  ;  gnc_html_document.py
 {'st_mtime': '1403822489', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4304'}  ;  gnc_html_scatter.py
@@ -33,7 +33,7 @@
 {'st_mtime': '1481536171', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15514'}  ;  gnc_plugin.py
 {'st_mtime': '1479897866', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5754'}  ;  gnc_plugin_manager.py
 {'st_mtime': '1480601991', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8438'}  ;  gnc_plugin_page.py
-{'st_mtime': '1481295481', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '42452'}  ;  gnc_plugin_page_python_report.py
+{'st_mtime': '1484252855', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '42496'}  ;  gnc_plugin_page_python_report.py
 {'st_mtime': '1400190320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1167'}  ;  gnc_plugin_page_report.py
 {'st_mtime': '1469996058', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3050'}  ;  gnc_plugin_page_reports.py
 {'st_mtime': '1480602345', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '6157'}  ;  gnc_plugin_python_example.py
@@ -47,7 +47,7 @@
 {'st_mtime': '1481916991', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16596'}  ;  gnc_tree_view_account_gi.py
 {'st_mtime': '1469893780', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4728'}  ;  gnc_utils.py
 {'st_mtime': '1481281320', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4714'}  ;  gnome_utils.py
-{'st_mtime': '1480601627', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8189'}  ;  gnome_utils_ctypes.py
+{'st_mtime': '1484252914', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8189'}  ;  gnome_utils_ctypes.py
 {'st_mtime': '1456474217', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '12459'}  ;  gnucash_ctypes.py
 {'st_mtime': '1436886375', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15750'}  ;  gnucash_ext.py
 {'st_mtime': '1412675052', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1962'}  ;  gnucash_log.py

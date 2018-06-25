@@ -461,6 +461,15 @@ class HtmlView(object):
         self.load_cb_data = load_cb_data
 
 
+    def export_to_file (self, filepath):
+        #pdb.set_trace()
+        #if self.use_pywebkit:
+        #    retval = self.webview.export_to_file(filepath)
+        if self.use_gncwebkit:
+            retval = self.html.export_to_file(filepath)
+        return retval
+
+
 type_2_proto = { \
                  URLType.TYPE_FILE : "file",
                  URLType.TYPE_JUMP : "",

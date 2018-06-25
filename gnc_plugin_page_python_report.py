@@ -54,6 +54,10 @@ import gnc_plugin
 
 import gnc_html_ctypes
 
+import gnc_file
+
+import gnome_utils_ctypes
+
 import report_objects
 from report_objects import Report
 

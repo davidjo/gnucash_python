@@ -236,7 +236,7 @@ def gnc_verify_dialog (parent, yes_is_default, errmsg):
     if parent == None:
         parent = ui_get_toplevel()
 
-    dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.MODAL|Gtk.FialogFlags.DESTROY_WITH_PARENT,
+    dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT,
                     Gtk.MessageType.QUESTION,Gtk.ButtonsType.YES_NO,N_(errmsg))
 
     if parent == None:
