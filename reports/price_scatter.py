@@ -119,9 +119,15 @@ class PriceScatter(ReportTemplate):
         # the only real issue is option replacement and links to
         # account pages
 
+        # note that price-scatter.scm defines an option getting function
+        # equivalent to the following python - we just split out the python
+        #def get_option (section, name):
+        #    optobj = self.options.lookup_name(section, name)
+        #    return optobj.value()
+
         # the various plotting options
 
-        #pdb.set_trace()
+        pdb.set_trace()
 
         optobj = self.options.lookup_name('General','Report name')
         chart.title = optobj.getter()
@@ -133,7 +139,7 @@ class PriceScatter(ReportTemplate):
         chart.height = optobj.getter()
 
         optobj = self.options.lookup_name('General','Step Size')
-        optstp = optobj.option_data[optobj.getter()][0]
+        optstp = optobj.getter()
         mapinterval = { \
                       'DayDelta' : N_("Days"),
                       'WeekDelta' : N_("Weeks"),
@@ -172,11 +178,21 @@ class PriceScatter(ReportTemplate):
         enddt = optobj.get_option_value()
 
 
+        if optinv:
+            chart_sym = cur.get_mnemonic()
+        else:
+            chart_sym = stock.get_mnemonic()
+        chart.subtitle = "%s"%chart_sym + " - " + "%s to %s"%(strtdt.strftime("%m/%d/%Y"),enddt.strftime("%m/%d/%Y"))
+
         # this tests the same namespace and mnemonic same
         #if gnc_commodity_eqiv(stock,cur):
         if stock.get_namespace() != cur.get_namespace() or \
              stock.get_mnemonic() != cur.get_mnemonic():
 
+            # this is junky emulation of the gnc:deltasym-to-delta scheme function
+            # this just converts the deltas to seconds - so have a simple linear x time scale
+            # gnc:deltasym-to-delta converts to actual date time structure - so should
+            # probably use datetime here
             mapxscale = { \
                         'DayDelta' : 86400.0,
                         'WeekDelta' : 604800.0,
@@ -205,7 +221,8 @@ class PriceScatter(ReportTemplate):
 
             for prctm,prc in prcordr:
                 prcobj = prc.get_value()
-                rlprc = float(prcobj.num)/prcobj.denom
+                #rlprc = float(prcobj.num)/prcobj.denom
+                rlprc = prcobj.to_double()
 
                 # we need to convert the date to seconds
                 cnvdt = (prctm-prcdt0)/mapxscale[optstp]
@@ -216,7 +233,8 @@ class PriceScatter(ReportTemplate):
 
             docelm = chart.render()
 
-            document.doc.docobj = docelm
+            #document.doc.docobj = docelm
+            document.doc.docobj.append(docelm)
 
             stdelm = ET.Element('p')
             stdelm.text = "Start Date %s"%str(strtdt)
@@ -241,6 +259,6 @@ class PriceScatter(ReportTemplate):
 are identical. It doesn't make sense to show prices for identical \
 commodities.")
 
-            document.doc.docobj = docelm
+            document.doc.docobj.append(docelm)
 
         return document

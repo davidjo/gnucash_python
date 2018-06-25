@@ -133,7 +133,7 @@
 {'st_mtime': '1412677008', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15987'}  ;  reports/hello_world.py
 {'st_mtime': '1508167724', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '25642'}  ;  reports/interest.py
 {'st_mtime': '1436913604', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16343'}  ;  reports/portfolio.py
-{'st_mtime': '1409317725', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9016'}  ;  reports/price_scatter.py
+{'st_mtime': '1511552450', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '9923'}  ;  reports/price_scatter.py
 {'st_mtime': '1436769135', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '14520'}  ;  stylesheets/__init__.py
 {'st_mtime': '1409316809', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8152'}  ;  stylesheets/plain.py
 {'st_mtime': '1511514979', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '22260'}  ;  sw_app_utils.py
