@@ -22,7 +22,7 @@
 {'st_mtime': '1484252486', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '20928'}  ;  gnc_html.py
 {'st_mtime': '1407509289', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1939'}  ;  gnc_html_ctypes.py
 {'st_mtime': '1508157521', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '11606'}  ;  gnc_html_document.py
-{'st_mtime': '1403822489', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4304'}  ;  gnc_html_scatter.py
+{'st_mtime': '1511514289', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '10171'}  ;  gnc_html_scatter.py
 {'st_mtime': '1436727830', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1332'}  ;  gnc_html_utilities.py
 {'st_mtime': '1403800563', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1399'}  ;  gnc_jqplot.py
 {'st_mtime': '1481295400', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '16860'}  ;  gnc_main_window.py
