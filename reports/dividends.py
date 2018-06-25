@@ -594,6 +594,33 @@ class Dividends(ReportTemplate):
                 new_col.text = colval.to_currency_string()
 
 
+                new_row = document.StyleSubElement(new_table,'grand-total')
+                new_row.text = "\n"
+                new_row.tail = "\n"
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = N_("Joint Contribution US Tax (15%)")
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = " "
+
+                # 15% is 0.15 (3/20) but halve for joint 0.15/2 or 3/40
+                colval = total_coll.getmonetary(total_commod)
+                colval.amount = colval.amount.mul(GncNumeric(3,40),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+
+                new_col = document.StyleSubElement(new_row,'total-number-cell')
+                new_col.text = colval.to_currency_string()
+
+                new_col = document.StyleSubElement(new_row,'text-cell')
+                new_col.text = " "
+
+                # 15% is 0.15 (3/20) but halve for joint 0.15/2 or 3/40
+                colval = total_rpt_coll.getmonetary(report_currency)
+                colval.amount = colval.amount.mul(GncNumeric(3,40),GNC_DENOM_AUTO,GNC_HOW_DENOM_SIGFIG | 5*256 | GNC_HOW_RND_ROUND)
+
+                new_col = document.StyleSubElement(new_row,'total-number-cell')
+                new_col.text = colval.to_currency_string()
+
 
             #new_col = document.StyleSubElement(new_row,'text-cell')
             #new_col.text = N_("Money In")

@@ -396,6 +396,10 @@ class Interest(ReportTemplate):
                 anchor_markup = document.doc.SubElement(new_col,"a")
                 anchor_markup.attrib['href'] = accurl
                 anchor_markup.text = accnm + "\n"
+                try:
+                    jnkstr = accnm.encode('utf-8')
+                except Exception, errexc :
+                    pdb.set_trace()
 
                 acc_coll = CommodityCollector()
                 acc_rpt_coll = CommodityCollector()
@@ -434,7 +438,18 @@ class Interest(ReportTemplate):
                             new_row = document.StyleSubElement(new_table,'alternate-row')
 
                         new_col = document.StyleSubElement(new_row,'text-cell')
-                        new_col.text = N_(parent.GetDescription())
+
+                        #new_col.text = N_(parent.GetDescription())
+                        # unfortunately GetDescription returns a str type for utf-8 encoded data
+                        # - we need to fix it
+                        desctxt = parent.GetDescription()
+                        try:
+                            newtxt = desctxt.encode('utf-8')
+                        except Exception, errexc:
+                            newtxt = desctxt.decode('utf-8')
+                            desctxt = newtxt
+                            #pdb.set_trace()
+                        new_col.text = N_(desctxt)
 
                         new_col = document.StyleSubElement(new_row,'text-cell')
                         new_col.text = N_(gnc_print_date(txn_date))
