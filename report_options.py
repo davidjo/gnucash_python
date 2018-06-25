@@ -403,6 +403,8 @@ class ComplexBooleanOption(OptionBase):
         # this is not right - in scheme the super_setter calls
         # the changed_callback after the setter_function_called_cb
         # here its called before
+        # is the above correct? - I dont see it now - the following
+        # follows the scheme lambda function order
         self.super_setter(x)
         if callable(self.setter_function_called_cb):
             self.setter_function_called_cb(x)
@@ -508,6 +510,8 @@ class MultiChoiceCallbackOption(OptionBase):
         # this is not right - in scheme the super_setter calls
         # the changed_callback after the setter_function_called_cb
         # here its called before
+        # is the above correct? - I dont see it now - the following
+        # follows the scheme lambda function order
         if self.legal(x):
             self.super_setter(x)
             if callable(self.setter_function_called_cb):
@@ -523,6 +527,12 @@ class MultiChoiceCallbackOption(OptionBase):
         if x in self.option_data_dict:
             return self.option_data_dict[x]
         return -1
+
+    def lookup_value (self, x):
+        # return the value for a key string - new python function
+        if x in self.option_data_dict:
+            return self.option_data_dict[x][1]
+        return None
 
     def lookup (self, x):
         # return whole sublist for a key as per scheme
@@ -547,7 +557,8 @@ class MultiChoiceCallbackOption(OptionBase):
 
     def get_option_value (self):
         # again this is a function for returning value in the python script
-        # we are now returning the key value
+        # note we return the key value as the value in reports (index 0 in list)
+        # the index 1 value is the string displayed in the options dialog
         optmrk = self.getter()
         #return self.option_data[optmrk][0]
         return optmrk
@@ -620,6 +631,8 @@ class ListOption(OptionBase):
         # this is not right - in scheme the super_setter calls
         # the changed_callback after the setter_function_called_cb
         # here its called before
+        # is the above correct? - I dont see it now - the following
+        # follows the scheme lambda function order
         if self.legal(x):
             self.super_setter(x)
             if callable(self.setter_function_called_cb):
@@ -1131,10 +1144,20 @@ class NumberRangeOption(OptionBase):
         self.documentation_string = tool_tip # AKA documentation_string
 
         # what to do about getters/setters
+        #pdb.set_trace()
 
         self.default_value = default_value
 
         self.option_data = (lower_bound, upper_bound, num_decimals, step_size)
+
+        #print "NumberRange default",self
+        #print "NumberRange default",self.section,self.name
+        #print "NumberRange default",self.default_value
+        #print "NumberRange option_data",self.option_data
+
+        ## debug the setter
+        #self.super_setter = self.setter
+        #self.setter = self.local_setter
 
     def value_validator (self, x):
         if not isinstance(x, numbers.Number):
@@ -1143,9 +1166,44 @@ class NumberRangeOption(OptionBase):
             return [ False, "number-range-option: out of range" ]
         return [ True, x ]
 
+    # the following was for debugging an issue with the SpinButton
+
     def get_option_value (self):
         # again this is a function for returning value in the python script
+        #pdb.set_trace()
         return self.getter()
+
+    #def get_default_value (self):
+    #    #pdb.set_trace()
+    #    return self.default_value
+
+    #def get_value (self):
+    #    #pdb.set_trace()
+    #    #print "NumberRange get_value",self
+    #    #print "NumberRange get_value",self.section,self.name
+    #    #print "NumberRange get_value",self.default_value
+    #    #print "NumberRange get_value",self.option_data
+    #    if self.option_value == None:
+    #        return self.get_default_value()
+    #    return self.option_value
+
+    #def set_value (self, value):
+
+    #    #pdb.set_trace()
+
+    #    self.option_value = value
+
+    #    if callable(self.changed_callback):
+    #        self.changed_callback()
+
+    #def set_changed_callback (self, callback):
+    #    # we need to call this function in a subclass to define the callback
+    #    #pdb.set_trace()
+    #    self.changed_callback = callback
+
+    #def local_setter (self, x):
+    #    #pdb.set_trace()
+    #    self.super_setter(x)
 
 
 class ColorOption(OptionBase):
