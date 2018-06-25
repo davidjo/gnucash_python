@@ -250,6 +250,15 @@ class AdvancedPortfolio(ReportTemplate):
             newlst.append((urt,vrt))
         return newlst
 
+    @staticmethod
+    def dump_basis_list (blist):
+        strlst = []
+        strlst.append("[")
+        for bunits,bval in blist:
+            strlst.append("(%s, %s),"%(str(bunits.to_double()),str(bval.to_double())))
+        strlst.append("]")
+        return "".join(strlst)
+
 
     def basis_builder (self, blist, bunits, bvalue, bmethod, currency_frac):
         # ;; this builds a list for basis calculation and handles average, fifo and lifo methods
@@ -259,7 +268,7 @@ class AdvancedPortfolio(ReportTemplate):
         #pdb.set_trace()
 
         print "actually in basis-builder"
-        print "b-list is", blist
+        print "b-list is", self.dump_basis_list(blist)
         print "b-units is", bunits
         print "b-value is", bvalue
         print "b-method is", bmethod
@@ -338,7 +347,7 @@ class AdvancedPortfolio(ReportTemplate):
                     elif cmpval == 1:
 
                         # ;; Sold more than the first lot, delete it and recurse
-                        pdb.set_trace()
+                        #pdb.set_trace()
                         newblst = blist[1:]
                         blist = self.basis_builder(newblst, bunits.add(blist[0][0],units_denom,GNC_HOW_RND_ROUND), 
                                      bvalue, # ;; Only the sign of b-value matters since the new b-units is negative
@@ -486,9 +495,29 @@ class AdvancedPortfolio(ReportTemplate):
         work_to_do = len(accounts)
         work_done = 0
 
+        # try adjusting the date to day+1 for the balance - currently doesnt seem to include
+        # the ending day - even though the time is set to 23:59:59
+        # nice idea but no go - we have to treat the case of going to zero specially
+        # well it appears the original scheme works off by day 1 - so a partial sale
+        # is not shown on the sale day but on the day after - and a full sale
+        # still shows unrealized gain on the sale day - and removed from list the
+        # day after
+        # so the big question is why does the python version give wrong results
+        # if end on the sale day - we have both the realized gain (post sale)
+        # and the unrealised gain (pre sale)
+
+        #day1 = to_date_tp + datetime.timedelta(days=1)
+        #day1 = day1.replace(hour=0,minute=0,second=0,microsecond=0)
+        day1 = to_date_tp.replace(hour=23,minute=59,second=59)
+
         for row,curacc in enumerate(accounts):
 
-            print "account",curacc.GetName(),curacc
+            ## for debug limit to just WFM
+            #if curacc.GetName().find('WFM') < 0:
+            #    continue
+
+            print
+            print "Doing account row",curacc.GetName(),curacc
 
             if (row % 2) == 0:
                 new_row = self.document.StyleSubElement(self.new_table,'normal-row')
@@ -503,7 +532,8 @@ class AdvancedPortfolio(ReportTemplate):
             ticker_symbol = commod.get_mnemonic()
             listing = commod.get_namespace()
 
-            unit_collector = account_get_comm_balance_at_date(curacc, to_date_tp)
+            #unit_collector = account_get_comm_balance_at_date(curacc, to_date_tp)
+            unit_collector = account_get_comm_balance_at_date(curacc, day1)
 
             units = unit_collector.getpair(commod)[1]
 
@@ -564,7 +594,7 @@ class AdvancedPortfolio(ReportTemplate):
             if price != None:
                 print gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string()
             else:
-                print
+                print "None"
                         
             # ;; If we have a price that can't be converted to the report currency
             # ;; don't use it
@@ -591,7 +621,7 @@ class AdvancedPortfolio(ReportTemplate):
 
                 # ;; Find the first (most recent) one that can be converted to report currency
                 spltindx = 0
-                while not use_txn and len(split_list) > 0:
+                while not use_txn and spltindx < len(split_list):
 
                     split =  split_list[spltindx]
 
@@ -609,13 +639,16 @@ class AdvancedPortfolio(ReportTemplate):
 
                     spltindx += 1
 
-                #pdb.set_trace()
                 if price != None:
-                    print "Using non-transaction price",price.to_currency_string()
+                    try:
+                        print "Using non-transaction price",price.to_currency_string()
+                    except Exception, errexc:
+                        print "pricing error"
+                        pdb.set_trace()
+                        print "pricing error"
 
 
             # ;; If we still don't have a price, use a price of 1 and complain later
-            #pdb.set_trace()
             if price == None:
                 price = gnc_commodity_utilities.GncMonetary(report_currency, GncNumeric(1,1))
                 # ;; If use-txn is set, but pricing-txn isn't set, it's a bogus price
@@ -628,6 +661,15 @@ class AdvancedPortfolio(ReportTemplate):
             print "Value ", value.to_currency_string()
             print " from ", gnc_commodity_utilities.GncMonetary(commod, units).to_currency_string()
 
+            #pdb.set_trace()
+
+            # so it looks as though what I need to do to properly handle total sale days
+            # is to detect if the zeroing splits occur on to_date_tp 
+            # (the units from above balance call will be 0 so the later test for units being non
+            #  zero is not good)
+            is_sale_on_date = False
+            shares_sold_on_date = GncNumeric(0,1)
+            prev_basis_list = []
 
             # ;; we're looking at each split we find in the account. these splits
             # ;; could refer to the same transaction, so we have to examine each
@@ -646,6 +688,10 @@ class AdvancedPortfolio(ReportTemplate):
 
                 if txn_date <= to_date_tp.date() and \
                      not parent.GetGUID() in seen_trans:
+
+                    # this is pure date comparison (ie no time) - so includes to_date_tp
+                    if txn_date == to_date_tp.date():
+                        is_sale_on_date = True
 
                     trans_income = GncNumeric(0,1)
                     trans_brokerage = GncNumeric(0,1)
@@ -716,6 +762,8 @@ class AdvancedPortfolio(ReportTemplate):
                                     shares_bought = shares_bought.add(split_units,units_denom, GNC_HOW_RND_ROUND)
                                 else:
                                     trans_sold = trans_sold.sub(split_value,commod_currency_frac, GNC_HOW_RND_ROUND)
+                                    if is_sale_on_date:
+                                        shares_sold_on_date = shares_sold_on_date.add(split_units,units_denom, GNC_HOW_RND_ROUND)
                         elif self.is_split_account_type(split, ACCT_TYPE_ASSET):
                             # ;; If all the asset accounts mentioned in the transaction are siblings of each other
                             # ;; keep track of the money transfered to them if it is in the correct currency
@@ -840,13 +888,17 @@ class AdvancedPortfolio(ReportTemplate):
                             else:
                                 split_value_with_fees = split_value_currency
 
-                            print "going in to basis list ", basis_list, " ", split_units.to_string(), " ", \
+                            print "going in to basis list ", self.dump_basis_list(basis_list), " ", split_units.to_string(), " ", \
                                     split_value_with_fees.to_string()
+
+                            # store basis list before sale - needed if the last report day is the sale day
+                            # (a new basis is only useful for later sales)
+                            if is_sale_on_date: prev_basis_list = basis_list
 
                             # ;; adjust the basis
                             basis_list = self.basis_builder(basis_list, split_units, split_value_with_fees, basis_method, currency_frac)
 
-                            print "coming out of basis list ", basis_list
+                            print "coming out of basis list ", self.dump_basis_list(basis_list)
 
                             # ;; If it's a sale or the stock is worthless, calculate the gain
                             if not split_value.positive_p():
@@ -869,11 +921,11 @@ class AdvancedPortfolio(ReportTemplate):
                         # ;; returns on a two-split txn.  It's not a spinoff is the other split is
                         # ;; in an income or expense account.
                         elif self.is_spin_off(split,curacc):
-                            print "before spin-off basis list ", basis_list
+                            print "before spin-off basis list ", self.dump_basis_list(basis_list)
                             basis_list = self.basis_builder(basis_list, split_units,
                                                    my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod_currency, split_value),report_currency).amount,
                                                    basis_method, currency_frac)
-                            print "after spin-off basis list ", basis_list
+                            print "after spin-off basis list ", self.dump_basis_list(basis_list)
 
 
             # ;; Look for income and expense transactions that don't have a split in the
@@ -932,19 +984,33 @@ class AdvancedPortfolio(ReportTemplate):
                             print "More expense ", val.neg().to_string()
                             brokeragecoll.add(curr, val.neg())
 
+            print "units ", units.to_double()
             print "pricing txn is ", pricing_txn
             print "use txn is ", use_txn
             print "prefer-pricelist is ", prefer_pricelist
-            print "price is ", price
+            try:
+                if use_txn:
+                    print "price   txn is ", pricing_txn, price, price.to_currency_string()
+                else:
+                    print "price       is ", pricing_txn, price, gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string()
+            except Exception, errexc:
+                pdb.set_trace()
+                print "junk"
+
+            #pdb.set_trace()
 
             print "basis we're using to build rows is ", self.sum_basis(basis_list,currency_frac).to_string()
-            print "but the actual basis list is ", basis_list
+            print "but the actual basis list is ", self.dump_basis_list(basis_list)
 
             if handle_brokerage_fees == 'include-in-gain':
                 gaincoll.minusmerge(brokeragecoll, False)
 
+            # note we dont by default include a row for shares which we have sold completely previously
+            # so what happens to the gain - looks as though its ignored
 
-            if include_empty or not units.zero_p():
+            #if curacc.GetName().find('WFM') >= 0: pdb.set_trace()
+
+            if include_empty or not units.zero_p() or is_sale_on_date:
 
                 moneyin = moneyincoll.sum(report_currency, my_exchange_fn)
                 moneyout = moneyoutcoll.sum(report_currency, my_exchange_fn)
@@ -952,7 +1018,12 @@ class AdvancedPortfolio(ReportTemplate):
                 income = dividendcoll.sum(report_currency, my_exchange_fn)
                 # ;; just so you know, gain == realized gain, ugain == un-realized gain, bothgain, well..
                 gain = gaincoll.sum(report_currency, my_exchange_fn)
-                ugain = gnc_commodity_utilities.GncMonetary(report_currency,
+                # this fixup should handle total sale days (where units ends as 0) - with original code
+                # we got both a realized gain and unrealised gain!! (because value is total sale)
+                if units.zero_p() and is_sale_on_date:
+                    ugain = gnc_commodity_utilities.GncMonetary(report_currency, GncNumeric(0,1))
+                else:
+                    ugain = gnc_commodity_utilities.GncMonetary(report_currency,
                           my_exchange_fn(value, report_currency).amount.sub(self.sum_basis(basis_list,report_currency.get_fraction()),currency_frac, GNC_HOW_RND_ROUND))
                 bothgain = gnc_commodity_utilities.GncMonetary(report_currency, gain.amount.add(ugain.amount,currency_frac,GNC_HOW_RND_ROUND))
                 totalreturn = gnc_commodity_utilities.GncMonetary(report_currency, bothgain.amount.add(income.amount,currency_frac,GNC_HOW_RND_ROUND))
@@ -1018,13 +1089,14 @@ class AdvancedPortfolio(ReportTemplate):
                     #pdb.set_trace()
 
                     if use_txn:
+                        if not isinstance(price, gnc_commodity_utilities.GncMonetary): pdb.set_trace()
                         if pricing_txn:
                             # this does gnc:html-transaction-anchor
                             prcurl = gnc_html_utilities.transaction_anchor_text(pricing_txn)
-                            prcstr = price.to_string()
+                            prcstr = price.to_currency_string()
                         else:
                             prcurl = None
-                            prcstr = price.to_string()
+                            prcstr = price.to_currency_string()
                     else:
                         # this does gnc:html-price-anchor
                         prcurl = gnc_html_utilities.price_anchor_text(price)
@@ -1056,7 +1128,11 @@ class AdvancedPortfolio(ReportTemplate):
                 new_col.tail = "\n"
 
                 new_col = self.document.StyleSubElement(new_row,'number-cell')
-                new_col.text = gnc_commodity_utilities.GncMonetary(report_currency, self.sum_basis(basis_list,currency_frac)).to_currency_string()
+                # so with this for a partial sale the basis shown is the basis after the sale
+                if units.zero_p() and is_sale_on_date:
+                    new_col.text = gnc_commodity_utilities.GncMonetary(report_currency, self.sum_basis(prev_basis_list,currency_frac)).to_currency_string()
+                else:
+                    new_col.text = gnc_commodity_utilities.GncMonetary(report_currency, self.sum_basis(basis_list,currency_frac)).to_currency_string()
                 new_col.tail = "\n"
 
                 new_col = self.document.StyleSubElement(new_row,'number-cell')
@@ -1157,6 +1233,9 @@ class AdvancedPortfolio(ReportTemplate):
         # the program - cannot interact with it anymore
         report_starting(self.name)
 
+        print
+        print "Starting report",self.name
+
         starttime = datetime.datetime.now()
 
         #pdb.set_trace()
@@ -1256,7 +1335,7 @@ class AdvancedPortfolio(ReportTemplate):
         self.warn_price_dirty = False
         self.warn_no_price = False
 
-
+        
         # Scheme uses a whole subclass of functions for dealing with
         # tables - indirectly creating all table elements
         # ignoring all this for now - just using CSS styles
@@ -1458,28 +1537,31 @@ class AdvancedPortfolio(ReportTemplate):
 
             if self.warn_price_dirty:
 
-                new_col = self.document.doc.SubElement("")
-                new_col.text = N_("* this commodity data was built using transaction pricing instead of the price list.")
-                new_col.tail = "\n"
+                pdb.set_trace()
 
-                new_col = self.document.doc.SubElement("br")
-                new_col.text = ""
-                new_col.tail = "\n"
+                new_text = self.document.doc.Element("p")
+                new_text.text = N_("* this commodity data was built using transaction pricing instead of the price list.")
+                new_text.tail = "\n"
 
-                new_col = self.document.doc.SubElement("")
-                new_col.text = N_("If you are in a multi-currency situation, the exchanges may not be correct.")
-                new_col.tail = "\n"
+                new_text = self.document.doc.Element("br")
+                new_text.text = ""
+                new_text.tail = "\n"
+
+                new_text = self.document.doc.Element("p")
+                new_text.text = N_("If you are in a multi-currency situation, the exchanges may not be correct.")
+                new_text.tail = "\n"
 
             if self.warn_no_price:
 
-                new_col = self.document.doc.SubElement("br")
-                new_col.text = ""
-                new_col.tail = "\n"
+                pdb.set_trace()
 
-                new_col = self.document.doc.SubElement("")
-                new_col.text = N_("** this commodity has no price and a price of 1 has been used.")
-                new_col.tail = "\n"
+                new_text = self.document.doc.Element("br")
+                new_text.text = None
+                new_text.tail = ""
 
+                new_text = self.document.doc.Element("p")
+                new_text.text = N_("** this commodity has no price and a price of 1 has been used.")
+                new_text.tail = "\n"
 
         else:
 
@@ -1505,15 +1587,15 @@ class AdvancedPortfolio(ReportTemplate):
 
     def make_generic_warning (self, report_title_string, report_id, warning_title_string, warning_string):
 
-        new_elm = self.document.doc.SubElement("h2")
+        new_elm = self.document.doc.Element("h2")
         new_elm.text = N_(report_title_string) + ":"
         new_elm.tail = "\n"
 
-        new_elm = self.document.doc.SubElement("h2")
+        new_elm = self.document.doc.Element("h2")
         new_elm.text = N_(warning_title_string)
         new_elm.tail = "\n"
 
-        new_elm = self.document.doc.SubElement("p")
+        new_elm = self.document.doc.Element("p")
         new_elm.text = N_(warning_string)
         new_elm.tail = "\n"
 
@@ -1524,5 +1606,4 @@ class AdvancedPortfolio(ReportTemplate):
         new_elm.text = N_("Edit report options")
         new_elm.tail = "\n"
 
-        
 
