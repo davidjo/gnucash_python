@@ -11,10 +11,12 @@ import os
 import pdb
 
 import gi
+
 import gi.repository
 
 from gi.repository import GObject
 
+gi.require_version('GIRepository', '2.0')
 from gi.repository import GIRepository
 
 
@@ -231,8 +233,10 @@ class PyGIBaseInfo(ctypes.Structure):
 # well its problematic to store/access string pointers
 # this should get us access to the string address which we can stuff in
 
-ctypes.pythonapi.PyString_AsString.argtypes = (ctypes.c_void_p,)
-ctypes.pythonapi.PyString_AsString.restype = ctypes.c_void_p
+ctypes.pythonapi.PyUnicode_AsUTF8.argtypes = (ctypes.py_object,)
+ctypes.pythonapi.PyUnicode_AsUTF8.restype = ctypes.c_void_p
+ctypes.pythonapi.PyUnicode_FromString.argtypes = (ctypes.c_void_p,)
+ctypes.pythonapi.PyUnicode_FromString.restype = ctypes.py_object
 
 
 
@@ -298,7 +302,7 @@ class GncPluginMeta(gi.types.GObjectMeta):
         print("GncPluginMeta new called:",str(mcls),classname,str(bases),str(attrs))
         #pdb.set_trace()
         if not '__girmetaclass__' in attrs:
-            #pdb.set_trace()
+            pdb.set_trace()
             # NOTA BENE - the correct order for multiple classes is base class last
             if len(bases) > 1:
                 raise AttributeError("__metaclass__ multiple bases not implemented")
@@ -338,9 +342,9 @@ class GncPluginMeta(gi.types.GObjectMeta):
         # is STILL the parent GType class structure!!
         # we need the cls variable AFTER the super call!!
         # so this is how to get the address of the class structure!!
-        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python meta gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         super(GncPluginMeta, cls).__init__(name, bases, attrs)
-        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python meta gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         #pdb.set_trace()
         # we delay this till subclass for subclass of subclass
         ## we have deleted plugin_name from attrs above!!
@@ -379,9 +383,9 @@ class GncPluginSubClassMeta(GncPluginMeta):
         # is STILL the parent GType class structure!!
         # we need the cls variable AFTER the super call!!
         # so this is how to get the address of the class structure!!
-        print("python sub gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python sub gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         super(GncPluginSubClassMeta, cls).__init__(name, bases, attrs)
-        print("python sub gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python sub gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         #pdb.set_trace()
         # we have deleted plugin_name from attrs above!!
         cls.plugin_name.set_klass_pointer(cls)
@@ -398,9 +402,9 @@ class GncPluginTryMeta(gi.types.GObjectMeta):
 
     def __init__ (cls, name, bases, attrs):
         print("GncPluginTryMeta init called:",str(cls),name,str(bases),str(attrs))
-        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python meta gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         super(GncPluginTryMeta, cls).__init__(name, bases, attrs)
-        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python meta gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
 
 # this is for the GncPluginPage class - essentially a duplicate of GncPluginMeta
 
@@ -453,9 +457,9 @@ class GncPluginPageMeta(gi.types.GObjectMeta):
         # is STILL the parent GType class structure!!
         # we need the cls variable AFTER the super call!!
         # so this is how to get the address of the class structure!!
-        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python meta gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         super(GncPluginPageMeta, cls).__init__(name, bases, attrs)
-        print("python meta gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python meta gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         #pdb.set_trace()
         # we delay this till subclass for subclass of subclass
         ## we have deleted plugin_name from attrs above!!
@@ -500,9 +504,9 @@ class GncPluginPageSubClassMeta(GncPluginPageMeta):
         # is STILL the parent GType class structure!!
         # we need the cls variable AFTER the super call!!
         # so this is how to get the address of the class structure!!
-        print("python sub gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python sub gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         super(GncPluginPageSubClassMeta, cls).__init__(name, bases, attrs)
-        print("python sub gtype klass %s address %x"%(str(cls),hash(gi.GObject.type_class_peek(cls))))
+        print("python sub gtype klass %s address %x"%(str(cls),hash(GObject.type_class_peek(cls))))
         #pdb.set_trace()
         # we have deleted plugin_name from attrs above!!
         cls.plugin_name.set_klass_pointer(cls)
@@ -517,6 +521,11 @@ class GncPluginPageSubClassMeta(GncPluginPageMeta):
 # class definition for python 2.7 using the meta class
 #class NewGObject(object):
 #    __metaclass__ = GirMeta
+#    __girmetaclass__ = NewGObject.GObjectClass
+# etc
+
+# class definition for python 3 using the meta class
+#class NewGObject(object, metaclass=GirMeta):
 #    __girmetaclass__ = NewGObject.GObjectClass
 # etc
 
@@ -583,8 +592,8 @@ class GObjectField(object):
 
         if self.field_type_tag == GITypeTag.GI_TYPE_TAG_UTF8:
 
-            self.get_value = self.get_str_value
-            self.set_value = self.set_str_value
+            self.get_value = self.get_utf8_value
+            self.set_value = self.set_utf8_value
 
         elif self.field_type_tag == GITypeTag.GI_TYPE_TAG_UINT32:
 
@@ -681,6 +690,7 @@ class GObjectField(object):
 
         if self.offset_adjust_hack != 0:
             if self.offset != self.check_adjust_hack:
+                pdb.set_trace()
                 raise ValueError("Field offset is wrong - possible bad version of GType %s - may need to regenerate gir files"%self.field_name)
 
         self.value_pointer = self.instance_pointer + self.offset_adjust_hack + self.offset
@@ -689,8 +699,8 @@ class GObjectField(object):
 
     def set_klass_pointer (self, gtype):
         # so this is how to get the address of the class structure!!
-        self.klass_ptr = hash(gi.GObject.type_class_peek(gtype))
-        print("python gtype klass %s address %x"%(str(gtype),hash(gi.GObject.type_class_peek(gtype))))
+        self.klass_ptr = hash(GObject.type_class_peek(gtype))
+        print("python gtype klass %s address %x"%(str(gtype),hash(GObject.type_class_peek(gtype))))
 
         if self.offset_adjust_hack != 0:
             if self.offset != self.check_adjust_hack:
@@ -705,27 +715,29 @@ class GObjectField(object):
         self.field_value = new_value
 
 
-    def get_str_value (self):
+    def get_utf8_value (self):
 
-        print("called get_str_value")
+        print("called get_utf8_value")
 
         print("python value address %x"%self.value_pointer)
 
         #pdb.set_trace()
+        # need to check if returning addresses or python values!!!
 
-        # this I think doesnt work if utf8??
-        # for unicode try
-        #strval = ctypes.cast(self.value_pointer, ctypes.POINTER(ctypes.c_wchar_p)).contents.value
         strval = ctypes.cast(self.value_pointer, ctypes.POINTER(ctypes.c_char_p)).contents.value
 
-        return strval
+        utf8val = ctypes.pythonapi.PyUnicode_FromString(strval)
+
+        return utf8val
 
 
-    def set_str_value (self, new_value):
+    def set_utf8_value (self, new_value):
 
         # for the moment this is limited to string type
 
-        print("called set_str_value")
+        print("called set_utf8_value")
+
+        #pdb.set_trace()
 
         print("python value address %x"%self.value_pointer)
 
@@ -744,8 +756,10 @@ class GObjectField(object):
             if not isinstance(new_value,str):
                 raise TypeError("argument value is not a string type - must be a string type")
 
-            # what to do about unicode??
-            new_value_str_ptr = ctypes.pythonapi.PyString_AsString(id(new_value))
+            # this was sneakily using the address of the string object as the C pointer
+            # we need to correct this to use the python object directly
+            #new_value_str_ptr = ctypes.pythonapi.PyUnicode_AsUTF8(id(new_value))
+            new_value_str_ptr = ctypes.pythonapi.PyUnicode_AsUTF8(new_value)
 
             print("python str address %x"%new_value_str_ptr)
 
@@ -917,7 +931,7 @@ def access_class_data (gtype):
 
     # so this is how to get the address of the class structure!!
     # note gtype is a GObject type - NOT the GObjectClass type!!
-    klass_ptr = hash(gi.GObject.type_class_peek(gtype))
+    klass_ptr = hash(GObject.type_class_peek(gtype))
 
     return klass_ptr
 
@@ -927,8 +941,8 @@ def main ():
     from gi.repository import Gtk
 
     # so this is how to get the address of the class structure!!
-    #trymod_klass = hash(gi.GObject.type_class_peek(Try.Plugin))
-    #print("python gobject trymod klass address %x"%hash(gi.GObject.type_class_peek(Try.Plugin)))
+    #trymod_klass = hash(GObject.type_class_peek(Try.Plugin))
+    #print("python gobject trymod klass address %x"%hash(GObject.type_class_peek(Try.Plugin)))
 
     pdb.set_trace()
 
