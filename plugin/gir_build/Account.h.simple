@@ -9,10 +9,16 @@
 // we need to know this is a subclass of QofInstance which itself
 // is a GObject
 
+// lets try new tack - define all types here
+
 #include "qofinstance.h"
 
 #include "qofbook.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 //typedef gnc_numeric (*xaccGetBalanceFn)( const Account *account );
 
 //typedef gnc_numeric (*xaccGetBalanceInCurrencyFn) (
@@ -24,6 +30,7 @@
 
 //typedef void (*AccountCb)(Account *a, gpointer data);
 //typedef gpointer (*AccountCb2)(Account *a, gpointer data);
+
 
 // copied from AccountP.h
 
@@ -41,6 +48,12 @@ typedef struct
 {
     QofInstanceClass parent_class;
 } AccountClass;
+
+//typedef struct
+//{
+//    Account *acc;
+//    QofBook *book;
+//} GncImportMatchMap;
 
 /* --- type macros --- */
 #define GNC_TYPE_ACCOUNT            (gnc_account_get_type ())
@@ -63,77 +76,6 @@ typedef struct
  * by xaccAccountGetType().
  */
 GType gnc_account_get_type(void);
-
-
-/**
- * AccountConstructors:
- * @name Account Constructors, Edit/Commit, Comparison
- @{
- */
-
-/**
- * xaccMallocAccount: (constructor)
- * returns: (transfer full) :
- *
- * Constructor
- */
-Account * xaccMallocAccount (QofBook *book);
-
-/**
- * gnc_account_create_root:
- * returns: (transfer full) :
- *
- * Create a new root level account.
- */
-Account * gnc_account_create_root (QofBook *book);
-
-/**
- * xaccCloneAccount: (constructor) 
- * returns: (transfer full) :
- *
- *  The xaccCloneAccount() routine makes a simple copy of the
- *  indicated account, placing it in the indicated book.  It copies
- *  the account type, name, description, and the kvp values;
- *  it does not copy splits/transactions.  The book should have
- *  a commodity table in it that has commodities with the same
- *  unique name as the ones being copied in the account (the
- *  commodities in the clone will be those from the book).
- */
-Account * xaccCloneAccount (const Account *source, QofBook *book);
-
-/**
- * xaccAccountBeginEdit: (method)
- *
- *  The xaccAccountBeginEdit() subroutine is the first phase of
- *    a two-phase-commit wrapper for account updates.
- */
-void xaccAccountBeginEdit (Account *account);
-
-/**
- * xaccAccountCommitEdit: (method)
- *
- *  ThexaccAccountCommitEdit() subroutine is the second phase of
- *    a two-phase-commit wrapper for account updates.
- */
-void xaccAccountCommitEdit (Account *account);
-
-/**
- * xaccAccountDestroy: (method)
- *
- *  The xaccAccountDestroy() routine can be used to get rid of an
- *    account.  The account should have been opened for editing
- *    (by calling xaccAccountBeginEdit()) before calling this routine.
- */
-void xaccAccountDestroy (Account *account);
-
-/**
- * xaccAccountEqual: (method)
- *
- * Compare two accounts for equality - this is a deep compare.
- */
-gboolean xaccAccountEqual(const Account *a, const Account* b,
-                          gboolean check_guids);
-
 
 /* 
  * The account types are used to determine how the transaction data
@@ -221,10 +163,108 @@ typedef enum
 } GNCAccountType;
 
 
+
 /**
- * AccountParameterNames:
- *
+ * AccountConstructors:
+ * @name Account Constructors, Edit/Commit, Comparison
+ @{
  */
+
+/**
+ * xaccMallocAccount: (constructor) :
+ * return: (transfer full)
+ *
+ * Constructor
+ */
+Account * xaccMallocAccount (QofBook *book);
+
+/**
+ * gnc_account_create_root:
+ * @book:
+ * return : (transfer full)
+ *
+ * Create a new root level account.
+ */
+Account * gnc_account_create_root (QofBook *book);
+
+/**
+ * xaccCloneAccount: (constructor) :
+ * @source:
+ * @book:
+ * return : (transfer full): 
+ *
+ *  The xaccCloneAccount() routine makes a simple copy of the
+ *  indicated account, placing it in the indicated book.  It copies
+ *  the account type, name, description, and the kvp values;
+ *  it does not copy splits/transactions.  The book should have
+ *  a commodity table in it that has commodities with the same
+ *  unique name as the ones being copied in the account (the
+ *  commodities in the clone will be those from the book).
+ */
+Account * xaccCloneAccount (const Account *source, QofBook *book);
+
+/**
+ * xaccAccountBeginEdit: (method)
+ * @account:
+ *
+ *  The xaccAccountBeginEdit() subroutine is the first phase of
+ *    a two-phase-commit wrapper for account updates.
+ */
+void xaccAccountBeginEdit (Account *account);
+
+/**
+ * xaccAccountCommitEdit: (method)
+ * @account:
+ *
+ *  ThexaccAccountCommitEdit() subroutine is the second phase of
+ *    a two-phase-commit wrapper for account updates.
+ */
+void xaccAccountCommitEdit (Account *account);
+
+/**
+ * xaccAccountDestroy: (method)
+ * @account:
+ *
+ *  The xaccAccountDestroy() routine can be used to get rid of an
+ *    account.  The account should have been opened for editing
+ *    (by calling xaccAccountBeginEdit()) before calling this routine.
+ */
+void xaccAccountDestroy (Account *account);
+
+/**
+ * xaccAccountEqual: (method)
+ * @a:
+ * @b:
+ * @check_guids
+ *
+ *  Compare two accounts for equality - this is a deep compare.
+ */
+gboolean xaccAccountEqual(const Account *a, const Account* b,
+                          gboolean check_guids);
+
+/**
+ * xaccAccountOrder: (method)
+ * @account_1:
+ * @account_2:
+ *
+ *  The xaccAccountOrder() subroutine defines a sorting order on
+ *    accounts.  It takes pointers to two accounts, and returns an int < 0 if
+ *    the first account is "less than" the second, returns an int > 0 if the
+ *    first is "greater than" the second, and 0 if they are equal.  To
+ *    determine the sort order, first the account codes are compared,
+ *    and if these are equal, then account types, then account
+ *    names. If still equal, it compares GUID to ensure that there
+ *    aren't any ties.
+ */
+int xaccAccountOrder (const Account *account_1, const Account *account_2);
+
+/*  @} */
+
+
+
+/*  @name Account parameter names
+ @{
+*/
 #define ACCOUNT_KVP		"kvp"
 #define ACCOUNT_NAME_		"name"
 #define ACCOUNT_CODE_		"code"
@@ -232,6 +272,7 @@ typedef enum
 #define ACCOUNT_COLOR_		"color"
 #define ACCOUNT_FILTER_		"filter"
 #define ACCOUNT_SORT_ORDER_	"sort-order"
+#define ACCOUNT_SORT_REVERSED_ "sort-reversed"
 #define ACCOUNT_NOTES_		"notes"
 #define ACCOUNT_BALANCE_	"balance"
 #define ACCOUNT_CLEARED_	"cleared"
@@ -244,9 +285,16 @@ typedef enum
 #define ACCOUNT_NSCU		"non-standard-scu"
 #define ACCOUNT_PARENT		"parent-account"
 
-/* 
- * This is the type-override when you want to match all accounts.  Used
+/*  @} */
+
+/*  This is the type-override when you want to match all accounts.  Used
  * in the gnome-search parameter list.  Be careful when you use this. */
 #define ACCOUNT_MATCH_ALL_TYPE	"account-match-all"
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 #endif /* XACC_ACCOUNT_H */
+/*  @} */
+/*  @} */

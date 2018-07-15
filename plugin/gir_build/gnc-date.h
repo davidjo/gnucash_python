@@ -1,11 +1,12 @@
-/***************************************************************************
+/********************************************************************
  *            gnc-date.h (to be renamed qofdate.h)
  *
  *  Copyright (C) 1997 Robin D. Clark <rclark@cs.hmc.edu>
  *  Copyright (C) 1998-2000, 2003 Linas Vepstas <linas@linas.org>
  *  Copyright  2005  Neil Williams <linux@codehelp.co.uk>
+ *  Copyright (C) 2005 David Hampton <hampton@employees.org>
  *  Copyright 2012 John Ralls <jralls@ceridwen.us>
- ****************************************************************************/
+ ********************************************************************/
 /********************************************************************\
  * This program is free software; you can redistribute it and/or    *
  * modify it under the terms of the GNU General Public License as   *
@@ -54,7 +55,7 @@
     If a file-io backend needs date handling, it should do it itself,
     instead of depending on the routines here.
 
-	(to be renamed qofdate.h in libqof2.)
+    (to be renamed qofdate.h in libqof2.)
 
     @author Copyright (C) 1997 Robin D. Clark <rclark@cs.hmc.edu>
     @author Copyright (C) 1998-2001,2003 Linas Vepstas <linas@linas.org>
@@ -67,7 +68,11 @@
 
 #ifndef GNC_DATE_H
 #define GNC_DATE_H
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+ 
 #include <glib-object.h>
 #include <time.h>
 
@@ -100,7 +105,6 @@ extern const char *gnc_default_strftime_date_format;
 
 /*  The maximum length of a string created by the date printers */
 #define MAX_DATE_LENGTH 34
-
 /*  Constants *******************************************************/
 /*  \brief UTC date format string.
 
@@ -149,16 +153,19 @@ typedef enum
     GNCDATE_MONTH_ABBREV,
     GNCDATE_MONTH_NAME
 } GNCDateMonthFormat;
+
 /* Replacements for POSIX functions which use time_t. Time_t is still
  * 32 bits in Microsoft Windows, Apple OSX, and some BSD versions even
  * when the rest of the system is 64-bits, as well as all 32-bit
  * versions of Unix. 32-bit time_t overflows at 03:14:07 UTC on
  * Tuesday, 19 January 2038 and so cannot represent dates after that.
  *
- * These functions use GLib's GDateTime internally, and include a
- * workaround for the lack of Win32 support before GLib 2.36.
+ * These functions use boost::date_time internally.
  */
-/*  \brief fill out a time struct from a 64-bit time value.
+/*
+ * gnc_localtime:
+ *
+ *  \brief fill out a time struct from a 64-bit time value.
  *  \param secs: Seconds since 00:00:01 UTC 01 January 1970 (negative values
  * are seconds before that moment).
  *  \return A struct tm*, allocated on the heap. Must be freed with gnc_tm_free().
@@ -166,7 +173,10 @@ typedef enum
  */
 struct tm* gnc_localtime (const time64 *secs);
 
-/*  \brief fill out a time struct from a 64-bit time value adjusted for the current time zone.
+/*
+ * gnc_localtime_r:
+ *
+ *  \brief fill out a time struct from a 64-bit time value adjusted for the current time zone.
  *  \param secs: Seconds since 00:00:01 UTC 01 January 1970 (negative values
  * are seconds before that moment)
  *  \param time: A struct tm* for the function to fill.
@@ -174,7 +184,10 @@ struct tm* gnc_localtime (const time64 *secs);
  */
 struct tm* gnc_localtime_r (const time64 *secs, struct tm* time);
 
-/*  \brief fill out a time struct from a 64-bit time value
+/*
+ * gnc_gmtime:
+ *
+ *  \brief fill out a time struct from a 64-bit time value
  *  \param secs: Seconds since 00:00:01 UTC 01 January 1970 (negative values
  * are seconds before that moment)
  *  \return A struct tm*, allocated on the heap. Must be freed with gnc_tm_free()
@@ -182,23 +195,32 @@ struct tm* gnc_localtime_r (const time64 *secs, struct tm* time);
  */
 struct tm* gnc_gmtime (const time64 *secs);
 
-/*  \brief calculate seconds from the epoch given a time struct
- *  \param time: A struct tm* for the function to fill.
+/*
+ * gnc_mktime:
+ *
+ *  \brief calculate seconds from the epoch given a time struct
+ *  \param time: A struct tm* containing the date-time information.
  *  The time is understood to be in the current local time zone.
  *  \return Seconds since 00:00:01 UTC 01 January 1970 (negative values
  * are seconds before that moment).
  */
 time64 gnc_mktime (struct tm* time);
 
-/*  \brief calculate seconds from the epoch given a time struct
- *  \param time: A struct tm* for the function to fill.
+/*
+ * gnc_timegm:
+ *
+ *  \brief calculate seconds from the epoch given a time struct
+ *  \param time: A struct tm* containing the date-time information
  *  The time is understood to be utc.
  *  \return Seconds since 00:00:01 UTC 01 January 1970 (negative values
  * are seconds before that moment).
  */
 time64 gnc_timegm (struct tm* time);
 
-/*  \brief Return a string representation of a date from a 64-bit time value
+/*
+ * gnc_ctime:
+ *
+ *  \brief Return a string representation of a date from a 64-bit time value
  *  \param secs: Seconds since 00:00:01 UTC 01 January 1970 (negative values
  * are seconds before that moment)
  * \return A string, which must be freed with g_free(), representing the date
@@ -208,7 +230,10 @@ time64 gnc_timegm (struct tm* time);
  */
 gchar* gnc_ctime (const time64 *secs);
 
-/*  \brief get the current local time
+/*
+ * gnc_time:
+ *
+ *  \brief get the current local time
  *  \param A time64* which, if not NULL, will be filled in with the same
  * value as is returned.
  * \return Seconds since 00:00:01 UTC 01 January 1970 (negative values
@@ -216,15 +241,10 @@ gchar* gnc_ctime (const time64 *secs);
  */
 time64 gnc_time (time64 *tbuf);
 
-/*  \brief get the current UTC time
- *  \param A time64* which, if not NULL, will be filled in with the same
- * value as is returned.
- * \return Seconds since 00:00:01 UTC 01 January 1970 (negative values
- * are seconds before that moment)
- */
-time64 gnc_time_utc (time64 *tbuf);
-
-/*  \brief Find the difference in seconds between two time values
+/*
+ * gnc_difftime:
+ *
+ *  \brief Find the difference in seconds between two time values
  *  \param secs1: The first time value, in Seconds since
  * 00:00:01 UTC 01 January 1970 (negative values are seconds before that moment)
  *  \param secs2: The second time value, in Seconds since
@@ -234,32 +254,28 @@ time64 gnc_time_utc (time64 *tbuf);
  */
 gdouble gnc_difftime (const time64 secs1, const time64 secs2);
 
-/*  Wrapper for g_date_time_new_from_unix_local() that takes special care on
- * windows to take the local time zone into account. On unix, it just calls the
- * g_date function. */
-GDateTime*
-gnc_g_date_time_new_from_unix_local (time64 time);
-
-/*  \brief free a struct tm* created with gnc_localtime() or gnc_gmtime()
+/*
+ * gnc_tm_free:
+ *
+ *  \brief free a struct tm* created with gnc_localtime() or gnc_gmtime()
  * \param time: The struct tm* to be freed.
  */
 void gnc_tm_free (struct tm* time);
 
-/*  \brief Create a GDateTime from a Timespec
- *  \param ts: A local (int64-based) Timespec
- *  \note: GDateTimes use microseconds, not nanoseconds, so in theory we lose precision. In practice, there's no portable way to get either.
- *  \note: Works around the lack of Win32 support in GTimeZone before GLib 2.36.
- *  \return A GDateTime pointer. Free it with g_date_time_unref () when you're done with it.
- */
-GDateTime* gnc_g_date_time_new_from_timespec_local (Timespec tm);
-
 /*  \name String / DateFormat conversion. */
 //@{
 
-/*  \brief The string->value versions return FALSE on success and TRUE on failure */
+/*
+ * gnc_date_dateformat_to_string:
+ *
+ *  \brief The string->value versions return FALSE on success and TRUE on failure
+ */
 const gchar* gnc_date_dateformat_to_string(QofDateFormat format);
 
-/*  \brief Converts the date format to a printable string.
+/*
+ * gnc_date_string_to_dateformat:
+ *
+ *  \brief Converts the date format to a printable string.
 
 Note the reversed return values!
 @return FALSE on success, TRUE on failure.
@@ -269,14 +285,57 @@ gboolean gnc_date_string_to_dateformat(const gchar* format_string,
 
 const gchar* gnc_date_monthformat_to_string(GNCDateMonthFormat format);
 
-/*  \brief Converts the month format to a printable string.
+/*
+ * gnc_date_string_to_monthformat:
+ *
+ *  \brief Converts the month format to a printable string.
 
 Note the reversed return values!
 @return FALSE on success, TRUE on failure.
 */
 gboolean gnc_date_string_to_monthformat(const gchar *format_string,
                                         GNCDateMonthFormat *format);
+
+/*
+ * gnc_print_time64:
+ *
+ *  \brief print a time64 as a date string per format
+ * \param time The time64 to print
+ * \param format A date format conforming to the strftime format rules.
+ * \return a raw heap-allocated char* which must be freed.
+ */
+char* gnc_print_time64(time64 time, const char* format);
+
 // @}
+
+/*
+ * gnc_g_date_new_today:
+ *
+ *  @name GDate time64 setters
+ *    @{
+ */
+/*  Returns a newly allocated date of the current clock time, taken from
+ * time(2). The caller must g_date_free() the object afterwards. */
+GDate* gnc_g_date_new_today (void);
+
+/*
+ * gnc_gdate_set_today:
+ *
+ *  Set a GDate to the current day
+ * @param gd The date to act on
+ */
+void gnc_gdate_set_today (GDate* gd);
+
+/*
+ * gnc_gdate_set_time64:
+ *
+ *  Set a GDate to a time64
+ * @param gd the date to act on
+ * @param time the time to set it to.
+ */
+void gnc_gdate_set_time64 (GDate* gd, time64 time);
+
+/*  @} */
 
 /* Datatypes *******************************************************/
 
@@ -337,11 +396,13 @@ Timespec timespec_abs(const Timespec *t);
  * returning a Timespec. */
 Timespec timespecCanonicalDayTime(Timespec t);
 
+time64 time64CanonicalDayTime(time64 t);
+
 /**
  * timespec_now:
- * return : (transfer none) : why needed - its a plain 64 bit int??
+ *
+ * Returns the current clock time as a Timespec, taken from time(2).
  */
-/*  Returns the current clock time as a Timespec, taken from time(2). */
 Timespec timespec_now (void);
 
 /*  Turns a time64 into a Timespec */
@@ -350,9 +411,7 @@ void timespecFromTime64 (Timespec *ts, time64 t );
 /*  Turns a Timespec into a time64 */
 time64 timespecToTime64 (Timespec ts);
 
-/*  Returns a newly allocated date of the current clock time, taken from
- * time(2). The caller must g_date_free() the object afterwards. */
-GDate* gnc_g_date_new_today (void);
+GDate time64_to_gdate (time64 t);
 
 /*  Turns a Timespec into a GDate */
 GDate timespec_to_gdate (Timespec ts);
@@ -364,6 +423,23 @@ GDate timespec_to_gdate (Timespec ts);
 /*  Turns a GDate into a Timespec, returning the first second of the day  */
 Timespec gdate_to_timespec (GDate d);
 
+/**
+ * gdate_to_time64:
+ *
+ * Turns a GDate into a time64, returning the first second of the day
+ */
+time64 gdate_to_time64 (GDate d);
+
+/**
+ * gnc_dmy2time64:
+ *
+ * Convert a day, month, and year to a time64, returning the first second of the day
+ */
+time64 gnc_dmy2time64 (gint day, gint month, gint year);
+
+time64 gnc_dmy2time64_neutral (gint day, gint month, gint year);
+
+time64 gnc_dmy2time64_end (gint day, gint month, gint year);
 
 /**
  * gnc_dmy2timespec:
@@ -379,8 +455,21 @@ Timespec gnc_dmy2timespec (gint day, gint month, gint year);
 /*  Same as gnc_dmy2timespec, but last second of the day */
 Timespec gnc_dmy2timespec_end (gint day, gint month, gint year);
 
-/*  The gnc_iso8601_to_timespec_gmt() routine converts an ISO-8601 style
- *    date/time string to Timespec.  Please note that ISO-8601 strings
+/*  Converts a day, month, and year to a Timespec representing 11:00:00 UTC
+ *  11:00:00 UTC falls on the same time in almost all timezones, the exceptions
+ *  being the +13, +14, and -12 timezones used by countries along the
+ *  International Date Line. Since users in those timezones would see dates
+ *  immediately change by one day, the function checks the current timezone for
+ *  those changes and adjusts the UTC time so that the date will be consistent.
+ */
+/**
+ * gnc_dmy2timespec_neutral:
+ * return : (transfer none) : why needed - its a plain 64 bit int??
+ */
+Timespec gnc_dmy2timespec_neutral (gint day, gint month, gint year);
+
+/*  The gnc_iso8601_to_time64_gmt() routine converts an ISO-8601 style
+ *    date/time string to time64.  Please note that ISO-8601 strings
  *    are a representation of Universal Time (UTC), and as such, they
  *    'store' UTC.  To make them human readable, they show time zone
  *    information along with a local-time string.  But fundamentally,
@@ -396,10 +485,9 @@ Timespec gnc_dmy2timespec_end (gint day, gint month, gint year);
  * times before January 1 1970.
  */
 /**
- * gnc_iso8601_to_timespec_gmt:
- * return : (transfer none) : why needed - its a plain 64 bit int??
+ * gnc_iso8601_to_timespec_time64_gmt:
  */
-Timespec gnc_iso8601_to_timespec_gmt(const gchar *str);
+time64 gnc_iso8601_to_time64_gmt(const gchar *);
 
 /*  The gnc_timespec_to_iso8601_buff() routine takes the input
  *    UTC Timespec value and prints it as an ISO-8601 style string.
@@ -418,6 +506,7 @@ Timespec gnc_iso8601_to_timespec_gmt(const gchar *str);
  *    on the machine on which it is executing to create the time string.
  */
 gchar * gnc_timespec_to_iso8601_buff (Timespec ts, gchar * buff);
+gchar * gnc_time64_to_iso8601_buff (time64, char * buff);
 
 /*  Set the proleptic Gregorian day, month, and year from a Timespec
  * \param ts: input timespec
@@ -427,22 +516,10 @@ gchar * gnc_timespec_to_iso8601_buff (Timespec ts, gchar * buff);
  */
 void gnc_timespec2dmy (Timespec ts, gint *day, gint *month, gint *year);
 
-/*  The gnc_timezone function returns the number of seconds *west*
- * of UTC represented by the tm argument, adjusted for daylight
- * savings time.
- *
- * This function requires a tm argument returned by localtime or set
- * by mktime. This is a strange function! It requires that localtime
- * or mktime be called before use. Subsequent calls to localtime or
- * mktime *may* invalidate the result! The actual contents of tm *may*
- * be used for both time zone offset and daylight savings time, or only
- * daylight savings time! time zone stuff under unix is not
- * standardized and is a big mess.
- */
-glong gnc_timezone (const struct tm *tm);
 // @}
 
-/* ------------------------------------------------------------------------ */
+/* ======================================================== */
+
 /*  \name QofDateFormat functions */
 // @{
 /*  The qof_date_format_get routine returns the date format that
@@ -480,6 +557,8 @@ const gchar *qof_date_format_get_string(QofDateFormat df);
 const gchar *qof_date_text_format_get_string(QofDateFormat df);
 // @}
 
+/* ======================================================== */
+
 /* 
  * The qof_date_completion_set() routing sets the date completion method to
  *    one of QOF_DATE_COMPLETION_THISYEAR (for completing the year to
@@ -498,6 +577,8 @@ void qof_date_completion_set(QofDateCompletion dc, int backmonths);
  * Globals: global dateFormat value
  */
 gchar dateSeparator(void);
+
+/* ======================================================== */
 
 /*  \name Date Printing/Scanning functions
  */
@@ -600,6 +681,9 @@ size_t qof_print_date_time_buff (char * buff, size_t len, time64 secs);
 gboolean qof_scan_date (const char *buff, int *day, int *month, int *year);
 
 // @}
+
+/* ======================================================== */
+
 /*  \name Date Start/End Adjustment routines
  * Given a time value, adjust it to be the beginning or end of that day.
  */
@@ -617,7 +701,6 @@ void gnc_tm_set_day_start (struct tm *tm)
     tm->tm_hour = 0;
     tm->tm_min = 0;
     tm->tm_sec = 0;
-    tm->tm_isdst = -1;
 }
 
 /*  The gnc_tm_set_day_middle() inline routine will set the appropriate
@@ -632,7 +715,6 @@ void gnc_tm_set_day_middle (struct tm *tm)
     tm->tm_hour = 12;
     tm->tm_min = 0;
     tm->tm_sec = 0;
-    tm->tm_isdst = -1;
 }
 
 /*  The gnc_tm_set_day_end() inline routine will set the appropriate
@@ -647,7 +729,6 @@ void gnc_tm_set_day_end (struct tm *tm)
     tm->tm_hour = 23;
     tm->tm_min = 59;
     tm->tm_sec = 59;
-    tm->tm_isdst = -1;
 }
 
 /*  The gnc_time64_get_day_start() routine will take the given time in
@@ -697,5 +778,199 @@ char * gnc_date_timestamp (void);
 void gnc_dow_abbrev(gchar *buf, int buf_len, int dow);
 
 //@}
+
+/* ======================================================== */
+
+/*  \name GDate hash table support */
+// @{
+
+/*  Compares two GDate*'s for equality; useful for using GDate*'s as
+ *  GHashTable keys. */
+gint gnc_gdate_equal(gconstpointer gda, gconstpointer gdb);
+
+
+/*  Provides a "hash" of a GDate* value; useful for using GDate*'s as
+ *  GHashTable keys. */
+guint gnc_gdate_hash( gconstpointer gd );
+
 //@}
+
+/* ======================================================== */
+
+/*  \name GDate to time64 conversions */
+// @{
+
+/*  The gnc_time64_get_day_start() routine will take the given time in
+ *  GLib GDate format and adjust it to the first second of that day.
+ */
+time64 gnc_time64_get_day_start_gdate (const GDate *date);
+
+/*  The gnc_time64_get_day_end() routine will take the given time in
+ *  GLib GDate format and adjust it to the last second of that day.
+ */
+time64 gnc_time64_get_day_end_gdate (const GDate *date);
+
+//@}
+
+/* ======================================================== */
+
+/*  \name Date Manipulation */
+// @{
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  month in which it falls.  For example, if this function is called
+ *  with a date of 2003-09-24 the date will be modified to 2003-09-01.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_month_start (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  month in which it falls.  For example, if this function is called
+ *  with a date of 2003-09-24 the date will be modified to 2003-09-30.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_month_end (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  month prior to the one in which it falls.  For example, if this
+ *  function is called with a date of 2003-09-24 the date will be
+ *  modified to 2003-08-01.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_prev_month_start (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  month prior to the one in which it falls.  For example, if this
+ *  function is called with a date of 2003-09-24 the date will be
+ *  modified to 2003-08-31.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_prev_month_end (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  quarter in which it falls.  For example, if this function is called
+ *  with a date of 2003-09-24 the date will be modified to 2003-09-01.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_quarter_start (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  quarter in which it falls.  For example, if this function is called
+ *  with a date of 2003-09-24 the date will be modified to 2003-12-31.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_quarter_end (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  quarter prior to the one in which it falls.  For example, if this
+ *  function is called with a date of 2003-09-24 the date will be
+ *  modified to 2003-06-01.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_prev_quarter_start (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  quarter prior to the one in which it falls.  For example, if this
+ *  function is called with a date of 2003-09-24 the date will be
+ *  modified to 2003-07-31.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_prev_quarter_end (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  year in which it falls.  For example, if this function is called
+ *  with a date of 2003-09-24 the date will be modified to 2003-01-01.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_year_start (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  year in which it falls.  For example, if this function is called
+ *  with a date of 2003-09-24 the date will be modified to 2003-12-31.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_year_end (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  year prior to the one in which it falls.  For example, if this
+ *  function is called with a date of 2003-09-24 the date will be
+ *  modified to 2002-01-01.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_prev_year_start (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  year prior to the one in which it falls.  For example, if this
+ *  function is called with a date of 2003-09-24 the date will be
+ *  modified to 2002-12-31.
+ *
+ *  @param date The GDate to modify. */
+void gnc_gdate_set_prev_year_end (GDate *date);
+
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  fiscal year in which it falls.  For example, if this function is
+ *  called with a date of 2003-09-24 and a fiscal year ending July
+ *  31st, the date will be modified to 2003-08-01.
+ *
+ *  @param date The GDate to modify.
+ *
+ *  @param year_end A GDate containing the last month and day of the
+ *  fiscal year.  The year field of this argument is ignored. */
+void gnc_gdate_set_fiscal_year_start (GDate *date, const GDate *year_end);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  fiscal year in which it falls.  For example, if this function is
+ *  called with a date of 2003-09-24 and a fiscal year ending July
+ *  31st, the date will be modified to 2004-07-31.
+ *
+ *  @param date The GDate to modify.
+ *
+ *  @param year_end A GDate containing the last month and day of the
+ *  fiscal year.  The year field of this argument is ignored. */
+void gnc_gdate_set_fiscal_year_end (GDate *date, const GDate *year_end);
+
+
+/*  This function modifies a GDate to set it to the first day of the
+ *  fiscal year prior to the one in which it falls.  For example, if
+ *  this function is called with a date of 2003-09-24 and a fiscal
+ *  year ending July 31st, the date will be modified to 2002-08-01.
+ *
+ *  @param date The GDate to modify.
+ *
+ *  @param year_end A GDate containing the last month and day of the
+ *  fiscal year.  The year field of this argument is ignored. */
+void gnc_gdate_set_prev_fiscal_year_start (GDate *date, const GDate *year_end);
+
+
+/*  This function modifies a GDate to set it to the last day of the
+ *  fiscal year prior to the one in which it falls.  For example, if
+ *  this function is called with a date of 2003-09-24 and a fiscal
+ *  year ending July 31st, the date will be modified to 2003-07-31.
+ *
+ *  @param date The GDate to modify.
+ *
+ *  @param year_end A GDate containing the last month and day of the
+ *  fiscal year.  The year field of this argument is ignored. */
+void gnc_gdate_set_prev_fiscal_year_end (GDate *date, const GDate *year_end);
+
+//@}
+
+//@}
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* GNC_DATE_H */

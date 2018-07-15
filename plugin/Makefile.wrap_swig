@@ -1,0 +1,90 @@
+
+# so with the transformation to c++ some things are no longer gobjects
+# eg dates
+# will have to make python modules out of the various swig wraps eg engine.i
+
+PYTHONPREFIX=/opt/local/Library/Frameworks/Python.framework/Versions/3.6
+PYTHONLIB=${PYTHONPREFIX}/lib
+PYTHONINC=${PYTHONPREFIX}/include/python3.6m
+PYTHONBIN=${PYTHONPREFIX}/bin/python3.6
+
+SWIG=/opt/local/bin/swig
+
+#$(CC) $(LDFLAGS) ../../../../build/lib/gnucash/libgncmod-gnome-utils.dylib ../../../../build/lib/gnucash/libgncmod-app-utils.dylib -shared $^ -o $@
+
+# Set the C flags to include the GTK+ and Python libraries
+CFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags glib-2.0 gtk+-3.0 webkitgtk-3.0` -I${PYTHONINC} -I../../../libgnucash/core-utils -I../../../gnucash/gnome-utils -I../../../libgnucash/app-utils -I../../../gnucash/html -I../../../libgnucash/engine -I. -I../.. -I../../..
+LDFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs gtk+-3.0` -L${PYTHONLIB} -lpython3.6
+
+
+# while debugging set up some explicit flag variables
+GLIB_FLAGS=/opt/local/include/glib-2.0 -I/opt/local/lib/glib-2.0/include -I/opt/local/include
+
+#CFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags guile-2.2`
+GUILE_FLAGS=-D_THREAD_SAFE -I/opt/local/include/guile/2.2 -I/opt/local/include
+
+top_srcdir = ../../..
+
+_sw_engine.c: engine.i ../../../common/base-typemaps.i 
+	-$(SWIG) -python -Wall -Werror \
+        -I$(top_srcdir)/common -I$(top_srcdir)/libgnucash/engine \
+        -I$(top_srcdir)/libgnucash/app-utils \
+	-I${GLIB_FLAGS} \
+	-o $@ $<
+
+
+_sw_engine.o: _sw_engine.c
+	# note that -I../../../../build/common points to swig-runtime.h
+	#$(CC) -DHAVE_SCANF_LLD=1 -I${PYTHONINC} -I${GLIB_FLAGS} -I../../../../build/common -I../../../libgnucash/engine -I../../../libgnucash/gnc-module -c $^ 
+	$(CC) $(CFLAGS) -I${PYTHONINC} -I../../../../build/common -I../../../libgnucash/engine -I${GUILE_FLAGS} -c $^ 
+
+_sw_engine.so: _sw_engine.o
+	#$(CC) $(LDFLAGS) ../../../../build/lib/gnucash/libgncmod-gnome-utils.dylib ../../../../build/lib/gnucash/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../../../build/lib/gnucash/libgncmod-gnome-utils.dylib -shared $^ -o $@
+
+
+#-I$(top_srcdir)/common -I$(top_srcdir)/libgnucash/engine \
+#-I$(top_srcdir)/libgnucash/app-utils -I${top_srcdir}/libgnucash/engine \
+
+_sw_gnome_utils.c: gnome-utils.i ../../../common/base-typemaps.i 
+	#$(SWIG) -python -Wall -Werror -o $@ $<
+	#$(SWIG) -python -Wall -I$(top_srcdir)/libgnucash/app-utils -I${GLIB_FLAGS} -o $@ $<
+	$(SWIG) -python -Wall -I${GLIB_FLAGS} -I${top_srcdir}/common -I${top_srcdir}/libgnucash/engine -I$(top_srcdir)/gnucash/gnome-utils -o $@ $<
+
+_sw_gnome_utils.o: _sw_gnome_utils.c
+	$(CC) $(CFLAGS) -I${PYTHONINC} -I${GUILE_FLAGS} -I../../../../build/common -I$(top_srcdir)/common -I${top_srcdir}/libgnucash/engine -I${top_srcdir}/gnucash/gnome-utils -c $^ 
+
+_sw_gnome_utils.so: _sw_gnome_utils.o
+	$(CC) $(LDFLAGS) ../../../../build/lib/gnucash/libgncmod-gnome-utils.dylib ../../../../build/lib/gnucash/libgncmod-engine.dylib -shared $^ -o $@
+
+
+_html_webkit_c.c: html-webkit.i ../../base-typemaps.i 
+	cp -p ../../html/gnc-html.h gnc-html.h
+	patch -p0 -b <patch-gnc-html.diff
+	$(SWIG) -python -Wall -Werror -o $@ $<
+
+_html_webkit_c.o: _html_webkit_c.c
+	$(CC) $(CFLAGS) -I${PYTHONINC} -c $^ 
+
+_html_webkit_c.so: _html_webkit_c.o
+	$(CC) $(LDFLAGS) ../../html/.libs/libgncmod-html.dylib -shared $^ -o $@
+
+
+_gnc_module.c: gnc-module.i ../../../common/base-typemaps.i 
+	#$(SWIG) -python -Wall -Werror -o $@ $<
+	$(SWIG) -python -Wall -I../../../common -I../../../libgnucash/engine -I${GLIB_FLAGS} -o $@ $<
+
+_gnc_module.o: _gnc_module.c
+	#CFLAGS = -I${PYTHONINC} -I../../../libgnucash/core-utils -I../../../gnucash/gnome-utils -I../../../libgnucash/app-utils -I../../../gnucash/html -I../../../libgnucash/engine -I. -I../.. -I../../..
+	#$(CC) $(CFLAGS) -I${PYTHONINC} -I../../../libgnucash/engine -c $^ 
+	$(CC) -DHAVE_SCANF_LLD=1 -I${PYTHONINC} -I${GLIB_FLAGS} -I../../../../build/common -I../../../libgnucash/engine -I../../../libgnucash/gnc-module -c $^ 
+
+_sw_gnc_module.so: _gnc_module.o
+	# so is this a .dylib or .so - both seem to be used - more .dylib now
+	# for dylib probably need -fPIC - .so not ???
+	#$(CC) $(LDFLAGS) ../../../../build/lib/gnucash/libgncmod-gnome-utils.dylib ../../../../build/lib/gnucash/libgncmod-app-utils.dylib -shared $^ -o $@
+	$(CC) $(LDFLAGS) ../../../../build/lib/libgnc-module.dylib -shared $^ -o $@
+
+
+testing: _gnome_utils_c.so _html_webkit_c.so
+

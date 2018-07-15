@@ -51,6 +51,9 @@
 #include "gnc-engine.h"
 #include "policy.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef gnc_numeric (*xaccGetBalanceFn)( const Account *account );
 
 typedef gnc_numeric (*xaccGetBalanceInCurrencyFn) (
@@ -67,6 +70,12 @@ typedef struct
 {
     QofInstanceClass parent_class;
 } AccountClass;
+
+typedef struct
+{
+    Account *acc;
+    QofBook *book;
+} GncImportMatchMap;
 
 /* --- type macros --- */
 #define GNC_TYPE_ACCOUNT            (gnc_account_get_type ())
@@ -314,6 +323,8 @@ void xaccAccountSetColor (Account *account, const char *color);
 void xaccAccountSetFilter (Account *account, const char *filter);
 /** Set the account's Sort Order */
 void xaccAccountSetSortOrder (Account *account, const char *sortorder);
+/** Set the account's Sort Order direction */
+void xaccAccountSetSortReversed (Account *account, gboolean sortreversed);
 /** Set the account's notes */
 void xaccAccountSetNotes (Account *account, const char *notes);
 /** Set the last num field of an Account */
@@ -405,6 +416,8 @@ const char * xaccAccountGetColor (const Account *account);
 const char * xaccAccountGetFilter (const Account *account);
 /** Get the account's Sort Order */
 const char * xaccAccountGetSortOrder (const Account *account);
+/** Get the account's Sort Order direction */
+gboolean xaccAccountGetSortReversed (const Account *account);
 /** Get the account's notes */
 const char * xaccAccountGetNotes (const Account *account);
 /** Get the last num field of an Account */
@@ -438,6 +451,17 @@ void xaccAccountSortSplits (Account *acc, gboolean force);
  */
 gchar * gnc_account_get_full_name (const Account *account);
 
+/** Retrieve the gains account used by this account for the indicated
+ * currency, creating and recording a new one if necessary.
+ *
+ * FIXME: There is at present no interface to designate an existing
+ * account, and the new account name is hard coded to
+ * "Orphaned Gains -- CUR"
+ *
+ * FIXME: There is no provision for creating separate accounts for
+ * anything other than currency, e.g. holding period of a security.
+ */
+Account * xaccAccountGainsAccount (Account *acc, gnc_commodity *curr);
 /** Set a string that identifies the Finance::Quote backend that
  *  should be used to retrieve online prices.  See price-quotes.scm
  *  for more information
@@ -784,7 +808,7 @@ gint gnc_account_get_current_depth (const Account *account);
 
 /** Return the number of levels of descendants accounts below the
  *  specified account.  The returned number does not include the
- *  specifed account itself.
+ *  specified account itself.
  *
  *  @param account The account to query.
  *
@@ -881,8 +905,6 @@ gboolean xaccAccountGetReconcileChildrenStatus(const Account *account);
  */
 gboolean xaccAccountHasAncestor(const Account *acc, const Account *ancestor);
 
-#define xaccAccountGetSlots(X) qof_instance_get_slots(QOF_INSTANCE(X))
-
 /** @} */
 
 /** @name Lookup Accounts and Subaccounts by name or code
@@ -943,6 +965,11 @@ GNCAccountType xaccAccountStringToEnum (const char* str);
  *  to the local language. */
 const char * xaccAccountGetTypeStr (GNCAccountType type);
 
+/** Return the bitmask of account types compatible with a given type.
+ *  That is, you could switch to any of the account types in the compatible
+ *  list without unwanted side-effects. */
+guint32 xaccAccountTypesCompatibleWith (GNCAccountType type);
+
 /** Return the bitmask of parent account types compatible with a given type. */
 guint32 xaccParentAccountTypesCompatibleWith (GNCAccountType type);
 
@@ -995,6 +1022,16 @@ gboolean xaccAccountIsEquityType(GNCAccountType t);
  * internal data structure used by this object.
  */
 SplitList* xaccAccountGetSplitList (const Account *account);
+
+
+/** The xaccAccountCountSplits() routine returns the number of all
+ *    the splits in the account.
+ * @param acc the account for which to count the splits
+ *
+ * @param include_children also count splits in descendants (TRUE) or
+ *        for this account only (FALSE).
+ */
+gint64 xaccAccountCountSplits (const Account *acc, gboolean include_children);
 
 /** The xaccAccountMoveAllSplits() routine reassigns each of the splits
  *  in accfrom to accto. */
@@ -1374,6 +1411,70 @@ int gnc_account_tree_staged_transaction_traversal(const Account *account,
 int xaccAccountTreeForEachTransaction(Account *acc,
                                       TransactionCallback proc, void *data);
 
+/** Obtain an ImportMatchMap object from an Account or a Book
+ */
+GncImportMatchMap *gnc_account_imap_create_imap (Account *acc);
+
+/* Look up an Account in the map non Baysian
+ */
+Account* gnc_account_imap_find_account (GncImportMatchMap *imap, const char* category,
+                                        const char *key);
+
+/* Store an Account in the map non Baysian
+ */
+void gnc_account_imap_add_account (GncImportMatchMap *imap, const char *category,
+                                   const char *key, Account *acc);
+
+/* Remove a reference to an Account in the map non Baysian
+ */
+void gnc_account_imap_delete_account (GncImportMatchMap *imap, const char *category,
+                                      const char *key);
+
+/** Look up an Account in the map using Baysian
+ */
+Account* gnc_account_imap_find_account_bayes (GncImportMatchMap *imap, GList* tokens);
+
+/** Updates the imap for a given account using a list of tokens
+ */
+void gnc_account_imap_add_account_bayes (GncImportMatchMap *imap, GList* tokens,
+                                         Account *acc);
+
+typedef struct imap_info
+{
+    Account        *source_account;
+    Account        *map_account;
+    GList          *list;
+    char           *head;
+    char           *category;
+    char           *match_string;
+    char           *count;
+}GncImapInfo;
+
+/** Returns a GList of structure imap_info of all Bayesian mappings for
+ *  required Account
+ */
+GList *gnc_account_imap_get_info_bayes (Account *acc);
+
+/** Returns a GList of structure imap_info of all Non Bayesian mappings for
+ *  required Account
+ */
+GList *gnc_account_imap_get_info (Account *acc, const char *category);
+
+/** Returns the text string pointed to by full_category for the Account, free
+ *  the returned text
+ */
+gchar *gnc_account_get_map_entry (Account *acc, const char *full_category);
+
+/** Delete the entry for Account pointed to by head,category and match_string,
+ *  if empty is TRUE then use delete if empty
+ */
+void gnc_account_delete_map_entry (Account *acc, char *head, char *category,
+                                   char *match_string, gboolean empty);
+
+/** Delete all bayes entries for Account
+ */
+void gnc_account_delete_all_bayes_maps (Account *acc);
+
 /** @} */
 
 
@@ -1421,6 +1522,7 @@ const char * dxaccAccountGetQuoteTZ (const Account *account);
 #define ACCOUNT_COLOR_		"color"
 #define ACCOUNT_FILTER_		"filter"
 #define ACCOUNT_SORT_ORDER_	"sort-order"
+#define ACCOUNT_SORT_REVERSED_ "sort-reversed"
 #define ACCOUNT_NOTES_		"notes"
 #define ACCOUNT_BALANCE_	"balance"
 #define ACCOUNT_CLEARED_	"cleared"
@@ -1438,6 +1540,10 @@ const char * dxaccAccountGetQuoteTZ (const Account *account);
 /** This is the type-override when you want to match all accounts.  Used
  * in the gnome-search parameter list.  Be careful when you use this. */
 #define ACCOUNT_MATCH_ALL_TYPE	"account-match-all"
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* XACC_ACCOUNT_H */
 /** @} */

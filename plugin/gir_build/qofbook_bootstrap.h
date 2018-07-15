@@ -40,15 +40,26 @@
 #ifndef QOF_BOOK_H
 #define QOF_BOOK_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* We only want a few things exported to Guile */
 #ifndef SWIG
 
 typedef struct _QofBookClass  QofBookClass;
+#ifndef __KVP_VALUE
+// we probably need to change this to a dummy gint64
+// so can use the address to pass to eg SWIG wrap functions
+typedef struct KvpValueImpl KvpValue;
+#define __KVP_VALUE
+#endif
 
 //#include "qofid.h"
 #include "qofidtype.h"
-//#include "kvp_frame.h"
 #include "qofinstance.h"
+#include "qofbackend.h"
 
 /* --- type macros --- */
 #define QOF_TYPE_BOOK            (qof_book_get_type ())
@@ -67,12 +78,17 @@ typedef struct _QofBookClass  QofBookClass;
 // dirty dummy declaration of QofBackend
 // its a pointer in the struct so what it is doesnt matter
 //typedef unsigned long long QofBackend;
-typedef void *QofBackend;
+typedef void QofBackend;
 
-//typedef gint64 	time64;
+typedef gint64 	time64;
 
 
 typedef void (*QofBookDirtyCB) (QofBook *book, gboolean dirty, gpointer user_data);
+
+typedef struct gnc_option_db GNCOptionDB;
+
+typedef void (*GNCOptionSave) (GNCOptionDB*, QofBook*, gboolean);
+typedef void (*GNCOptionLoad) (GNCOptionDB*, QofBook*);
 
 /* Book structure */
 struct _QofBook
@@ -104,7 +120,7 @@ struct _QofBook
 
     /* The entity table associates the GUIDs of all the objects
      * belonging to this book, with their pointers to the respective
-     * objects.  This allows a lookup of objects based on thier guid.
+     * objects.  This allows a lookup of objects based on their guid.
      */
     GHashTable * hash_of_collections;
 
@@ -143,6 +159,13 @@ struct _QofBook
      * except that it provides a nice convenience, avoiding a lookup
      * from the session.  Better solutions welcome ... */
     QofBackend *backend;
+
+    /* A cached value of the OPTION_NAME_NUM_FIELD_SOURCE option value because
+     * it is queried quite a lot, so we want to avoid a KVP lookup on each query
+     */
+    gboolean cached_num_field_source;
+    /* Whether the above cached value is valid. */
+    gboolean cached_num_field_source_isvalid;
 };
 
 struct _QofBookClass
@@ -152,13 +175,11 @@ struct _QofBookClass
 
 GType qof_book_get_type(void);
 
-/*  @brief Encapsulates all the information about a dataset
- * manipulated by QOF.  This is the top-most structure
- * used for anchoring data.
- */
-
 
 #endif /* SWIG */
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* QOF_BOOK_H */
 /*  @} */

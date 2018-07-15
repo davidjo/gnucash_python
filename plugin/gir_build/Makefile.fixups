@@ -1,0 +1,219 @@
+
+PREFIX=/opt/local
+
+PYTHONPREFIX=/opt/local/Library/Frameworks/Python.framework/Versions/2.7
+#PYTHONPREFIX=/usr
+PYTHONVER=python2.7
+PYTHONLIB=${PYTHONPREFIX}/lib
+PYTHONINC=${PYTHONPREFIX}/include/${PYTHONVER}
+PYTHONBIN=${PYTHONPREFIX}/bin/${PYTHONVER}
+
+GNUCASH_SRC = ../../..
+
+SWIG=/opt/local/bin/swig
+#SWIG=/usr/bin/swig
+
+# Set the C flags to include the GTK+ and Python libraries
+CFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --cflags gtk+-2.0 webkit-1.0` -I${PYTHONINC} -I${GNUCASH_SRC}/libqof/qof -I${GNUCASH_SRC}/gnome-utils -I${GNUCASH_SRC}/app-utils -I${GNUCASH_SRC}/html -I${GNUCASH_SRC}/engine -I. -I../.. -I../../..
+LDFLAGS = `env PKG_CONFIG_PATH=${PYTHONLIB}/pkgconfig pkg-config --libs gtk+-2.0 ` -L${PYTHONLIB} -l${PYTHONVER}
+
+
+all:
+	echo "Not allowed"
+
+Helpers:
+	# THESE needed for pygignchelpers.c
+	# and only because dont want issues with figuring out paths to actual versions
+	# ../../../../gnucash/html/gnc-html-p.h
+	cp -p ../../../../gnucash/html/gnc-html-p.h gnc-html-p.h
+	# ../../../../gnucash/html/gnc-html-webkit-p.h
+	cp -p ../../../../gnucash/html/gnc-html-webkit-p.h gnc-html-webkit-p.h
+
+Account: ../../../../libgnucash/engine/Account.h
+	# ../../../../libgnucash/engine/Account.h
+	cp -p ../../../../libgnucash/engine/Account.h Account.h.orig
+	cp -p Account.h.orig Account.h.full
+	diff3 -E Account.h.full oldver/Account.h.orig oldver/Account.h.full >ted
+	echo wq >>ted
+	ex Account.h.full <ted
+
+	# the constants to the gir file
+
+GncDate: ../../../../libgnucash/engine/gnc-date.h
+	# ../../../../libgnucash/engine/gnc-date.h
+	cp -p ../../../../libgnucash/engine/gnc-date.h gnc-date.h.orig
+	cp -p gnc-date.h.orig gnc-date.h
+	-diff3 -E gnc-date.h oldver/gnc-date.h.orig oldver/gnc-date.h >ted
+	echo wq >>ted
+	ex gnc-date.h <ted
+
+GncHtmlExtras: ../../../../gnucash/html/gnc-html-extras.h
+	# ../../../../gnucash/html/gnc-html-extras.h
+	cp -p ../../../../gnucash/html/gnc-html-extras.h gnc-html-extras.h.orig
+	cp -p gnc-html-extras.h.orig gnc-html-extras.h
+	diff3 -E gnc-html-extras.h oldver/gnc-html-extras.h.orig oldver/gnc-html-extras.h >ted
+	echo wq >>ted
+	ex gnc-html-extras.h <ted
+
+GncHtmlHistory: ../../../../gnucash/html/gnc-html-history.h
+	# ../../../../gnucash/html/gnc-html-history.h
+	cp -p ../../../../gnucash/html/gnc-html-history.h gnc-html-history.h.orig
+	cp -p gnc-html-history.h.orig gnc-html-history.h
+	diff3 -E gnc-html-history.h oldver/gnc-html-history.h.orig oldver/gnc-html-history.h >ted
+	echo wq >>ted
+	ex gnc-html-history.h <ted
+
+GncHtmlWebkit: ../../../../gnucash/html/gnc-html-webkit.h
+	# ../../../../gnucash/html/gnc-html-webkit1.h
+	cp -p ../../../../gnucash/html/gnc-html-webkit1.h gnc-html-webkit1.h.orig
+	cp -p gnc-html-webkit1.h.orig gnc-html-webkit1.h
+	-diff3 -E gnc-html-webkit1.h oldver/gnc-html-webkit.h.orig oldver/gnc-html-webkit.h >ted
+	echo wq >>ted
+	ex gnc-html-webkit1.h <ted
+	cp -p ../../../../gnucash/html/gnc-html-webkit2.h gnc-html-webkit2.h.orig
+	cp -p gnc-html-webkit2.h.orig gnc-html-webkit2.h
+	#-diff3 -E gnc-html-webkit2.h oldver/gnc-html-webkit.h.orig oldver/gnc-html-webkit.h >ted
+	#echo wq >>ted
+	#ex gnc-html-webkit1.h <ted
+
+GncHtml: ../../../../gnucash/html/gnc-html.h
+	# ../../../../gnucash/html/gnc-html.h
+	cp -p ../../../../gnucash/html/gnc-html.h gnc-html.h.orig
+	cp -p gnc-html.h.orig gnc-html.h
+	diff3 -E gnc-html.h oldver/gnc-html.h.orig oldver/gnc-html.h >ted
+	echo wq >>ted
+	ex gnc-html.h <ted
+
+GncMainWindow: ../../../../gnucash/gnome-utils/gnc-main-window.h
+	# ../../../../gnucash/gnome-utils/gnc-main-window.h
+	cp -p ../../../../gnucash/gnome-utils/gnc-main-window.h gnc-main-window.h.orig
+	cp -p gnc-main-window.h.orig gnc-main-window.h
+	diff3 -E gnc-main-window.h oldver/gnc-main-window.h.orig oldver/gnc-main-window.h >ted
+	echo wq >>ted
+	ex gnc-main-window.h <ted
+	# fixup the bootstrap version (cut lines from 96)
+	head -95 gnc-main-window.h >gnc-main-window-bootstrap.h
+	tail -5 gnc-main-window.h >>gnc-main-window-bootstrap.h
+
+GncNumeric: ../../../../libgnucash/engine/gnc-numeric.h
+	# well bleeding great - as of 3.2 we seem to have 2 gnc-numeric types
+	# a c++ type GncNumeric and a pure c type (not gobject)
+	# ../../../../libgnucash/engine/gnc-numeric.h
+	cp -p ../../../../libgnucash/engine/gnc-numeric.h gnc-numeric.h.orig
+	cp -p gnc-numeric.h.orig gnc-numeric.h
+	diff3 -E gnc-numeric.h oldver/gnc-numeric.h.orig oldver/gnc-numeric.h >ted
+	echo wq >>ted
+	ex gnc-numeric.h <ted
+
+GncPluginPage: ../../../../gnucash/gnome-utils/gnc-plugin-page.h
+	# ../../../../gnucash/gnome-utils/gnc-plugin-page.h
+	cp -p ../../../../gnucash/gnome-utils/gnc-plugin-page.h gnc-plugin-page.h.orig
+	cp -p gnc-plugin-page.h.orig gnc-plugin-page.h
+	diff3 -E gnc-plugin-page.h oldver/gnc-plugin-page.h.orig oldver/gnc-plugin-page.h >ted
+	echo wq >>ted
+	ex gnc-plugin-page.h <ted
+	head -215 gnc-plugin-page.h >gnc-plugin-page-bootstrap.h
+	tail -4 gnc-plugin-page.h    >>gnc-plugin-page-bootstrap.h 
+
+GncPlugin: ../../../../gnucash/gnome-utils/gnc-plugin.h
+	# ../../../../gnucash/gnome-utils/gnc-plugin.h
+	cp -p ../../../../gnucash/gnome-utils/gnc-plugin.h gnc-plugin.h.orig
+	cp -p gnc-plugin.h.orig gnc-plugin.h
+	diff3 -E gnc-plugin.h oldver/gnc-plugin.h.orig oldver/gnc-plugin.h >ted
+	echo wq >>ted
+	ex gnc-plugin.h <ted
+
+GncTreeModelAccountTypes: ../../../../gnucash/gnome-utils/gnc-tree-model-account-types.h
+	# ../../../../gnucash/gnome-utils/gnc-tree-model-account-types.h
+	cp -p ../../../../gnucash/gnome-utils/gnc-tree-model-account-types.h gnc-tree-model-account-types.h.orig
+	cp -p gnc-tree-model-account-types.h.orig gnc-tree-model-account-types.h
+	diff3 -E gnc-tree-model-account-types.h oldver/gnc-tree-model-account-types.h.orig oldver/gnc-tree-model-account-types.h >ted
+	echo wq >>ted
+	ex gnc-tree-model-account-types.h <ted
+
+GncTreeViewAccount: ../../../../gnucash/gnome-utils/gnc-tree-view-account.h
+	# ../../../../gnucash/gnome-utils/gnc-tree-view-account.h
+	cp -p ../../../../gnucash/gnome-utils/gnc-tree-view-account.h gnc-tree-view-account.h.orig
+	cp -p gnc-tree-view-account.h.orig gnc-tree-view-account.h
+	-diff3 -E gnc-tree-view-account.h oldver/gnc-tree-view-account.h.orig oldver/gnc-tree-view-account.h >ted
+	echo wq >>ted
+	ex gnc-tree-view-account.h <ted
+
+GncTreeView: ../../../../gnucash/gnome-utils/gnc-tree-view.h
+	# ../../../../gnucash/gnome-utils/gnc-tree-view.h
+	cp -p ../../../../gnucash/gnome-utils/gnc-tree-view.h gnc-tree-view.h.orig
+	cp -p gnc-tree-view.h.orig gnc-tree-view.h
+	-diff3 -E gnc-tree-view.h oldver/gnc-tree-view.h.orig oldver/gnc-tree-view.h >ted
+	echo wq >>ted
+	ex gnc-tree-view.h <ted
+
+GncURLResult:
+	# gnc-urlresult.h is the GNCURLResult structure cut from gnc-html.h
+
+GUID: ../../../../libgnucash/engine/guid.h
+	# ../../../../libgnucash/engine/guid.h
+	cp -p ../../../../libgnucash/engine/guid.h guid.h.orig
+	cp -p guid.h.orig guid.h
+	-diff3 -E guid.h oldver/guid.h.orig oldver/guid.h >ted
+	echo wq >>ted
+	ex guid.h <ted
+
+KvpFrame: ../../../../libgnucash/engine/kvp_frame.h
+	# ../../../../libgnucash/engine/kvp_frame.h
+	cp -p ../../../../libgnucash/engine/kvp_frame.h kvp_frame.h.orig
+	cp -p kvp_frame.h.orig kvp_frame.h
+	-diff3 -E kvp_frame.h oldver/kvp_frame.h.orig oldver/kvp_frame.h >ted
+	echo wq >>ted
+	ex kvp_frame.h <ted
+
+QofBook: ../../../../libgnucash/engine/qofbook.h
+	# ../../../../libgnucash/engine/qofbook.h
+	cp -p ../../../../libgnucash/engine/qofbook.h qofbook.h.orig
+	cp -p qofbook.h.orig qofbook.h
+	-diff3 -E qofbook.h oldver/qofbook.h.orig oldver/qofbook.h >ted
+	echo wq >>ted
+	ex qofbook.h <ted
+        # additional edits needed
+	#head -158 qofbook.h >qofbook_bootstrap.h
+	#tail -6 qofbook.h >>qofbook_bootstrap.h
+
+	# so qofcollection.h is extracted from qofid.c!!
+
+QofID: ../../../../libgnuchash/engine/qofid.h
+	# ../../../../libgnuchash/engine/qofid.h
+	cp -p ../../../../libgnucash/engine/qofid.h qofid.h.orig
+	cp -p qofid.h.orig qofid.h
+	diff3 -E qofid.h oldver/qofid.h.orig oldver/qofid.h >ted
+	echo wq >>ted
+	ex qofid.h <ted
+
+QofInstance: ../../../../libgnucash/engine/qofinstance.h
+	# ../../../../libgnucash/engine/qofinstance.h
+	cp -p ../../../../libgnucash/engine/qofinstance.h qofinstance.h.orig
+	cp -p qofinstance.h.orig qofinstance.h
+	-diff3 -E qofinstance.h oldver/qofinstance.h.orig oldver/qofinstance.h >ted
+	echo wq >>ted
+	ex qofinstance.h <ted
+	#head -105 qofinstance.h >qofinstance_bootstrap.h
+	#tail -4 qofinstance.h >>qofinstance_bootstrap.h
+	# additional edits needed
+
+fixup:
+	Account
+	Helpers
+	GncDate
+	GncHtmlExtras
+	GncHtmlHistory
+	GncHtmlWebkit
+	GncHtml
+	GncNumeric
+	GncPluginPage
+	GncPlugin
+	GncTreeModelAccountTypes
+	GncTreeViewAccount
+	GncTreeView
+	GncURLResult
+	KvpFrame
+	QofBook
+	QofID
+	QofInstance

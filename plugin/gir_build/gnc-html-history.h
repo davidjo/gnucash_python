@@ -24,6 +24,7 @@
 #define GNC_HTML_HISTORY_H
 
 typedef struct _gnc_html_history_node gnc_html_history_node;
+// bugger this is making an opaque type
 typedef void gnc_html_history;
 
 // boring recursive includes

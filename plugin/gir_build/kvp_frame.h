@@ -236,12 +236,18 @@ void kvp_frame_set_frame(KvpFrame *frame, const gchar *path, KvpFrame *chld);
  */
 void kvp_frame_set_frame_nc(KvpFrame *frame, const gchar *path, KvpFrame *chld);
 
+<<<<<<< kvp_frame.h
+GList * kvp_frame_get_keys_matching_prefix (KvpFrame *, const gchar *);
+
+/** The kvp_frame_set_value() routine copies the value into the frame,
+=======
 /**
  * kvp_frame_set_value:
  * return : (transfer none) : The returned value
       is a pointer to the actual frame into which the value was inserted
  *
  *  The kvp_frame_set_value() routine copies the value into the frame,
+>>>>>>> oldver/kvp_frame.h
  *    at the location 'path'.   If the path contains slashes '/', these
  *    are assumed to represent a sequence of keys.  The returned value
  *    is a pointer to the actual frame into which the value was inserted;

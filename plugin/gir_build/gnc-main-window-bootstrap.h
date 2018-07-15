@@ -93,6 +93,7 @@ typedef void (*GncMainWindowPageFunc) (GncPluginPage *page, gpointer user_data);
 GType gnc_main_window_get_type (void);
 
 
+
 #endif /* __GNC_MAIN_WINDOW_H */
 
 /*  @} */

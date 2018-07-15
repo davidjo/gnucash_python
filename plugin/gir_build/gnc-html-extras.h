@@ -23,6 +23,7 @@
 #ifndef GNC_HTML_EXTRAS_H
 #define GNC_HTML_EXTRAS_H
 
+
 #include <glib-object.h>
 
 // This file is needed so that these definitions can be separately included in the

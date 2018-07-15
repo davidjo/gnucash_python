@@ -1,18 +1,10 @@
---- gir/GncPluginPage-0.1.gir.orig	2016-12-05 18:38:39.000000000 +0000
-+++ gir/GncPluginPage-0.1.gir	2016-12-05 18:42:37.000000000 +0000
+--- gir/GncPluginPage-0.1.gir.orig	2018-07-03 10:19:53.000000000 +0100
++++ gir/GncPluginPage-0.1.gir	2018-07-03 10:20:15.000000000 +0100
 @@ -10,6 +10,7 @@
-   <include name="Gdk" version="2.0"/>
+   <include name="Gdk" version="3.0"/>
    <include name="Gio" version="2.0"/>
-   <include name="Gtk" version="2.0"/>
+   <include name="Gtk" version="3.0"/>
 +  <include name="QofBook" version="0.1"/>
    <namespace name="GncPluginPage"
               version="0.1"
               shared-library="/opt/local/lib/gnucash/libgncmod-gnome-utils.dylib"
-@@ -1100,7 +1101,5 @@
-         </callback>
-       </field>
-     </record>
--    <record name="QofBook" c:type="QofBook" disguised="1">
--    </record>
-   </namespace>
- </repository>

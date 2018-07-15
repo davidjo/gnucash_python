@@ -322,6 +322,24 @@ gboolean gnc_main_window_button_press_cb (GtkWidget *whatever,
         GdkEventButton *event,
         GncPluginPage *page);
 
+
+/** Callback function invoked when the user requests that Gnucash
+ *  popup the contextual menu via the keyboard context-menu request
+ *  key combination (Shift-F10 by default).
+ *
+ *  @param page This is the GncPluginPage corresponding to the visible
+ *  page.
+ *
+ *  @param widget Whatever widget had focus when the user issued the
+ *  keyboard context-menu request.
+ *
+ *  @return Always returns TRUE to indicate that the menu request was
+ *  handled.
+ */
+gboolean gnc_main_window_popup_menu_cb (GtkWidget *widget,
+        GncPluginPage *page);
+
+
 /** Restore the persistent state of all windows.
  *
  *  @param keyfile The GKeyFile containing persistent window state.
@@ -417,10 +435,27 @@ void gnc_main_window_show_all_windows(void);
  *
  *  @param title Title of the dialog; "Book Options" if NULL.
  *
+ *  @param parent The toplevel GdkWindow with which the dialog will
+ *  be transient for.
+ *
  *  @return A pointer to the GtkWidget for the dialog that can be used
  *  when started in modal mode.
  **/
-GtkWidget *gnc_book_options_dialog_cb (gboolean modal, gchar *title);
+GtkWidget *gnc_book_options_dialog_cb (gboolean modal, gchar *title,
+                                       GtkWindow *parent);
+
+/**
+ * Processes selected options in the Book Options dialog: checks book_currency
+ * and use_split_action_for_num to see if features kvp shuold be set. To be used
+ * where ever a new book situation requires book option selection (e.g., not
+ * just in Book Options dialog opened from main window but also in new-file
+ * assistant).
+ *
+ *  @param GNCOptionDB * options.
+ *
+ *  @return TRUE if gnc_gui_refresh_all should be called; otherwise FALSE.
+ **/
+gboolean gnc_book_options_dialog_apply_helper(GNCOptionDB * options);
 
 #endif /* __GNC_MAIN_WINDOW_H */
 

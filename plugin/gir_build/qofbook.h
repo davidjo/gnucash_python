@@ -40,15 +40,26 @@
 #ifndef QOF_BOOK_H
 #define QOF_BOOK_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* We only want a few things exported to Guile */
 #ifndef SWIG
 
 typedef struct _QofBookClass  QofBookClass;
+#ifndef __KVP_VALUE
+// we probably need to change this to a dummy gint64
+// so can use the address to pass to eg SWIG wrap functions
+typedef struct KvpValueImpl KvpValue;
+#define __KVP_VALUE
+#endif
 
 //#include "qofid.h"
 #include "qofidtype.h"
-#include "kvp_frame.h"
 #include "qofinstance.h"
+#include "qofbackend.h"
 
 /* --- type macros --- */
 #define QOF_TYPE_BOOK            (qof_book_get_type ())
@@ -69,10 +80,15 @@ typedef struct _QofBookClass  QofBookClass;
 //typedef unsigned long long QofBackend;
 typedef void QofBackend;
 
-//typedef gint64 	time64;
+typedef gint64 	time64;
 
 
 typedef void (*QofBookDirtyCB) (QofBook *book, gboolean dirty, gpointer user_data);
+
+typedef struct gnc_option_db GNCOptionDB;
+
+typedef void (*GNCOptionSave) (GNCOptionDB*, QofBook*, gboolean);
+typedef void (*GNCOptionLoad) (GNCOptionDB*, QofBook*);
 
 /* Book structure */
 struct _QofBook
@@ -104,7 +120,7 @@ struct _QofBook
 
     /* The entity table associates the GUIDs of all the objects
      * belonging to this book, with their pointers to the respective
-     * objects.  This allows a lookup of objects based on thier guid.
+     * objects.  This allows a lookup of objects based on their guid.
      */
     GHashTable * hash_of_collections;
 
@@ -143,6 +159,13 @@ struct _QofBook
      * except that it provides a nice convenience, avoiding a lookup
      * from the session.  Better solutions welcome ... */
     QofBackend *backend;
+
+    /* A cached value of the OPTION_NAME_NUM_FIELD_SOURCE option value because
+     * it is queried quite a lot, so we want to avoid a KVP lookup on each query
+     */
+    gboolean cached_num_field_source;
+    /* Whether the above cached value is valid. */
+    gboolean cached_num_field_source_isvalid;
 };
 
 struct _QofBookClass
@@ -248,31 +271,13 @@ typedef void (*QofCollectionForeachCB) (QofCollection *book, gpointer user_data)
 void qof_book_foreach_collection (const QofBook *book, QofCollectionForeachCB cb, gpointer user_data);
 
 /**
- * qof_book_get_slots:
- *
- * Returns : (transfer none) : Return The kvp data for the book.
- *
- *  Return The kvp data for the book.
- *  Note that the book KVP data is persistent, and is stored/retrieved
- *  from the file/database.  Thus, the book KVP is the correct place to
- *  store data that needs to be persistent accross sessions (or shared
- *  between multiple users).  To store application runtime data, use
- *  qof_book_set_data() instead.
- */
-KvpFrame *qof_book_get_slots(const QofBook *book);
-
-/**
  * qof_book_set_data:
  *
- *  The qof_book_set_data() allows arbitrary pointers to structs
+ * The qof_book_set_data() allows arbitrary pointers to structs
  *    to be stored in QofBook. This is the "preferred" method for
  *    extending QofBook to hold new data types.  This is also
  *    the ideal location to store other arbitrary runtime data
  *    that the application may need.
- *
- *    The book data differs from the book KVP in that the contents
- *    of the book KVP are persistent (are saved and restored to file
- *    or database), whereas the data pointers exist only at runtime.
  */
 void qof_book_set_data (QofBook *book, const gchar *key, gpointer data);
 
@@ -321,9 +326,42 @@ void qof_book_mark_readonly(QofBook *book);
 gboolean qof_book_use_trading_accounts (const QofBook *book);
 
 /**
+  * qof_book_get_book_currency_name:
+  *
+  *  Returns pointer to book-currency name for book, if one exists in the
+  * KVP, or NULL; does not validate contents nor determine if there is a valid
+  * default gain/loss policy, both of which are required, for the
+  * 'book-currency' currency accounting method to apply. Use instead
+  * 'gnc_book_get_book_currency_name' which does these validations.
+  */
+const gchar * qof_book_get_book_currency_name (QofBook *book);
+
+/**
+  * qof_book_get_default_gains_policy:
+  *
+  * Returns pointer to default gain/loss policy for book, if one exists in the
+  * KVP, or NULL; does not validate contents nor determine if there is a valid
+  * book-currency, both of which are required, for the 'book-currency'
+  * currency accounting method to apply. Use instead
+  * 'gnc_book_get_default_gains_policy' which does these validations.
+  */
+const gchar * qof_book_get_default_gains_policy (QofBook *book);
+
+/**
+  * qof_book_get_default_gain_loss_acct_guid:
+  *
+  * Returns pointer to default gain/loss account GUID for book, if one exists in
+  * the KVP, or NULL; does not validate contents nor determine if there is a
+  * valid book-currency, both of which are required, for the 'book-currency'
+  * currency accounting method to apply. Use instead
+  * 'gnc_book_get_default_gain_loss_acct' which does these validations.
+  */
+const GncGUID * qof_book_get_default_gain_loss_acct_guid (QofBook *book);
+
+/**
  * qof_book_uses_autoreadonly:
  *
- *  Returns TRUE if the auto-read-only feature should be used, otherwise
+ * Returns TRUE if the auto-read-only feature should be used, otherwise
  * FALSE. This is just a wrapper on qof_book_get_num_days_autoreadonly() == 0.
  */
 gboolean qof_book_uses_autoreadonly (const QofBook *book);
@@ -422,14 +460,6 @@ gint64 qof_book_get_session_dirty_time(const QofBook *book);
 void qof_book_set_dirty_cb(QofBook *book, QofBookDirtyCB cb, gpointer user_data);
 
 /**
- * qof_book_kvp_changed:
- *
- *  Call this function when you change the book kvp, to make sure the book
- * is marked 'dirty'.
- */
-void qof_book_kvp_changed (QofBook *book);
-
-/**
  * qof_book_get_counter:
  *
  *  This will get the named counter for this book. The return value is
@@ -465,18 +495,115 @@ gchar * qof_book_normalize_counter_format(const gchar *format, gchar **err_msg);
  *    The return value is NULL on error or the format string of the
  *    counter. The returned string should be freed by the caller.
  */
-gchar *qof_book_get_counter_format (const QofBook *book, const char *counter_name);
+char *qof_book_get_counter_format (const QofBook *book,
+                                   const char *counter_name);
 
 const char* qof_book_get_string_option(const QofBook* book, const char* opt_name);
 void qof_book_set_string_option(QofBook* book, const char* opt_name, const char* opt_val);
 
+/**
+ * qof_book_get_features:
+ * return : (transfer container)
+ *
+ * Access functions for reading and setting the used-features on this book.
+ */
+GHashTable *qof_book_get_features (QofBook *book);
+/**
+ * qof_book_set_feature:
+ */
+void qof_book_set_feature (QofBook *book, const gchar *key, const gchar *descr);
+
+/**
+ * qof_book_begin_edit:
+ */
+/**
+ * qof_book_commit_edit:
+ */
 void qof_book_begin_edit(QofBook *book);
 void qof_book_commit_edit(QofBook *book);
 
+/* Access functions for options. */
+/*  @ingroup KVP
+ @{
+ */
+/**
+ * qof_book_load_options:
+ * @book:
+ * @load_cb: (scope call) :
+ * @odb:
+ *
+ * Load a GNCOptionsDB from KVP data.
+ * @param book: The book.
+ * @param load_cb: A callback function that does the loading.
+ * @param odb: The GNCOptionDB to load.
+ */
+void qof_book_load_options (QofBook *book, GNCOptionLoad load_cb,
+			    GNCOptionDB *odb);
+/**
+ * qof_book_save_options:
+ * @book:
+ * @save_cb: (scope call) :
+ * @odb:
+ * @clear:
+ *
+ * Save a GNCOptionsDB back to the book's KVP.
+ * @param book: The book.
+ * @param save_cb: A callback function that does the saving.
+ * @param odb: The GNCOptionsDB to save from.
+ * @param clear: Should the GNCOptionsDB be emptied after the save?
+ */
+void qof_book_save_options (QofBook *book, GNCOptionSave save_cb,
+                            GNCOptionDB* odb, gboolean clear);
+/**
+ * qof_book_set_option:
+ * @book:
+ * @value:
+ * @path:  (element-type gchar*) :
+ *
+ * Save a single option value.
+ * Used from Scheme, the KvpValue<-->SCM translation is handled by the functions
+ * in kvp-scm.c and automated by SWIG. The starting element is set as
+ * KVP_OPTION_PATH in qofbookslots.h.
+ * @param book: The book.
+ * @param value: The KvpValue to store.
+ * @param path: A GSList of keys which form a path under KVP_OPTION_PATH.
+ */
+void qof_book_set_option (QofBook *book, KvpValue *value, GSList *path);
+
+/**
+ * qof_book_get_option:
+ * @book:
+ * @path: (element-type gchar*) :
+ *
+ * Read a single option value.
+ * Used from Scheme, the KvpValue<-->SCM translation is handled by the functions
+ * in kvp-scm.c and automated by SWIG. The starting element is set as
+ * KVP_OPTION_PATH in qofbookslots.h.
+ * @param book: The book.
+ * @param path: A GSList of keys which form a path under KVP_OPTION_PATH.
+ */
+KvpValue* qof_book_get_option (QofBook *book, GSList *path);
+
+/**
+ * qof_book_options_delete:
+ * @book:
+ * @path: (element-type gchar*) :
+ *
+ * Delete the options.
+ * Primarily used from Scheme to clear out the options before saving a new set.
+ * @param book: The book.
+ * @param list: A GList of keys which from a path under KVP_OPTION_PATH.
+ *              If GList is Null, the whole option is deleted.
+ */
+void qof_book_options_delete (QofBook *book, GSList *path);
+/*  @} End of Doxygen Include */
 /*  deprecated */
 #define qof_book_get_guid(X) qof_entity_get_guid (QOF_INSTANCE(X))
 
 #endif /* SWIG */
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* QOF_BOOK_H */
 /*  @} */

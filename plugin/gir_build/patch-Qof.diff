@@ -1,0 +1,44 @@
+--- gir/Qof-0.1.gir.orig	2018-07-02 18:44:40.000000000 +0100
++++ gir/Qof-0.1.gir	2018-07-02 18:45:43.000000000 +0100
+@@ -10,13 +10,12 @@
+   <include name="GObject" version="2.0"/>
+   <include name="GncGUID" version="0.1"/>
+   <include name="QofIdType" version="0.1"/>
++  <include name="QofBook" version="0.1"/>
+   <namespace name="Qof"
+              version="0.1"
+              shared-library="/opt/local/lib/gnucash/libgncmod-engine.dylib"
+              c:identifier-prefixes="Qof"
+              c:symbol-prefixes="qof">
+-    <record name="Book" c:type="QofBook" disguised="1">
+-    </record>
+     <record name="Collection" c:type="QofCollection" disguised="1">
+     </record>
+     <class name="Instance"
+@@ -283,7 +282,7 @@
+           <doc xml:space="preserve">Return the book pointer
+ 
+  Return the book pointer</doc>
+-          <type name="Book" c:type="QofBook*"/>
++          <type name="QofBook.Book" c:type="QofBook*"/>
+         </return-value>
+         <parameters>
+           <instance-parameter name="inst" transfer-ownership="none">
+@@ -357,7 +356,7 @@
+             <type name="QofIdType.IdType" c:type="QofIdType"/>
+           </parameter>
+           <parameter name="book" transfer-ownership="none">
+-            <type name="Book" c:type="QofBook*"/>
++            <type name="QofBook.Book" c:type="QofBook*"/>
+           </parameter>
+         </parameters>
+       </method>
+@@ -391,7 +390,7 @@
+             <type name="Instance" c:type="QofInstance*"/>
+           </instance-parameter>
+           <parameter name="book" transfer-ownership="none">
+-            <type name="Book" c:type="QofBook*"/>
++            <type name="QofBook.Book" c:type="QofBook*"/>
+           </parameter>
+         </parameters>
+       </method>

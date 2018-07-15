@@ -180,7 +180,7 @@ gnc_tree_view_add_toggle_column (GncTreeView *view,
  * @view:
  * @column_title:
  * @pref_name:
- * @stock_icon_name:
+ * @icon_name:
  * @sizing_text:
  * @model_data_column:
  * @model_visibility_column:
@@ -199,10 +199,10 @@ gnc_tree_view_add_toggle_column (GncTreeView *view,
  *  used in several functions to look up the column, and it is also
  *  used when saving/restoring the view's state.
  *
- *  @param stock_icon_name The name of the stock icon to display to
+ *  @param icon_name The name of the icon to display to
  *  the left of the text in this column.  Used for adding icons like
- *  the "account" icon to a view.  This must be a registered stock
- *  icon, not a filename.
+ *  the "account" icon to a view.  This must be a registered icon,
+ *  not a filename.
  *
  *  @param sizing_text A string used to compute the default width of
  *  the column.  This text is never displayed.
@@ -228,7 +228,7 @@ GtkTreeViewColumn *
 gnc_tree_view_add_text_column (GncTreeView *view,
                                const gchar *column_title,
                                const gchar *pref_name,
-                               const gchar *stock_icon_name,
+                               const gchar *icon_name,
                                const gchar *sizing_text,
                                gint model_data_column,
                                gint model_visibility_column,
@@ -271,7 +271,7 @@ gnc_tree_view_add_combo_column (GncTreeView *view,
  * @view:
  * @column_title:
  * @pref_name:
- * @stock_icon_name:
+ * @icon_name:
  * @sizing_text:
  * @model_data_column:
  * @model_visibility_column:
@@ -286,7 +286,7 @@ GtkTreeViewColumn *
 gnc_tree_view_add_date_column (GncTreeView *view,
                                const gchar *column_title,
                                const gchar *pref_name,
-                               const gchar *stock_icon_name,
+                               const gchar *icon_name,
                                const gchar *sizing_text,
                                gint model_data_column,
                                gint model_visibility_column,
@@ -588,6 +588,35 @@ gnc_tree_view_keynav(GncTreeView *view, GtkTreeViewColumn **col,
 gboolean
 gnc_tree_view_path_is_valid(GncTreeView *view, GtkTreePath *path);
 
+/**
+ * gnc_tree_view_set_editing_started_cb:
+ * @view:
+ * @editing_started_cb: (scope call) :
+ * @editing_cb_data:
+ *
+ *  Setup a callback for when the user starts editing so appropiate actions can be taken
+ *  like disable the actions delete menu option.
+ */
+void
+gnc_tree_view_set_editing_started_cb(GncTreeView *view,
+                    GFunc editing_started_cb, gpointer editing_cb_data);
+
+/**
+ * gnc_tree_view_set_editing_finished_cb:
+ * @view:
+ * @editing_finished_cb: (scope call) :
+ * @editing_cb_data:
+ *
+ *  Setup a callback for when the user finishes editing so appropiate actions can be taken
+ *  like enable the actions delete menu option.
+ */
+void
+gnc_tree_view_set_editing_finished_cb(GncTreeView *view,
+                   GFunc editing_finished_cb, gpointer editing_cb_data);
+
+/*  @} */
+
+/*  @} */
 
 G_END_DECLS
 

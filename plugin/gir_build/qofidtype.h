@@ -25,5 +25,4 @@ typedef const gchar* QofLogModule;
 #define QOF_ID_BOOK           "Book"
 #define QOF_ID_SESSION        "Session"
 
-
 #endif /* QOF_IDTYPE_H */

@@ -25,9 +25,9 @@
 
 /**
  * GncHtml:
- *  A GncHtml object is an abstract base for an html engine used to display reports and
- *  charts in gnucash.  It must be overridden to create specific objects using specific
- *  html engines (e.g. webkit).
+ * A GncHtml object is an abstract base for an html engine used to display reports and
+ * charts in gnucash.  It must be overridden to create specific objects using specific
+ * html engines (e.g. webkit).
  */
 
 #include <glib-object.h>
@@ -51,28 +51,8 @@ typedef struct _GncHtmlPrivate GncHtmlPrivate;
 
 #include "gnc-html-extras.h"
 
-/* The result structure of url handlers. Strings should be g_malloc'd
- * by the handler and will be freed by gnc_html. */
-typedef struct
-{
-    /* The following members are used if the handler succeeds (returns TRUE). */
+#include "gnc-urlresult.h"
 
-    gboolean load_to_stream; /* If TRUE, the url should be loaded from
-                            * a stream using the rest of the data in
-                            * the struct into the original gnc_html
-                            * object. If FALSE, the handler will
-                            * perform all needed actions itself. */
-
-    URLType url_type;        /* Defaults to original */
-    gchar* location;         /* If NULL, use original (NULL is default) */
-    gchar* label;            /* If NULL, use original (NULL is default) */
-
-    URLType base_type;
-    gchar* base_location;
-
-    /* The following members are used if the handler fails (returns FALSE). */
-    gchar* error_message;
-} GNCURLResult;
 
 typedef gboolean (* GncHTMLObjectCB)(GncHtml* html, gpointer eb,
                                      gpointer data);
@@ -84,15 +64,19 @@ typedef gboolean (* GncHTMLUrlCB)(const gchar* location, const gchar* label,
  * gnc_html_register_urltype:
  * @type : New URL type
  * @protocol : Protocol - should be an empty string if there is no corresponding protocol.
- *  Registers a new URLType.
- *  returns TRUE if succesful, FALSE if type already exists.
- * return : TRUE if successful, FALSE if type already exists or protocol is NULL.
+ *
+ * Registers a new URLType.
+ * returns TRUE if successful, FALSE if type already exists.
+ *
+ * @param type New URL type
+ * @param prococol Protocol - should be an empty string if there is no corresponding protocol.
+ * @return TRUE if successful, FALSE if type already exists or protocol is NULL.
  */
 gboolean gnc_html_register_urltype( URLType type, const gchar* protocol );
 
 /**
  * gnc_html_initialize:
- *  Initializes the html subsystem
+ * Initializes the html subsystem
  */
 void gnc_html_initialize( void );
 
@@ -155,10 +139,14 @@ struct _GncHtmlClass
                       const gchar* label,
                       gboolean new_window_hint );
     void (*show_data)( GncHtml* html, const gchar* data, int datalen );
-    void (*reload)( GncHtml* html );
+    void (*reload)( GncHtml* html, gboolean force_rebuild );
     void (*copy_to_clipboard)( GncHtml* html );
     gboolean (*export_to_file)( GncHtml* html, const gchar* file );
-    void (*print)( GncHtml* html, const gchar* jobname, gboolean export_pdf );
+#ifdef WEBKIT1
+  void (*print) (GncHtml* html, const gchar* jobname, gboolean export_pdf);
+#else
+    void (*print) (GncHtml* html);
+#endif
     void (*cancel)( GncHtml* html );
     /**
      * parse_url:
@@ -184,8 +172,10 @@ struct _GncHtml
 /**
  * gnc_html_destroy:
  * @html : GncHtml object to destroy
- *  Destroys a GncHtml object.
  *
+ * Destroys a GncHtml object.
+ *
+ * @param html GncHtml object to destroy
  */
 void gnc_html_destroy( GncHtml* html );
 
@@ -196,8 +186,10 @@ void gnc_html_destroy( GncHtml* html );
  * @location : a url
  * @label : a label
  * @new_window_hint : make a new window maybe
- *  Displays a URL in a GncHtml object.
  *
+ * Displays a URL in a GncHtml object.
+ *
+ * @param html GncHtml object
  */
 void gnc_html_show_url( GncHtml* html, URLType type, const gchar* location,
                         const gchar* label, gboolean new_window_hint );
@@ -207,24 +199,32 @@ void gnc_html_show_url( GncHtml* html, URLType type, const gchar* location,
  * @html : GncHtml object
  * @data : User data
  * @datalen : Length of user data
- *  Displays an HTML string in a GncHtml object.
  *
+ * Displays an HTML string in a GncHtml object.
+ *
+ * @param html GncHtml object
  */
 void gnc_html_show_data( GncHtml* html, const gchar* data, int datalen );
 
 /**
  * gnc_html_reload:
  * @html : GncHtml object
- *  Reloads the current GncHtml object.
+ * @force_rebuild : if TRUE, report is reloaded, if FALSE, report is recreated
  *
+ * Reloads the current GncHtml object.
+ *
+ * @param html GncHtml object
+ * @param view if TRUE, view is reloaded, if FALSE, report is recreated
  */
-void gnc_html_reload( GncHtml* html );
+void gnc_html_reload( GncHtml* html, gboolean force_rebuild );
 
 /**
  * gnc_html_copy_to_clipboard:
  * @html : GncHtml object
- *  Copies the html to the clipboard
  *
+ * Copies the html to the clipboard
+ *
+ * @param html GncHtml object
  */
 void gnc_html_copy_to_clipboard( GncHtml* html );
 
@@ -232,27 +232,50 @@ void gnc_html_copy_to_clipboard( GncHtml* html );
  * gnc_html_export_to_file:
  * @html : GncHtml object
  * @file : External file name
- *  Exports the html to an external file.
- * return : TRUE if successful, FALSE if unsuccessful
+ *
+ * Exports the html to an external file.
+ *
+ * @param html GncHtml object
+ * @param filename External file name
+ * @param TRUE if successful, FALSE if unsuccessful
  */
 gboolean gnc_html_export_to_file( GncHtml* html, const gchar* file );
 
+#ifdef WEBKIT1
 /**
  * gnc_html_print:
  * @html : GncHtml object
  * @jobname : A jobname for identifying this job, or to be used as an output file
  * @export_pdf : If TRUE, only run a "print to PDF" operation in order to
           export this to pdf. If FALSE, run a normal printing dialog.
- *  Prints the report.
  *
+ * Prints the report.
+ *
+ * @param html GncHtml object
+ * @param jobname A jobname fo identifying the print job or to provide
+ *                an output filename.
+ * @param export_pdf If TRUE write a PDF file using the jobname for a
+ *                   filename; otherwise put up a print dialog.
  */
-void gnc_html_print( GncHtml* html, const gchar* jobname, gboolean export_pdf );
-
+void gnc_html_print (GncHtml* html, const char* jobname, gboolean export_pdf);
+#else
+/**
+ * gnc_html_print:
+ * @html : GncHtml object
+ *
+ * Prints the report.
+ *
+ * @param html GncHtml object
+ */
+void gnc_html_print (GncHtml* html);
+#endif
 /**
  * gnc_html_cancel:
  * @html : GncHtml object
+ *
  * Cancels the current operation
  *
+ * @param html GncHtml object
  */
 void gnc_html_cancel( GncHtml* html );
 
@@ -264,8 +287,12 @@ void gnc_html_cancel( GncHtml* html );
  * @url_label : (out) : Pointer where to store address of string containing label
  * return: (transfer none) : type of parsed URL
  *
- *  Parses a URL into URI and label
+ * Parses a URL into URI and label
  *
+ * @param html GncHtml object
+ * @param url URL
+ * @param url_location Pointer where to store address of string containing main URI
+ * @param url_label Pointer where to store address of string containing label
  */
 URLType gnc_html_parse_url( GncHtml* html, const gchar* url,
                             gchar** url_location, gchar** url_label );
@@ -276,7 +303,10 @@ URLType gnc_html_parse_url( GncHtml* html, const gchar* url,
  *
  * return : (transfer none) : History
  *
- *  Returns the history for this html engine
+ * Returns the history for this html engine
+ *
+ * @param html GncHtml object
+ * @return History
  */
 gnc_html_history* gnc_html_get_history( GncHtml* html );
 
@@ -285,7 +315,10 @@ gnc_html_history* gnc_html_get_history( GncHtml* html );
  * @html : GncHtml object
  * return: (transfer none) : main widget
  *
- *  Returns the main widget for this html engine
+ * Returns the main widget for this html engine
+ *
+ * @param html GncHtml object
+ * @return Main widget
  */
 GtkWidget* gnc_html_get_widget( GncHtml* html );
 
@@ -293,8 +326,11 @@ GtkWidget* gnc_html_get_widget( GncHtml* html );
  * gnc_html_set_parent:
  * @html : GncHtml object
  * @parent : Parent window
- *  Sets the parent window for this html engine.  The engine will be embedded in this parent.
  *
+ * Sets the parent window for this html engine.  The engine will be embedded in this parent.
+ *
+ * @param html GncHtml object
+ * @param parent Parent window
  */
 void gnc_html_set_parent( GncHtml* html, GtkWindow* parent );
 

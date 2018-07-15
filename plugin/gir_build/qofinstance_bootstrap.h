@@ -40,18 +40,28 @@
 typedef struct _QofInstanceClass QofInstanceClass;
 typedef struct QofInstance_s QofInstance;
 
-// this bootstrap version just includes the primary type and minimal
-// functions so we dont need the circular reference
-/*  \brief QofBook reference */
-//typedef struct _QofBook       QofBook;
+// now thats interesting - because the gir scanner actually creates an object
+// from the include file it is able to extract data from the in memory gobject
+// - primarily any private data defined - without accessing the c file!!
+// this means any type in the private data we need to define here
+// so we DO need a QofBook gir - else the private QofBook is a bit undefined
+// if we just use the QofBook reference here
+// - except we cant because the QofBook needs a QofInstance definition
+// so leave as below and patch
+
+// NOTA BENE - circular references REALLY confuse the scanner
+// NO QofBook references in the bootstrap!!
+// NO QofCollection references in the bootstrap!!
+
+// cant see usage of gnc-date.h or qof-gobject.h
+// so commenting out
 
 //#include "qofid.h"
 #include "qofidtype.h"
 //#include "qofcollection.h"
 //#include "guid.h"
 //#include "gnc-date.h"
-#include "kvp_frame.h"
-#include "qof-gobject.h"
+//#include "qof-gobject.h"
 
 /* --- type macros --- */
 #define QOF_TYPE_INSTANCE            (qof_instance_get_type ())
@@ -65,17 +75,15 @@ typedef struct QofInstance_s QofInstance;
      (G_TYPE_CHECK_CLASS_TYPE ((k), QOF_TYPE_INSTANCE))
 #define QOF_INSTANCE_GET_CLASS(o)    \
      (G_TYPE_INSTANCE_GET_CLASS ((o), QOF_TYPE_INSTANCE, QofInstanceClass))
+#ifndef __KVP_FRAME
+typedef struct KvpFrameImpl KvpFrame;
+#define __KVP_FRAME
+#endif
 
 struct QofInstance_s
 {
     GObject object;
-
     QofIdType        e_type;		   /* <	Entity type */
-
-    /* kvp_data is a key-value pair database for storing arbirtary
-     * information associated with this instance.
-     * See src/engine/kvp_doc.txt for a list and description of the
-     * important keys. */
     KvpFrame *kvp_data;
 };
 
@@ -100,7 +108,7 @@ struct _QofInstanceClass
  */
 GType qof_instance_get_type(void);
 
+
 /* @} */
 /* @} */
 #endif /* QOF_INSTANCE_H */
-

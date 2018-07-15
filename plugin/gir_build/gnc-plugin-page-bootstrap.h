@@ -36,23 +36,24 @@
 #ifndef __GNC_PLUGIN_PAGE_H
 #define __GNC_PLUGIN_PAGE_H
 
-// also we have the config.h file included here
-//#include <config.h>
-
 #include <glib.h>
+//#include "qof.h"
+
 // why the hell is this missing in the new gnucash
 // how is this included???
 // bleeding eejits - we now only include the gtk.h in the .c file
 // and this file is included AFTER that include so all entities are defined
 #include <gtk/gtk.h>
-//#include "qof.h"
-// still having issues with GncMainWindow if use even bootstrap version
+
+// still having issues with GncMainWindow even if use bootstrap version
 //#include "qofbook_bootstrap.h"
 // this is how the type should appear if use QofBook
 // but we have problems using it (circular references??)
 // make dummy type definition then replace with correct version
 //<type name="QofBook.Book" c:type="QofBook*"/>
+//typedef void       QofBook;
 typedef struct _QofBook       QofBook;
+
 
 G_BEGIN_DECLS
 
@@ -70,7 +71,7 @@ G_BEGIN_DECLS
 /* typedefs & structures */
 
 /*  The instance data structure for a content plugin. */
-typedef struct _GncPluginPage
+typedef struct GncPluginPage
 {
     GObject gobject;		/* < The parent object data. */
 
@@ -103,10 +104,10 @@ typedef struct
     const gchar *plugin_name;
 
     /* Signals */
-    void (*inserted) (GncPluginPage *plugin_page);
-    void (*removed) (GncPluginPage *plugin_page);
-    void (*selected) (GncPluginPage *plugin_page);
-    void (*unselected) (GncPluginPage *plugin_page);
+    void (* inserted) (GncPluginPage *plugin_page);
+    void (* removed) (GncPluginPage *plugin_page);
+    void (* selected) (GncPluginPage *plugin_page);
+    void (* unselected) (GncPluginPage *plugin_page);
 
     /* Virtual Table */
 
@@ -211,6 +212,7 @@ typedef struct
  *  @return A GType.
  */
 GType gnc_plugin_page_get_type (void);
+
 
 
 G_END_DECLS

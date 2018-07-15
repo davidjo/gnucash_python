@@ -93,7 +93,7 @@ typedef struct QofCollection_s QofCollection;
 #define QOF_ID_BOOK           "Book"
 #define QOF_ID_SESSION        "Session"
 
-/*  Inline string comparision; compiler will optimize away most of this */
+/*  Inline string comparison; compiler will optimize away most of this */
 #ifndef _MSC_VER
 # define QSTRCMP(da,db) ({                \
   gint val = 0;                          \
@@ -202,7 +202,7 @@ void qof_collection_foreach (const QofCollection *col, QofInstanceForeachCB cb,
 /**
  * qof_collection_get_data:
  *
- *  Store and retreive arbitrary object-defined data
+ *  Store and retrieve arbitrary object-defined data
  *
  * XXX We need to add a callback for when the collection is being
  * destroyed, so that the user has a chance to clean up anything
@@ -245,7 +245,7 @@ void qof_collection_remove_entity (QofInstance *ent);
 
 /*  \brief Compare two secondary collections.
 
-Performs a deep comparision of the collections. Each QofInstance in
+Performs a deep comparison of the collections. Each QofInstance in
 each collection is looked up in the other collection, via the GncGUID.
 
 \return 0 if the collections are identical or both are NULL

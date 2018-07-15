@@ -67,6 +67,9 @@ typedef struct
     URLType base_type;
     gchar* base_location;
 
+    /* The window that triggered this URL request */
+    GtkWindow *parent;
+
     /* The following members are used if the handler fails (returns FALSE). */
     gchar* error_message;
 } GNCURLResult;
@@ -79,7 +82,7 @@ typedef gboolean (* GncHTMLUrlCB)(const gchar* location, const gchar* label,
 
 /**
  * Registers a new URLType.
- * returns TRUE if succesful, FALSE if type already exists.
+ * returns TRUE if successful, FALSE if type already exists.
  *
  * @param type New URL type
  * @param prococol Protocol - should be an empty string if there is no corresponding protocol.
@@ -132,10 +135,14 @@ struct _GncHtmlClass
                       const gchar* label,
                       gboolean new_window_hint );
     void (*show_data)( GncHtml* html, const gchar* data, int datalen );
-    void (*reload)( GncHtml* html );
+    void (*reload)( GncHtml* html, gboolean force_rebuild );
     void (*copy_to_clipboard)( GncHtml* html );
     gboolean (*export_to_file)( GncHtml* html, const gchar* file );
-    void (*print)( GncHtml* html, const gchar* jobname, gboolean export_pdf );
+#ifdef WEBKIT1
+  void (*print) (GncHtml* html, const gchar* jobname, gboolean export_pdf);
+#else
+    void (*print) (GncHtml* html);
+#endif
     void (*cancel)( GncHtml* html );
     URLType (*parse_url)( GncHtml* html, const gchar* url,
                           gchar** url_location, gchar** url_label );
@@ -176,8 +183,9 @@ void gnc_html_show_data( GncHtml* html, const gchar* data, int datalen );
  * Reloads the current GncHtml object.
  *
  * @param html GncHtml object
+ * @param view if TRUE, view is reloaded, if FALSE, report is recreated
  */
-void gnc_html_reload( GncHtml* html );
+void gnc_html_reload( GncHtml* html, gboolean view );
 
 /**
  * Copies the html to the clipboard
@@ -195,16 +203,25 @@ void gnc_html_copy_to_clipboard( GncHtml* html );
  */
 gboolean gnc_html_export_to_file( GncHtml* html, const gchar* filename );
 
+#ifdef WEBKIT1
 /**
  * Prints the report.
  *
  * @param html GncHtml object
- * \param jobname A jobname for identifying this job, or to be used as an output file
- * \param export_pdf If TRUE, only run a "print to PDF" operation in order to
- *        export this to pdf. If FALSE, run a normal printing dialog.
+ * @param jobname A jobname fo identifying the print job or to provide
+ *                an output filename.
+ * @param export_pdf If TRUE write a PDF file using the jobname for a
+ *                   filename; otherwise put up a print dialog.
  */
-void gnc_html_print( GncHtml* html, const gchar* jobname, gboolean export_pdf );
-
+void gnc_html_print (GncHtml* html, const char* jobname, gboolean export_pdf);
+#else
+/**
+ * Prints the report.
+ *
+ * @param html GncHtml object
+ */
+void gnc_html_print (GncHtml* html);
+#endif
 /**
  * Cancels the current operation
  *
