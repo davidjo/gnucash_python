@@ -6,11 +6,13 @@ Functioning means a report page is displayed which can be exported as html.
 Coding primarily based on scheme at the moment for testing and comparing to the scheme way
 - this is not necessarily the most "pythonic" way
 
+Major update to work with gnucash 3.2 and python 3
+
 Requirements:
 
 swig
-python (currently using 2.7)
-python bindings to gtk
+python 
+python introspection bindings to gtk version 3
 python gobject/glib bindings
 python elementtree module
 gnucash python bindings
@@ -19,28 +21,24 @@ The git source should be stored in a directory called python under ~/.gnucash.
 The git branch release is the minimal files needed for working, master is all
 files including implementations which failed or been superseded.
 
-Implementation needs 5 compiled modules
+Implementation needs 1 compiled module, swighelpers.so plus introspection bindings
+for 15 gnucash gobjects, built under plugin/gir_build.
 The directory ~/.gnucash/python/plugin should be copied
-to the primary gnucash source under src/python as a subdirectory.
-The shared objects (.so) need to be copied back to ~/.gnucash/python after compilation
+to the primary gnucash source under gnucash/python as a subdirectory.
+The shared objects (.so) need to be copied back to ~/.gnucash/python after compilation.
+The introspection binding typelibs need to be copied back to ~/.gnucash/python/girepository.
 
 Makefile.wrap is defined which is designed to be run in an existing gnucash source
 after a full compilation step
 
 to compile: make -f Makefile.wrap release
 
+to build introspection bindings in plugin/gir_build: make -f Makefile.wrap_gir repository
+
 Three defines required
 - PYTHONPREFIX - path to your python installation
-- PYTHONVER - python version eg python2.6 for 2.6 version of python
+- PYTHONVER - python version eg python3.6 for 3.6 version of python
 - SWIG - path to your swig binary
-
-At the moment Im using the pre-introspection gobject bindings
-(Im on OSX 10.6.8 using macports for primary gnucash installation)
-
-If you wish to modify the wrappings 3 additional utilities are needed from the gobject package
-pygobject-codegen-2.0
-h2def.py
-defsgen.py
 
 HTML output is via python wrappers access to the gnucash webkit output functions
 python elementtree module used as document model for HTML output
