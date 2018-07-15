@@ -51,8 +51,6 @@ import gnc_commodity_utilities
 
 import gnc_html_utilities
 
-from qof_ctypes import gnc_print_date
-
 # maybe store the class in ReportTemplate then dont need this import
 # yes we need a better way to handle this so dont need all these includes
 from report_objects import OptionsDB
@@ -60,6 +58,12 @@ from report_objects import OptionsDB
 #from report_options import MultiChoiceOption
 # lets try importing all
 from report_options import *
+
+
+#from sw_engine_swig import gnc_print_date
+from date_ctypes import gnc_print_date
+
+import engine_ctypes
 
 
 import gnucash
@@ -71,10 +75,6 @@ from gnucash import GNC_DENOM_AUTO, GNC_HOW_RND_ROUND, GNC_HOW_DENOM_REDUCE
 from gnucash.gnucash_core_c import GNC_HOW_DENOM_SIGFIG
 
 from gnucash import GncNumeric
-
-import engine_ctypes
-
-from qof_ctypes import gnc_print_date
 
 
 class Dividends(ReportTemplate):
@@ -204,7 +204,7 @@ class Dividends(ReportTemplate):
         shwobj = self.options.lookup_name('Accounts','Always show sub-accounts')
         shwopt = shwobj.get_value()
 
-        print >> sys.stderr, "shwobj",shwobj,shwopt
+        print("shwobj",shwobj,shwopt, file=sys.stderr)
 
         if shwopt:
             subacclst = get_all_subaccounts(accounts)
@@ -305,7 +305,7 @@ class Dividends(ReportTemplate):
                 doacc = False
                 for split in acc.GetSplitList():
                     parent = split.GetParent()
-                    txn_date = parent.RetDatePostedTS()
+                    txn_date = parent.RetDatePosted().date()
                     if (txn_date >= from_date_tp.date() and txn_date <= to_date_tp.date()):
                         doacc = True
                 if doacc:
@@ -320,7 +320,7 @@ class Dividends(ReportTemplate):
 
             new_row = document.doc.SubElement(new_table,"tr")
             new_row.tail = "\n"
-	    new_data = document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "2" })
+            new_data = document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "2" })
             new_ruler = document.doc.SubElement(new_data,"hr")
 
             new_row = document.StyleSubElement(new_table,'primary-subheading')
@@ -390,21 +390,21 @@ class Dividends(ReportTemplate):
                 for split in acc.GetSplitList():
 
                     parent = split.GetParent()
-                    txn_date = parent.RetDatePostedTS()
+                    txn_date = parent.RetDatePosted().date()
                     commod_currency = parent.GetCurrency()
                     commod_currency_frac = commod_currency.get_fraction()
 
                     try:
                         other_split = split.GetOtherSplit()
-                    except Exception, errexc:
+                    except Exception as errexc:
                         other_split = None
-                    print "other split for", other_split
+                    print("other split for", other_split)
 
                     #if other_split != None:
                     #    other_accnt = 
 
                     corr_accnm = split.GetCorrAccountName()
-                    print "corr account", corr_accnm
+                    print("corr account", corr_accnm)
 
                     # what do the functions eg GetCorrAccountName() do??
                     #

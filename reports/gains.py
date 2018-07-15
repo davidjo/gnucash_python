@@ -51,7 +51,8 @@ import gnc_commodity_utilities
 
 import gnc_html_utilities
 
-from qof_ctypes import gnc_print_date
+#from sw_engine import gnc_print_date
+from date_ctypes import gnc_print_date
 
 import engine_ctypes
 
@@ -249,7 +250,7 @@ class CapitalGains(ReportTemplate):
         # ;; apply a ratio to an existing basis-list, useful for splits/mergers and spinoffs
         # ;; I need to get a brain and use (map) for this.
         #pdb.set_trace()
-        print "Applying ratio",units_ratio.to_string()
+        print("Applying ratio",units_ratio.to_string())
         bsum = GncNumeric(0,1)
         newlst = []
         for bitm in blist:
@@ -266,11 +267,11 @@ class CapitalGains(ReportTemplate):
         # ;; coming in out of order, such as a transfer with a price adjusted to carryover the basis.
         #pdb.set_trace()
 
-        print "actually in basis-builder"
-        print "b-list is", blist
-        print "b-units is", bunits
-        print "b-value is", bvalue
-        print "b-method is", bmethod
+        print("actually in basis-builder")
+        print("b-list is", blist)
+        print("b-units is", bunits)
+        print("b-value is", bvalue)
+        print("b-method is", bmethod)
 
         # unlike scheme blist must be a list on entry - even if empty
 
@@ -290,9 +291,9 @@ class CapitalGains(ReportTemplate):
                     # what if blist has more than 1 element??
                     # maybe not possible if doing average??
                     if len(blist) > 1:
-                        print "average basis and blist > 1!!"
+                        print("average basis and blist > 1!!")
                         pdb.set_trace()
-                        print "average basis and blist > 1!!"
+                        print("average basis and blist > 1!!")
 
                     #pdb.set_trace()
 
@@ -391,7 +392,7 @@ class CapitalGains(ReportTemplate):
         # ;; no value, just units, this is a split/merge...
         elif bvalue.zero_p() and not bunits.zero_p():
 
-            print "Split/Merging"
+            print("Split/Merging")
 
             current_units = self.units_basis(blist)
 
@@ -414,7 +415,7 @@ class CapitalGains(ReportTemplate):
         # ;; with a ratio of 1
         elif bunits.zero_p() and not bvalue.zero_p():
 
-            print "Spinoff"
+            print("Spinoff")
 
             current_value = self.sum_basis(blist,GNC_DENOM_AUTO)
 
@@ -468,7 +469,7 @@ class CapitalGains(ReportTemplate):
         # need exception wrap for python
         try:
             other_split = split.GetOtherSplit()
-        except Exception, errexc:
+        except Exception as errexc:
             other_split = None
 
         if split.GetAmount().zero_p() and \
@@ -561,7 +562,7 @@ class CapitalGains(ReportTemplate):
                 else:
                     #pdb.set_trace()
                     # what type is this??
-                    print "price type is",price
+                    print("price type is",price)
                     prcurl = None
                     if isinstance(price,gnc_commodity_utilities.GncMonetary):
                         prcstr = price.to_currency_string()
@@ -659,7 +660,7 @@ class CapitalGains(ReportTemplate):
             can_skip_account = True
             for split_acc in curacc.GetSplitList():
                 parent = split_acc.GetParent()
-                txn_date = parent.RetDatePostedTS()
+                txn_date = parent.RetDatePosted().date()
                 if txn_date >= from_date_tp.date() and txn_date < to_date_tp.date():
                     for split in parent.GetSplitList():
                         if self.is_same_account(curacc,split.GetAccount()):
@@ -672,7 +673,7 @@ class CapitalGains(ReportTemplate):
             if can_skip_account:
                 continue
 
-            print "account",curacc.GetName(),curacc
+            print("account",curacc.GetName(),curacc)
 
             commod = curacc.GetCommodity()
 
@@ -684,7 +685,7 @@ class CapitalGains(ReportTemplate):
 
             units = unit_collector.getpair(commod)[1]
 
-            print "units",units.to_string()
+            print("units",units.to_string())
 
             # ;; Counter to keep track of stuff
             brokeragecoll = CommodityCollector()
@@ -738,11 +739,11 @@ class CapitalGains(ReportTemplate):
                     runval = exchange_fn.run(fromunits, tocurrency)
                 return runval
 
-            print "Starting account ", curacc.GetName(), ", initial price: ", 
+            print("Starting account ", curacc.GetName(), ", initial price: ", end='')
             if price != None:
-                print gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string()
+                print(gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string())
             else:
-                print
+                print()
                         
             # ;; If we have a price that can't be converted to the report currency
             # ;; don't use it
@@ -790,7 +791,7 @@ class CapitalGains(ReportTemplate):
 
                 #pdb.set_trace()
                 if price != None:
-                    print "Using non-transaction price",price.to_currency_string()
+                    print("Using non-transaction price",price.to_currency_string())
 
 
             # ;; If we still don't have a price, use a price of 1 and complain later
@@ -807,8 +808,8 @@ class CapitalGains(ReportTemplate):
             # this may not be useful - if units is 0 there is no value and if we have sold all shares
             # then at this point we have 0 units so value is 0
 
-            print "Value ", value.to_currency_string()
-            print " from ", gnc_commodity_utilities.GncMonetary(commod, units).to_currency_string()
+            print("Value ", value.to_currency_string())
+            print(" from ", gnc_commodity_utilities.GncMonetary(commod, units).to_currency_string())
 
 
             # ;; we're looking at each split we find in the account. these splits
@@ -822,11 +823,11 @@ class CapitalGains(ReportTemplate):
 
                 #pdb.set_trace()
                 parent = split_acc.GetParent()
-                txn_date = parent.RetDatePostedTS()
+                txn_date = parent.RetDatePosted().date()
                 commod_currency = parent.GetCurrency()
                 commod_currency_frac = commod_currency.get_fraction()
 
-                print "Analyzing transaction for stock", ticker_symbol, "on date", str(txn_date)
+                print("Analyzing transaction for stock", ticker_symbol, "on date", str(txn_date))
 
                 if txn_date <= to_date_tp.date() and \
                      not parent.GetGUID() in seen_trans:
@@ -857,7 +858,7 @@ class CapitalGains(ReportTemplate):
                     # ;; what it does in terms of income, money in or out, shares bought or sold, etc.
                     for split in parent.GetSplitList():
 
-                        print "split for", split.GetAccount().GetName(),split.GetValue().to_string()
+                        print("split for", split.GetAccount().GetName(),split.GetValue().to_string())
 
                         split_units = split.GetAmount()
                         split_value = split.GetValue()
@@ -866,9 +867,9 @@ class CapitalGains(ReportTemplate):
                         # - so wrap with try then test
                         try:
                             other_split = split.GetOtherSplit()
-                        except Exception, errexc:
+                        except Exception as errexc:
                             other_split = None
-                        print "other split for", other_split
+                        print("other split for", other_split)
 
                         if self.is_split_account_type(split, ACCT_TYPE_EXPENSE):
                             # ;; Brokerage expense unless a two split transaction with other split
@@ -879,7 +880,7 @@ class CapitalGains(ReportTemplate):
                             #other_split = split.GetOtherSplit()
                             try:
                                 other_split = split.GetOtherSplit()
-                            except Exception, errexc:
+                            except Exception as errexc:
                                 other_split = None
                             if other_split == None or \
                                not self.is_same_account(curacc,split.GetOtherSplit().GetAccount()):
@@ -926,15 +927,15 @@ class CapitalGains(ReportTemplate):
                                    else:
                                        trans_drp_account = None
 
-                    print "Income: ", trans_income.to_string()
-                    print " Brokerage: ", trans_brokerage.to_string()
-                    print " Shares traded: ", trans_shares.to_string()
-                    print " Shares bought: ", shares_bought.to_string()
-                    print " Shares sold: ", shares_sold.to_string()
-                    print " Value sold: ", trans_sold.to_string()
-                    print " Value purchased: ", trans_bought.to_string()
-                    print " Spinoff value ", trans_spinoff.to_string()
-                    print " Trans DRP residual: ", trans_drp_residual.to_string()
+                    print("Income: ", trans_income.to_string())
+                    print(" Brokerage: ", trans_brokerage.to_string())
+                    print(" Shares traded: ", trans_shares.to_string())
+                    print(" Shares bought: ", shares_bought.to_string())
+                    print(" Shares sold: ", shares_sold.to_string())
+                    print(" Value sold: ", trans_sold.to_string())
+                    print(" Value purchased: ", trans_bought.to_string())
+                    print(" Spinoff value ", trans_spinoff.to_string())
+                    print(" Trans DRP residual: ", trans_drp_residual.to_string())
 
                     # ;; We need to calculate several things for this transaction:
                     # ;; 1. Total income: this is already in trans-income
@@ -1000,8 +1001,8 @@ class CapitalGains(ReportTemplate):
                         if trans_bought.negative_p():
                             trans_bought = GncNumeric(0,1)
 
-                    print "Adjusted trans-bought ", trans_bought.to_string()
-                    print " DRP holding account ", drp_holding_amount.to_string()
+                    print("Adjusted trans-bought ", trans_bought.to_string())
+                    print(" DRP holding account ", drp_holding_amount.to_string())
 
                     moneyincoll.add(commod_currency, trans_bought)
                     moneyoutcoll.add(commod_currency, trans_sold)
@@ -1020,9 +1021,9 @@ class CapitalGains(ReportTemplate):
                         split_units = split.GetAmount()
                         split_value = split.GetValue()
 
-                        print "Pass 2: split units ", split_units.to_string(), " split-value ", \
-                            split_value.to_string(), " commod-currency ", \
-                            commod_currency.get_printname()
+                        print("Pass 2: split units ", split_units.to_string(), " split-value ",
+                            split_value.to_string(), " commod-currency ",
+                            commod_currency.get_printname())
 
                         if not split_units.zero_p() and self.is_same_account(curacc,split.GetAccount()):
                             # ;; Split into subject account with non-zero amount.  This is a purchase
@@ -1047,14 +1048,14 @@ class CapitalGains(ReportTemplate):
                                 split_value_with_fees = split_value
                                 split_value_with_fees_currency = split_value_currency
 
-                            print "going in to basis list ", basis_list, " ", split_units.to_string(), " "
-                            print "                       ", split_value_with_fees.to_string()
-                            print "                       ", split_value_with_fees_currency.to_string()
+                            print("going in to basis list ", basis_list, " ", split_units.to_string(), " ")
+                            print("                       ", split_value_with_fees.to_string())
+                            print("                       ", split_value_with_fees_currency.to_string())
 
                             # ;; adjust the basis
                             basis_list = self.basis_builder(basis_list, split_units, split_value_with_fees, basis_method, currency_frac)
 
-                            print "coming out of basis list ", basis_list
+                            print("coming out of basis list ", basis_list)
 
                             # ;; If it's a sale or the stock is worthless, calculate the gain
                             if not split_value.positive_p():
@@ -1066,9 +1067,9 @@ class CapitalGains(ReportTemplate):
                                     # ;; Split value is negative or new basis is zero (stock is worthless),
                                     # ;; Capital gain is money out minus change in basis
                                     gain = split_value_with_fees.abs().sub(orig_basis.sub(new_basis,currency_frac,GNC_HOW_RND_ROUND),currency_frac,GNC_HOW_RND_ROUND)
-                                    print "Old basis=", orig_basis.to_string()
-                                    print " New basis=", new_basis.to_string()
-                                    print " Gain=", gain.to_string()
+                                    print("Old basis=", orig_basis.to_string())
+                                    print(" New basis=", new_basis.to_string())
+                                    print(" Gain=", gain.to_string())
                                     #gaincoll.add(report_currency,gain)
                                     gaincoll.add(commod_currency,gain)
 
@@ -1077,11 +1078,11 @@ class CapitalGains(ReportTemplate):
                         # ;; returns on a two-split txn.  It's not a spinoff is the other split is
                         # ;; in an income or expense account.
                         elif self.is_spin_off(split,curacc):
-                            print "before spin-off basis list ", basis_list
+                            print("before spin-off basis list ", basis_list)
                             basis_list = self.basis_builder(basis_list, split_units,
                                                    my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod_currency, split_value),report_currency).amount,
                                                    basis_method, currency_frac)
-                            print "after spin-off basis list ", basis_list
+                            print("after spin-off basis list ", basis_list)
 
 
                     # WE HAVE A BIG PROBLEM
@@ -1141,7 +1142,7 @@ class CapitalGains(ReportTemplate):
                             new_use_txn = True
                             new_pricing_txn = False
 
-                        print "price", type(price)
+                        print("price", type(price))
                         #pdb.set_trace()
 
                         if check_sale:
@@ -1155,7 +1156,7 @@ class CapitalGains(ReportTemplate):
                             #basis_amt = GncNumeric(0,1)
                         else:
                             # these are likely gain/loss splits so far
-                            print "junk"
+                            print("junk")
                             #pdb.set_trace()
                             basis_amt = gnc_commodity_utilities.GncMonetary(commod_currency, GncNumeric(0,1))
 
@@ -1256,7 +1257,7 @@ class CapitalGains(ReportTemplate):
                     # ;; This is safe because xaccSplitGetAccount returns null for a null split
                     other_acct = other_split.GetAccount()
                     parent = split.GetParent()
-                    txn_date = parent.RetDatePostedTS()
+                    txn_date = parent.RetDatePosted().date()
 
                     if other_acct != None and \
                         txn_date <= to_date_tp.date() and \
@@ -1268,19 +1269,19 @@ class CapitalGains(ReportTemplate):
                         val = split.GetValue()
                         curr = other_acct.GetCommodity()
                         if self.is_split_account_type(other_split, ACCT_TYPE_INCOME):
-                            print "More income ", val.to_string()
+                            print("More income ", val.to_string())
                             dividendcoll.add(curr, val)
                         elif self.is_split_account_type(other_split, ACCT_TYPE_EXPENSE):
-                            print "More expense ", val.neg().to_string()
+                            print("More expense ", val.neg().to_string())
                             brokeragecoll.add(curr, val.neg())
 
-            print "pricing txn is ", pricing_txn
-            print "use txn is ", use_txn
-            print "prefer-pricelist is ", prefer_pricelist
-            print "price is ", price
+            print("pricing txn is ", pricing_txn)
+            print("use txn is ", use_txn)
+            print("prefer-pricelist is ", prefer_pricelist)
+            print("price is ", price)
 
-            print "basis we're using to build rows is ", self.sum_basis(basis_list,currency_frac).to_string()
-            print "but the actual basis list is ", basis_list
+            print("basis we're using to build rows is ", self.sum_basis(basis_list,currency_frac).to_string())
+            print("but the actual basis list is ", basis_list)
 
             # wierd - I think this is removing the brokerage fees???
             if handle_brokerage_fees == 'include-in-gain':
@@ -1499,7 +1500,7 @@ class CapitalGains(ReportTemplate):
         #pdb.set_trace()
 
         #find_price = self.pricedb.lookup_nearest_in_time_any_currency(foreign,timespecCanonicalDayTime(date))
-        find_price = self.pricedb.lookup_nearest_in_time_any_currency(foreign,date)
+        find_price = self.pricedb.lookup_nearest_in_time_any_currency_t64(foreign,date)
 
         return find_price
 

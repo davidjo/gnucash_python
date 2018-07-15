@@ -52,7 +52,7 @@ import gnc_commodity_utilities
 
 import gnc_html_utilities
 
-from qof_ctypes import gnc_print_date
+from date_ctypes import gnc_print_date
 
 import engine_ctypes
 
@@ -241,7 +241,7 @@ class AdvancedPortfolio(ReportTemplate):
         # ;; apply a ratio to an existing basis-list, useful for splits/mergers and spinoffs
         # ;; I need to get a brain and use (map) for this.
         #pdb.set_trace()
-        print "Applying ratio",units_ratio.to_string()
+        print("Applying ratio",units_ratio.to_string())
         bsum = GncNumeric(0,1)
         newlst = []
         for bitm in blist:
@@ -267,11 +267,11 @@ class AdvancedPortfolio(ReportTemplate):
         # ;; coming in out of order, such as a transfer with a price adjusted to carryover the basis.
         #pdb.set_trace()
 
-        print "actually in basis-builder"
-        print "b-list is", self.dump_basis_list(blist)
-        print "b-units is", bunits
-        print "b-value is", bvalue
-        print "b-method is", bmethod
+        print("actually in basis-builder")
+        print("b-list is", self.dump_basis_list(blist))
+        print("b-units is", bunits)
+        print("b-value is", bvalue)
+        print("b-method is", bmethod)
 
         # unlike scheme blist must be a list on entry - even if empty
 
@@ -291,9 +291,9 @@ class AdvancedPortfolio(ReportTemplate):
                     # what if blist has more than 1 element??
                     # maybe not possible if doing average??
                     if len(blist) > 1:
-                        print "average basis and blist > 1!!"
+                        print("average basis and blist > 1!!")
                         pdb.set_trace()
-                        print "average basis and blist > 1!!"
+                        print("average basis and blist > 1!!")
 
                     #pdb.set_trace()
 
@@ -392,7 +392,7 @@ class AdvancedPortfolio(ReportTemplate):
         # ;; no value, just units, this is a split/merge...
         elif bvalue.zero_p() and not bunits.zero_p():
 
-            print "Split/Merging"
+            print("Split/Merging")
 
             current_units = self.units_basis(blist)
 
@@ -415,7 +415,7 @@ class AdvancedPortfolio(ReportTemplate):
         # ;; with a ratio of 1
         elif bunits.zero_p() and not bvalue.zero_p():
 
-            print "Spinoff"
+            print("Spinoff")
 
             current_value = self.sum_basis(blist,GNC_DENOM_AUTO)
 
@@ -469,7 +469,7 @@ class AdvancedPortfolio(ReportTemplate):
         # need exception wrap for python
         try:
             other_split = split.GetOtherSplit()
-        except Exception, errexc:
+        except Exception as errexc:
             other_split = None
 
         if split.GetAmount().zero_p() and \
@@ -516,8 +516,8 @@ class AdvancedPortfolio(ReportTemplate):
             #if curacc.GetName().find('WFM') < 0:
             #    continue
 
-            print
-            print "Doing account row",curacc.GetName(),curacc
+            print()
+            print("Doing account row",curacc.GetName(),curacc)
 
             if (row % 2) == 0:
                 new_row = self.document.StyleSubElement(self.new_table,'normal-row')
@@ -537,7 +537,7 @@ class AdvancedPortfolio(ReportTemplate):
 
             units = unit_collector.getpair(commod)[1]
 
-            print "units",units.to_string()
+            print("units",units.to_string())
 
             # ;; Counter to keep track of stuff
             brokeragecoll = CommodityCollector()
@@ -590,11 +590,11 @@ class AdvancedPortfolio(ReportTemplate):
                     runval = exchange_fn.run(fromunits, tocurrency)
                 return runval
 
-            print "Starting account ", curacc.GetName(), ", initial price: ", 
+            print("Starting account ", curacc.GetName(), ", initial price: ", end='')
             if price != None:
-                print gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string()
+                print(gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string())
             else:
-                print "None"
+                print("None")
                         
             # ;; If we have a price that can't be converted to the report currency
             # ;; don't use it
@@ -641,11 +641,11 @@ class AdvancedPortfolio(ReportTemplate):
 
                 if price != None:
                     try:
-                        print "Using non-transaction price",price.to_currency_string()
-                    except Exception, errexc:
-                        print "pricing error"
+                        print("Using non-transaction price",price.to_currency_string())
+                    except Exception as errexc:
+                        print("pricing error")
                         pdb.set_trace()
-                        print "pricing error"
+                        print("pricing error")
 
 
             # ;; If we still don't have a price, use a price of 1 and complain later
@@ -658,8 +658,8 @@ class AdvancedPortfolio(ReportTemplate):
             # ;; Now that we have a pricing transaction if needed, set the value of the asset
             value = my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod,units), report_currency)
 
-            print "Value ", value.to_currency_string()
-            print " from ", gnc_commodity_utilities.GncMonetary(commod, units).to_currency_string()
+            print("Value ", value.to_currency_string())
+            print(" from ", gnc_commodity_utilities.GncMonetary(commod, units).to_currency_string())
 
             #pdb.set_trace()
 
@@ -682,7 +682,7 @@ class AdvancedPortfolio(ReportTemplate):
 
                 #pdb.set_trace()
                 parent = split_acc.GetParent()
-                txn_date = parent.RetDatePostedTS()
+                txn_date = parent.RetDatePosted().date()
                 commod_currency = parent.GetCurrency()
                 commod_currency_frac = commod_currency.get_fraction()
 
@@ -713,7 +713,7 @@ class AdvancedPortfolio(ReportTemplate):
                     # ;; what it does in terms of income, money in or out, shares bought or sold, etc.
                     for split in parent.GetSplitList():
 
-                        print "split for", split.GetAccount().GetName(),split.GetValue().to_string()
+                        print("split for", split.GetAccount().GetName(),split.GetValue().to_string())
 
                         split_units = split.GetAmount()
                         split_value = split.GetValue()
@@ -722,9 +722,9 @@ class AdvancedPortfolio(ReportTemplate):
                         # - so wrap with try then test
                         try:
                             other_split = split.GetOtherSplit()
-                        except Exception, errexc:
+                        except Exception as errexc:
                             other_split = None
-                        print "other split for", other_split
+                        print("other split for", other_split)
 
                         if self.is_split_account_type(split, ACCT_TYPE_EXPENSE):
                             # ;; Brokerage expense unless a two split transaction with other split
@@ -735,7 +735,7 @@ class AdvancedPortfolio(ReportTemplate):
                             #other_split = split.GetOtherSplit()
                             try:
                                 other_split = split.GetOtherSplit()
-                            except Exception, errexc:
+                            except Exception as errexc:
                                 other_split = None
                             if other_split == None or \
                                not self.is_same_account(curacc,split.GetOtherSplit().GetAccount()):
@@ -781,14 +781,14 @@ class AdvancedPortfolio(ReportTemplate):
                                        trans_drp_account = None
 
 
-                    print "Income: ", trans_income.to_string()
-                    print " Brokerage: ", trans_brokerage.to_string()
-                    print " Shares traded: ", trans_shares.to_string()
-                    print " Shares bought: ", shares_bought.to_string()
-                    print " Value sold: ", trans_sold.to_string()
-                    print " Value purchased: ", trans_bought.to_string()
-                    print " Spinoff value ", trans_spinoff.to_string()
-                    print " Trans DRP residual: ", trans_drp_residual.to_string()
+                    print("Income: ", trans_income.to_string())
+                    print(" Brokerage: ", trans_brokerage.to_string())
+                    print(" Shares traded: ", trans_shares.to_string())
+                    print(" Shares bought: ", shares_bought.to_string())
+                    print(" Value sold: ", trans_sold.to_string())
+                    print(" Value purchased: ", trans_bought.to_string())
+                    print(" Spinoff value ", trans_spinoff.to_string())
+                    print(" Trans DRP residual: ", trans_drp_residual.to_string())
 
                     # ;; We need to calculate several things for this transaction:
                     # ;; 1. Total income: this is already in trans-income
@@ -854,8 +854,8 @@ class AdvancedPortfolio(ReportTemplate):
                         if trans_bought.negative_p():
                             trans_bought = GncNumeric(0,1)
 
-                    print "Adjusted trans-bought ", trans_bought.to_string()
-                    print " DRP holding account ", drp_holding_amount.to_string()
+                    print("Adjusted trans-bought ", trans_bought.to_string())
+                    print(" DRP holding account ", drp_holding_amount.to_string())
 
                     moneyincoll.add(commod_currency, trans_bought)
                     moneyoutcoll.add(commod_currency, trans_sold)
@@ -869,9 +869,9 @@ class AdvancedPortfolio(ReportTemplate):
                         split_units = split.GetAmount()
                         split_value = split.GetValue()
 
-                        print "Pass 2: split units ", split_units.to_string(), " split-value ", \
-                            split_value.to_string(), " commod-currency ", \
-                            commod_currency.get_printname()
+                        print("Pass 2: split units ", split_units.to_string(), " split-value ",
+                            split_value.to_string(), " commod-currency ",
+                            commod_currency.get_printname())
 
                         if not split_units.zero_p() and self.is_same_account(curacc,split.GetAccount()):
                             # ;; Split into subject account with non-zero amount.  This is a purchase
@@ -888,8 +888,8 @@ class AdvancedPortfolio(ReportTemplate):
                             else:
                                 split_value_with_fees = split_value_currency
 
-                            print "going in to basis list ", self.dump_basis_list(basis_list), " ", split_units.to_string(), " ", \
-                                    split_value_with_fees.to_string()
+                            print("going in to basis list ", self.dump_basis_list(basis_list), " ", split_units.to_string(), " ",
+                                    split_value_with_fees.to_string())
 
                             # store basis list before sale - needed if the last report day is the sale day
                             # (a new basis is only useful for later sales)
@@ -898,7 +898,7 @@ class AdvancedPortfolio(ReportTemplate):
                             # ;; adjust the basis
                             basis_list = self.basis_builder(basis_list, split_units, split_value_with_fees, basis_method, currency_frac)
 
-                            print "coming out of basis list ", self.dump_basis_list(basis_list)
+                            print("coming out of basis list ", self.dump_basis_list(basis_list))
 
                             # ;; If it's a sale or the stock is worthless, calculate the gain
                             if not split_value.positive_p():
@@ -910,9 +910,9 @@ class AdvancedPortfolio(ReportTemplate):
                                     # ;; Split value is negative or new basis is zero (stock is worthless),
                                     # ;; Capital gain is money out minus change in basis
                                     gain = split_value_with_fees.abs().sub(orig_basis.sub(new_basis,currency_frac,GNC_HOW_RND_ROUND),currency_frac,GNC_HOW_RND_ROUND)
-                                    print "Old basis=", orig_basis.to_string()
-                                    print " New basis=", new_basis.to_string()
-                                    print " Gain=", gain.to_string()
+                                    print("Old basis=", orig_basis.to_string())
+                                    print(" New basis=", new_basis.to_string())
+                                    print(" Gain=", gain.to_string())
                                     gaincoll.add(report_currency,gain)
 
 
@@ -921,11 +921,11 @@ class AdvancedPortfolio(ReportTemplate):
                         # ;; returns on a two-split txn.  It's not a spinoff is the other split is
                         # ;; in an income or expense account.
                         elif self.is_spin_off(split,curacc):
-                            print "before spin-off basis list ", self.dump_basis_list(basis_list)
+                            print("before spin-off basis list ", self.dump_basis_list(basis_list))
                             basis_list = self.basis_builder(basis_list, split_units,
                                                    my_exchange_fn(gnc_commodity_utilities.GncMonetary(commod_currency, split_value),report_currency).amount,
                                                    basis_method, currency_frac)
-                            print "after spin-off basis list ", self.dump_basis_list(basis_list)
+                            print("after spin-off basis list ", self.dump_basis_list(basis_list))
 
 
             # ;; Look for income and expense transactions that don't have a split in the
@@ -966,7 +966,7 @@ class AdvancedPortfolio(ReportTemplate):
                     # ;; This is safe because xaccSplitGetAccount returns null for a null split
                     other_acct = other_split.GetAccount()
                     parent = split.GetParent()
-                    txn_date = parent.RetDatePostedTS()
+                    txn_date = parent.RetDatePosted().date()
 
                     if other_acct != None and \
                         txn_date <= to_date_tp.date() and \
@@ -978,29 +978,29 @@ class AdvancedPortfolio(ReportTemplate):
                         val = split.GetValue()
                         curr = other_acct.GetCommodity()
                         if self.is_split_account_type(other_split, ACCT_TYPE_INCOME):
-                            print "More income ", val.to_string()
+                            print("More income ", val.to_string())
                             dividendcoll.add(curr, val)
                         elif self.is_split_account_type(other_split, ACCT_TYPE_EXPENSE):
-                            print "More expense ", val.neg().to_string()
+                            print("More expense ", val.neg().to_string())
                             brokeragecoll.add(curr, val.neg())
 
-            print "units ", units.to_double()
-            print "pricing txn is ", pricing_txn
-            print "use txn is ", use_txn
-            print "prefer-pricelist is ", prefer_pricelist
+            print("units ", units.to_double())
+            print("pricing txn is ", pricing_txn)
+            print("use txn is ", use_txn)
+            print("prefer-pricelist is ", prefer_pricelist)
             try:
                 if use_txn:
-                    print "price   txn is ", pricing_txn, price, price.to_currency_string()
+                    print("price   txn is ", pricing_txn, price, price.to_currency_string())
                 else:
-                    print "price       is ", pricing_txn, price, gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string()
-            except Exception, errexc:
+                    print("price       is ", pricing_txn, price, gnc_commodity_utilities.GncMonetary(price.get_currency(),price.get_value()).to_currency_string())
+            except Exception as errexc:
                 pdb.set_trace()
-                print "junk"
+                print("junk")
 
             #pdb.set_trace()
 
-            print "basis we're using to build rows is ", self.sum_basis(basis_list,currency_frac).to_string()
-            print "but the actual basis list is ", self.dump_basis_list(basis_list)
+            print("basis we're using to build rows is ", self.sum_basis(basis_list,currency_frac).to_string())
+            print("but the actual basis list is ", self.dump_basis_list(basis_list))
 
             if handle_brokerage_fees == 'include-in-gain':
                 gaincoll.minusmerge(brokeragecoll, False)
@@ -1220,7 +1220,7 @@ class AdvancedPortfolio(ReportTemplate):
         #pdb.set_trace()
 
         #find_price = self.pricedb.lookup_nearest_in_time_any_currency(foreign,timespecCanonicalDayTime(date))
-        find_price = self.pricedb.lookup_nearest_in_time_any_currency(foreign,date)
+        find_price = self.pricedb.lookup_nearest_in_time_any_currency_t64(foreign,date)
 
         return find_price
 
@@ -1233,8 +1233,8 @@ class AdvancedPortfolio(ReportTemplate):
         # the program - cannot interact with it anymore
         report_starting(self.name)
 
-        print
-        print "Starting report",self.name
+        print()
+        print("Starting report",self.name)
 
         starttime = datetime.datetime.now()
 
@@ -1419,7 +1419,7 @@ class AdvancedPortfolio(ReportTemplate):
 
             # this is essentially doing gnc:html-table-set-col-headers
             for colhdr in headercols:
-	        new_hdr = self.document.doc.SubElement(new_row,"th",attrib={'rowspan' : "1", 'colspan' : "1" })
+                new_hdr = self.document.doc.SubElement(new_row,"th",attrib={'rowspan' : "1", 'colspan' : "1" })
                 new_hdr.text = colhdr
                 new_hdr.tail = "\n"
 
@@ -1449,7 +1449,7 @@ class AdvancedPortfolio(ReportTemplate):
             # this is labelled grand-total for some reason - just draws a line
             new_row = self.document.doc.SubElement(self.new_table,"tr")
             new_row.tail = "\n"
-	    new_data = self.document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "17" })
+            new_data = self.document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "17" })
             new_ruler = self.document.doc.SubElement(new_data,"hr")
 
 
@@ -1574,7 +1574,7 @@ class AdvancedPortfolio(ReportTemplate):
 
         endtime = datetime.datetime.now()
 
-        print "time taken",endtime-starttime
+        print("time taken",endtime-starttime)
 
         return self.document
 

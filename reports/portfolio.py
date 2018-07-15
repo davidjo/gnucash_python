@@ -52,7 +52,7 @@ import gnc_commodity_utilities
 
 import gnc_html_utilities
 
-from qof_ctypes import gnc_print_date
+from date_ctypes import gnc_print_date
 
 # maybe store the class in ReportTemplate then dont need this import
 # yes we need a better way to handle this so dont need all these includes
@@ -64,6 +64,8 @@ from report_options import *
 
 
 import gnucash
+
+import gnucash_ext
 
 from gnucash import ACCT_TYPE_STOCK, ACCT_TYPE_MUTUAL
 
@@ -164,7 +166,7 @@ class Portfolio(ReportTemplate):
 
         for row,curacc in enumerate(accounts):
 
-            print "account",curacc.GetName(),curacc
+            print("account",curacc.GetName(),curacc)
 
             if (row % 2) == 0:
                 new_row = self.document.StyleSubElement(self.new_table,'normal-row')
@@ -183,7 +185,7 @@ class Portfolio(ReportTemplate):
 
             units = unit_collector.getpair(commod)[1]
 
-            print "units",units.to_string()
+            print("units",units.to_string())
 
             price_info = price_fn(commod,to_date_tp)
 
@@ -288,7 +290,7 @@ class Portfolio(ReportTemplate):
         #pdb.set_trace()
 
         #price = self.pricedb.lookup_nearest_in_time_any_currency(foreign,timespecCanonicalDayTime(date))
-        price = self.pricedb.lookup_nearest_in_time_any_currency(foreign,date)
+        price = self.pricedb.lookup_nearest_in_time_any_currency_t64(foreign,date)
 
         if len(price) > 0:
             v = price[0].get_value()
@@ -384,7 +386,7 @@ class Portfolio(ReportTemplate):
         new_row = self.document.doc.SubElement(self.new_table,"tr")
         new_row.tail = "\n"
         for colhdr in colhdrlst:
-	    new_hdr = self.document.doc.SubElement(new_row,"th",attrib={'rowspan' : "1", 'colspan' : "1" })
+            new_hdr = self.document.doc.SubElement(new_row,"th",attrib={'rowspan' : "1", 'colspan' : "1" })
             new_hdr.text = colhdr
             new_hdr.tail = "\n"
 
@@ -420,7 +422,7 @@ class Portfolio(ReportTemplate):
             # this is labelled grand-total for some reason - just draws a line
             new_row = self.document.doc.SubElement(self.new_table,"tr")
             new_row.tail = "\n"
-	    new_data = self.document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "6" })
+            new_data = self.document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "6" })
             new_ruler = self.document.doc.SubElement(new_data,"hr")
 
             def total_func (currency, amount):

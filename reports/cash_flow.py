@@ -50,7 +50,7 @@ import gnc_commodity_utilities
 
 import gnc_html_utilities
 
-from qof_ctypes import gnc_print_date
+from date_ctypes import gnc_print_date
 
 # maybe store the class in ReportTemplate then dont need this import
 # yes we need a better way to handle this so dont need all these includes
@@ -206,11 +206,11 @@ class CashFlow(ReportTemplate):
                         s_acc = trnsplt.GetAccount()
                         s_val = trnsplt.GetValue()
                         s_cmd = s_acc.GetCommodity()
-                        #print "split acc",s_acc.GetName(),s_val.to_string()
-                        #print "split acc in",CashFlow.account_in_list(s_acc,accounts)
+                        #print("split acc",s_acc.GetName(),s_val.to_string())
+                        #print("split acc in",CashFlow.account_in_list(s_acc,accounts))
 
                         if s_acc == None:
-                            print "WARNING: s-account is NULL for split: %s",trnsplt.GetGUID() 
+                            print("WARNING: s-account is NULL for split: %s",trnsplt.GetGUID())
 
                         if s_acc != None and \
                            not CashFlow.account_in_list(s_acc,accounts) \
@@ -251,7 +251,7 @@ class CashFlow(ReportTemplate):
                                     self.money_out_collector.add(report_currency, s_report_value)
                                     s_acc_out_collector.add(report_currency, s_report_value)
 
-                                #print "add val",s_report_value.to_string()
+                                #print("add val",s_report_value.to_string())
 
 
     def renderer (self, report):
@@ -398,7 +398,7 @@ class CashFlow(ReportTemplate):
 
             new_row = document.doc.SubElement(new_table,"tr")
             new_row.tail = "\n"
-	    new_data = document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "2" })
+            new_data = document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "2" })
             new_ruler = document.doc.SubElement(new_data,"hr")
 
             new_row = document.StyleSubElement(new_table,'primary-subheading')

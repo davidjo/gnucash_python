@@ -45,7 +45,7 @@ class PriceScatter(ReportTemplate):
         self.menu_name = N_("Price Scatterplot")
         # we have to define the tip
         self.menu_tip = N_("Price Scatterplot")
-	self.menu_path = N_("_Assets & Liabilities")
+        self.menu_path = N_("_Assets & Liabilities")
 
 
     def options_generator (self):
@@ -127,7 +127,7 @@ class PriceScatter(ReportTemplate):
 
         # the various plotting options
 
-        pdb.set_trace()
+        #pdb.set_trace()
 
         optobj = self.options.lookup_name('General','Report name')
         chart.title = optobj.getter()
@@ -206,28 +206,30 @@ class PriceScatter(ReportTemplate):
             prcdb = book.get_price_db()
             prclst = prcdb.get_prices(stock,cur)
 
-            #pdb.set_trace()
+            pdb.set_trace()
 
             prcordr = []
             for prc in prclst:
-                prcdt = prc.get_time()
+                prcdt = prc.get_time64().date()
                 if prcdt >= strtdt.date() and prcdt <= enddt.date():
                     prcordr.append((float(prcdt.strftime("%s")),prc))
             prcordr.sort()
 
-            prclst0 = prcordr[0][1]
-            prcdt = prclst0.get_time()
-            prcdt0 = float(prcdt.strftime("%s"))
+            if len(prcordr) > 0:
 
-            for prctm,prc in prcordr:
-                prcobj = prc.get_value()
-                #rlprc = float(prcobj.num)/prcobj.denom
-                rlprc = prcobj.to_double()
+                prclst0 = prcordr[0][1]
+                prcdt = prclst0.get_time64().date()
+                prcdt0 = float(prcdt.strftime("%s"))
 
-                # we need to convert the date to seconds
-                cnvdt = (prctm-prcdt0)/mapxscale[optstp]
+                for prctm,prc in prcordr:
+                    prcobj = prc.get_value()
+                    #rlprc = float(prcobj.num)/prcobj.denom
+                    rlprc = prcobj.to_double()
 
-                chart.add_datapoint((cnvdt,rlprc))
+                    # we need to convert the date to seconds
+                    cnvdt = (prctm-prcdt0)/mapxscale[optstp]
+
+                    chart.add_datapoint((cnvdt,rlprc))
 
             #pdb.set_trace()
 

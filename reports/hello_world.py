@@ -311,8 +311,11 @@ class HelloWorld(ReportTemplate):
         new_markup.tail = "\n"
 
         new_opt = document.doc.SubElement(new_markup,"b")
-        new_val = gnucash.GncNumeric(optval,1)
-        new_opt.text = sw_app_utils.PrintAmount(new_val,None)
+        # apparently we can only give 2 integers - for a float
+        # need to give 1 argument
+        new_val = gnucash.GncNumeric(optval)
+        #new_val = gnucash.GncNumeric(int(optval), 1)
+        new_opt.text = sw_app_utils.PrintAmount(new_val,sw_app_utils.DefaultPrintInfo(False))
         # annoying but this is where we add the remaining string
         new_opt.tail = N_(".")
 
@@ -323,7 +326,7 @@ class HelloWorld(ReportTemplate):
 
         optobj = self.options.lookup_name('Hello Again','A list option')
         optval = optobj.get_option_value()
-        optval = optval[0]
+        print("list option value", optval)
 
         if len(optval) > 0:
             new_table = document.doc.Element("table")
@@ -333,8 +336,9 @@ class HelloWorld(ReportTemplate):
             new_cap = document.doc.SubElement(new_table,"caption")
             new_cap.text = "List items selected"
             new_row = document.doc.SubElement(new_table,"tr")
-            new_col = document.doc.SubElement(new_row,"td")
-            new_col.text = optval
+            for optitm in optval:
+                new_col = document.doc.SubElement(new_row,"td")
+                new_col.text = optitm
         else:
             new_markup = document.doc.Element("p")
             new_markup.text = N_("(You selected no list items.)")

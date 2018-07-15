@@ -51,8 +51,6 @@ import gnc_commodity_utilities
 
 import gnc_html_utilities
 
-from qof_ctypes import gnc_print_date
-
 # maybe store the class in ReportTemplate then dont need this import
 # yes we need a better way to handle this so dont need all these includes
 from report_objects import OptionsDB
@@ -60,6 +58,12 @@ from report_objects import OptionsDB
 #from report_options import MultiChoiceOption
 # lets try importing all
 from report_options import *
+
+
+#from sw_engine import gnc_print_date
+from date_ctypes import gnc_print_date
+
+import engine_ctypes
 
 
 import gnucash
@@ -71,10 +75,6 @@ from gnucash import GNC_DENOM_AUTO, GNC_HOW_RND_ROUND, GNC_HOW_DENOM_REDUCE
 from gnucash.gnucash_core_c import GNC_HOW_DENOM_SIGFIG
 
 from gnucash import GncNumeric
-
-import engine_ctypes
-
-from qof_ctypes import gnc_print_date
 
 
 class Interest(ReportTemplate):
@@ -204,7 +204,7 @@ class Interest(ReportTemplate):
         shwobj = self.options.lookup_name('Accounts','Always show sub-accounts')
         shwopt = shwobj.get_value()
 
-        print >> sys.stderr, "shwobj",shwobj,shwopt
+        print("shwobj",shwobj,shwopt, file=sys.stderr)
 
         #if shwopt:
         #    subacclst = get_all_subaccounts(accounts)
@@ -216,7 +216,7 @@ class Interest(ReportTemplate):
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "account len",len(accounts)
+        print("account len",len(accounts), file=sys.stderr)
 
         if len(accounts) > 0:
 
@@ -224,13 +224,13 @@ class Interest(ReportTemplate):
             for acc in accounts:
                 curdep = int(acc.get_current_depth())
                 if curdep < topdepth: topdepth = curdep
-            print >> sys.stderr, "account min depth",topdepth
+            print("account min depth",topdepth, file=sys.stderr)
 
             if display_depth == 'all':
                 tree_depth = self.accounts_get_children_depth(accounts)
             else:
                 tree_depth = topdepth+display_depth
-            print >> sys.stderr, "treedepth",tree_depth
+            print("treedepth",tree_depth, file=sys.stderr)
 
             #self.time_exchange_fn = gnc_commodity_utilities.case_exchange_time_fn(price_source, report_currency, commodity_list, to_date_tp, 0.0, 0.0)
 
@@ -318,7 +318,7 @@ class Interest(ReportTemplate):
                 doacc = False
                 for split in acc.GetSplitList():
                     parent = split.GetParent()
-                    txn_date = parent.RetDatePostedTS()
+                    txn_date = parent.RetDatePosted().date()
                     if (txn_date >= from_date_tp.date() and txn_date <= to_date_tp.date()):
                         doacc = True
                 if doacc:
@@ -333,7 +333,7 @@ class Interest(ReportTemplate):
 
             new_row = document.doc.SubElement(new_table,"tr")
             new_row.tail = "\n"
-	    new_data = document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "2" })
+            new_data = document.doc.SubElement(new_row,"td",attrib={'rowspan' : "1", 'colspan' : "2" })
             new_ruler = document.doc.SubElement(new_data,"hr")
 
             new_row = document.StyleSubElement(new_table,'primary-subheading')
@@ -398,7 +398,7 @@ class Interest(ReportTemplate):
                 anchor_markup.text = accnm + "\n"
                 try:
                     jnkstr = accnm.encode('utf-8')
-                except Exception, errexc :
+                except Exception as errexc :
                     pdb.set_trace()
 
                 acc_coll = CommodityCollector()
@@ -407,21 +407,21 @@ class Interest(ReportTemplate):
                 for split in acc.GetSplitList():
 
                     parent = split.GetParent()
-                    txn_date = parent.RetDatePostedTS()
+                    txn_date = parent.RetDatePosted().date()
                     commod_currency = parent.GetCurrency()
                     commod_currency_frac = commod_currency.get_fraction()
 
                     try:
                         other_split = split.GetOtherSplit()
-                    except Exception, errexc:
+                    except Exception as errexc:
                         other_split = None
-                    print "other split for", other_split
+                    print("other split for", other_split)
 
                     #if other_split != None:
                     #    other_accnt = 
 
                     corr_accnm = split.GetCorrAccountName()
-                    print "corr account", corr_accnm
+                    print("corr account", corr_accnm)
 
                     # what do the functions eg GetCorrAccountName() do??
                     #
@@ -445,7 +445,7 @@ class Interest(ReportTemplate):
                         desctxt = parent.GetDescription()
                         try:
                             newtxt = desctxt.encode('utf-8')
-                        except Exception, errexc:
+                        except Exception as errexc:
                             newtxt = desctxt.decode('utf-8')
                             desctxt = newtxt
                             #pdb.set_trace()
