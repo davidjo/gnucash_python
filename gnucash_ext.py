@@ -253,6 +253,15 @@ def Run (self, instance_class):
 Query.Run = Run
 
 def CreateFor (cls,  qofid):
+   # for some reason this no longer seems to work for python 3
+   # oh bugger - probably because need to map qofid to utf-8
+   # - except I dont get a type error??
+   # and looking a the wrap c code it seems to be doing the conversion
+   # from unicode to utf-8 - except doesnt seem to set the pointer right
+   # ah - thats worrying - the SWIG code allocates an object for the
+   # utf-8 string which it frees at the end of the call - which obviously
+   # doesnt work for this as the utf-8 string needs to exist till after
+   # the query run call
    if qofid == None:
        return None
    newinst = cls()
@@ -366,7 +375,7 @@ Account.GetChildren = Account.get_children
 def LookupByName (self, account_name):
     try:
         found_acc = self.lookup_by_name(account_name)
-    except RuntimeError, runerr:
+    except RuntimeError as runerr:
         raise KeyError("No account exists with name %s"%account_name)
     else:
         if found_acc.get_instance() == None:
@@ -376,7 +385,7 @@ def LookupByName (self, account_name):
 def LookupByCode (self, account_code):
     try:
         found_acc = self.lookup_by_code(account_code)
-    except RuntimeError, runerr:
+    except RuntimeError as runerr:
         raise KeyError("No account exists with code %s"%account_code)
     else:
         if found_acc == None:
@@ -388,7 +397,7 @@ def LookupByCode (self, account_code):
 def LookupByFullName (self, account_name):
     try:
         found_acc = self.lookup_by_full_name(account_name)
-    except RuntimeError, runerr:
+    except RuntimeError as runerr:
         raise KeyError("No account exists with full name %s"%account_name)
     else:
         if found_acc == None:
@@ -414,12 +423,22 @@ GNCAccountType.add_methods_with_prefix('xaccAccountTypes')
 # which are not mapped in gnucash.py
 GncPriceDB.lookup_latest_any_currency = method_function_returns_instance_list(
     GncPriceDB.lookup_latest_any_currency, GncPrice )
-GncPriceDB.lookup_at_time = method_function_returns_instance_list(
-    GncPriceDB.lookup_at_time, GncPrice )
+GncPriceDB.lookup_day_t64 = method_function_returns_instance(
+    GncPriceDB.lookup_day_t64, GncPrice )
+#    GncPriceDB.lookup_at_time, GncPrice )
+# another Timespec method
+#GncPriceDB.lookup_at_time = method_function_returns_instance(
+#    GncPriceDB.lookup_at_time, GncPrice )
 GncPriceDB.lookup_nearest_in_time_any_currency = method_function_returns_instance_list(
     GncPriceDB.lookup_nearest_in_time_any_currency, GncPrice )
-GncPriceDB.lookup_latest_before_any_currency = method_function_returns_instance_list(
-    GncPriceDB.lookup_nearest_in_time_any_currency, GncPrice )
+GncPriceDB.lookup_nearest_in_time_any_currency_t64 = method_function_returns_instance_list(
+    GncPriceDB.lookup_nearest_in_time_any_currency_t64, GncPrice )
+# apparently shouldnt be used - and now wont work because uses Timespec for time
+#GncPriceDB.lookup_latest_before_any_currency = method_function_returns_instance_list(
+#    GncPriceDB.lookup_latest_before_any_currency, GncPrice )
+# the problem with this method is it needs a currency
+GncPriceDB.lookup_nearest_in_time64 = method_function_returns_instance(
+    GncPriceDB.lookup_nearest_in_time64, GncPrice )
 
 # gnc_price_lookup needs fixing - first arg is GncGUID so should be removed from GncPrice
 # probably should be a Book function
