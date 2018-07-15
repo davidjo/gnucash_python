@@ -24,12 +24,12 @@ class GncCommodityEdit(GncGeneralSelect):
                                                  self.get_string, self.new_select, None)
 
     def get_string (self, ptr):
-        print "GncCommodityEdit get_string",ptr
+        print("GncCommodityEdit get_string",ptr)
         # in C this involves a type conversion
         return ptr.get_printname()
 
     def new_select (self, mode_ptr, comm, toplevel):
-        print "GncCommodityEdit new_select",mode_ptr, comm, toplevel
+        print("GncCommodityEdit new_select",mode_ptr, comm, toplevel)
         # lots of type conversions
         mode = mode_ptr if mode_ptr != None else DialogCommodity.DIAG_COMM_ALL
         newobj = DialogCommodity.gnc_ui_select_commodity_modal(comm, toplevel, mode)

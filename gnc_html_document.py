@@ -96,9 +96,8 @@ class HtmlDocument(object):
                 else:
                     # we have elements but no body - nor html
                     # make an outer body object
-                    pdb.set_trace()
                     bodyobj = ET.Element("body")
-                    bodyobj.append(self.docobj)
+                    bodyobj.append(self.doc.docobj)
                     self.docobj = bodyobj
         else:
             bodyobj = self.doc.Element("body")
@@ -215,7 +214,7 @@ class HtmlDocument(object):
 
             try:
                 subdoc = renderer(report)
-            except Exception, errexc:
+            except Exception as errexc:
                 traceback.print_exc()
                 # ensure GUI reactivated
                 report.report_type.cleanup_gui()
@@ -279,7 +278,7 @@ class HtmlDocument(object):
                 else:
                     htmlobj.append(bodyobj)
                     #bodyobj.append(subdoc.doc.docobj)
-            except Exception, errexc:
+            except Exception as errexc:
                 traceback.print_exc()
                 pdb.set_trace()
 
@@ -288,12 +287,15 @@ class HtmlDocument(object):
             try:
                 # only in python 2.7
                 #docstr = ET.tostring(htmlobj, encoding="utf-8", method="html")
-                docstr = docxml.tostring(encoding="utf-8")
-            except Exception, errexc:
+                #docstr = docxml.tostring(encoding="utf-8")
+                # apparently in python 3 to keep in python unicode we need to use unicode encoding
+                # - default is to convert to bytestring
+                docstr = docxml.tostring(encoding="unicode")
+            except Exception as errexc:
                 traceback.print_exc()
                 try:
                     ET.dump(htmlobj)
-                except Exception, errexc1:
+                except Exception as errexc1:
                     pass
                 pdb.set_trace()
 

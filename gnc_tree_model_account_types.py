@@ -1,4 +1,7 @@
 
+# very preliminary attempt at ctypes wrap of functions
+# in gnc-tree-model-account-types.c
+# NOTE not used at the moment
 
 import sys
 
@@ -21,8 +24,6 @@ import sw_app_utils
 import gnome_utils_ctypes
 
 import glib_ctypes
-
-import qof_ctypes
 
 import gnucash
 
@@ -84,9 +85,9 @@ def new (selected):
 
     #tmptreeview = GObject.new(GObject.type_from_name('GncTreeView'))
     #tmptreeviewaccount = GObject.new(GObject.type_from_name('GncTreeViewAccount'))
-    #print "trying 1"
-    #print tmptreeviewaccount
-    #print "trying 2"
+    #print("trying 1")
+    #print(tmptreeviewaccount)
+    #print("trying 2")
     #newaccview = GObject.new(GObject.type_from_name('GncTreeViewAccount'))
 
 
@@ -113,7 +114,7 @@ def init_functions (newtreemdl):
 def set_mask (self, acc_types):
 
     #pdb.set_trace()
-    #print "set_selected_accounts 1",self
+    #print("set_selected_accounts 1",self)
     #gc.collect()
 
     trmdlptr = hash(self)
@@ -123,7 +124,7 @@ def set_mask (self, acc_types):
 def get_mask (self):
 
     #pdb.set_trace()
-    #print "set_selected_accounts 1",self
+    #print("set_selected_accounts 1",self)
     #gc.collect()
 
     trmdlptr = hash(self)

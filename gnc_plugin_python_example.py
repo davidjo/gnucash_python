@@ -54,9 +54,7 @@ def close_handler (arg):
     pass
 
 
-class GncPluginPythonExample(GncPluginPython):
-
-    __metaclass__ = girepo.GncPluginSubClassMeta
+class GncPluginPythonExample(GncPluginPython, metaclass=girepo.GncPluginSubClassMeta):
 
     #__girmetaclass__ = BaseGncPluginClass
 
@@ -66,7 +64,7 @@ class GncPluginPythonExample(GncPluginPython):
     __gtype_name__ = 'GncPluginPythonExample'
 
     # add properties/signals here
-    #__gproperties__ =
+    #name = GObject.Property(type=int,...)
 
     # I think these are more consistent if they are class variables
     # unfortunately cant figure out how to have a method of the class
@@ -77,14 +75,14 @@ class GncPluginPythonExample(GncPluginPython):
 
     def __init__ (self):
 
-        print "python gtype obj klass %s address %x"%(str(self.__class__),hash(gi.GObject.type_class_peek(self)))
+        print("python gtype obj klass %s address %x"%(str(self.__class__),hash(GObject.type_class_peek(self))))
 
         #pdb.set_trace()
 
         super(GncPluginPythonExample,self).__init__()
         #GncPluginPython.__init__(self)
 
-        print "python gtype obj klass %s address %x"%(str(self.__class__),hash(gi.GObject.type_class_peek(self)))
+        print("python gtype obj klass %s address %x"%(str(self.__class__),hash(GObject.type_class_peek(self))))
 
         #pdb.set_trace()
 
@@ -126,11 +124,11 @@ class GncPluginPythonExample(GncPluginPython):
 
         #pdb.set_trace()
 
-        #print >> sys.stderr, "before access class"
+        #print("before access class", file=sys.stderr)
 
         #priv = girepo.access_class_data(self)
 
-        #print >> sys.stderr, "after access class"
+        #print("after access class", file=sys.stderr)
 
         #GncPluginPythonExample.class_init()
 
@@ -169,21 +167,21 @@ class GncPluginPythonExample(GncPluginPython):
         # we probably need to set all of these
         #gnc_plugin_class->plugin_name     = GNC_PLUGIN_NAME;
 
-        print >> sys.stderr, "before super set_plugin_name"
+        print("before super set_plugin_name", file=sys.stderr)
 
-        print "junk",self.plugin_name,self.actions_name
+        print("junk",self.plugin_name,self.actions_name)
 
         # define special C function in the wrappers to set the class private data
         #pdb.set_trace()
         #self.set_class_init_data(plugin_name=self.plugin_name, actions_name=self.actions_name)
 
-        print >> sys.stderr, "before super set_callbacks"
+        print("before super set_callbacks", file=sys.stderr)
 
         # and another special C function in the wrappers to set the callbacks
         # in the class private data
         #self.set_callbacks()
 
-        #print >> sys.stderr, "after set_callbacks"
+        #print("after set_callbacks", file=sys.stderr)
 
 
     # note that in the C the primary version of these functions are defined in
@@ -196,16 +194,16 @@ class GncPluginPythonExample(GncPluginPython):
 
     def do_add_to_window (self, window, window_type):
 
-        print >> sys.stderr, "called do_add_to_window"
+        print("called do_add_to_window", file=sys.stderr)
         #pdb.set_trace()
 
         super(GncPluginPythonExample,self).add_to_window(window, window_type)
 
     def do_remove_from_window (self, window, window_type):
 
-        print >> sys.stderr, "called do_remove_from_window"
+        print("called do_remove_from_window", file=sys.stderr)
         pdb.set_trace()
-        print >> sys.stderr, "called do_remove_from_window"
+        print("called do_remove_from_window", file=sys.stderr)
 
         super(GncPluginPythonExample,self).remove_from_window(window, window_type)
 
@@ -213,11 +211,11 @@ class GncPluginPythonExample(GncPluginPython):
 
     def cmd_test (self, action, data):
 
-        print >> sys.stderr, " entered cmd_test"
+        print(" entered cmd_test", file=sys.stderr)
 
         pdb.set_trace()
 
-        print >> sys.stderr, " entered cmd_test"
+        print(" entered cmd_test", file=sys.stderr)
 
 
 

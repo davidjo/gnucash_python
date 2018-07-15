@@ -61,3 +61,8 @@ libglib.g_log_default_handler.restype = None
 libglib.g_log_set_default_handler.argtypes = [GLOGFUNC, gpointer]
 libglib.g_log_set_default_handler.restype = GLOGFUNC
 
+# still not sure if should re-implement here with the required type conversions
+
+def glog (logmodule, loglevel, logstr):
+    pdb.set_trace()
+    libglib.g_log(logmodule.encode('utf-8'), loglevel, logstr.encode('utf-8'))

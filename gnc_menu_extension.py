@@ -1,5 +1,9 @@
 
 # this is a re-coded update of menu items for python reports
+# note this only used for old python_only_reports
+# and not really used so not tested out or updated
+# only left for legacy reasons at the moment
+# menu extension handled by python_menu_extensions now
 
 from gi.repository import Gtk
 
@@ -43,19 +47,19 @@ class MyMenuAdditions(GObject.GObject):
         #self.menu_callbacks[menuitm.ae.name] = menuitm.ae.callback
         #menuitm.ae.callback = self.action_cb
         # although it says add actions we are actually adding one
-        #print "group",self.group
-        #print "menuitem",menuitm
-        #print "menuitem",menuitm.ae.as_tuple()
+        #print("group",self.group)
+        #print("menuitem",menuitm)
+        #print("menuitem",menuitm.ae.as_tuple())
         #pdb.set_trace()
         #pythoncallback.add_actions(self.save_callbacks, self.group, [menuitm.ae.as_tuple()], user_data=self.window)
         self.group.add_actions([menuitm.ae.as_tuple()],user_data=self.window)
         # so this implements the xml
         # with path giving the menu position
         #   <menuitem name="Python Reports" action="pythonreportsAction"/>
-        #print " preui",self.ui_manager.get_ui()
-        #print "add_ui",self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type
+        #print(" preui",self.ui_manager.get_ui())
+        #print("add_ui",self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type)
         self.ui_manager.add_ui(self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type,False)
-        #print "postui",self.ui_manager.get_ui()
+        #print("postui",self.ui_manager.get_ui())
         self.ui_manager.ensure_update()
 
     def add_to_window (self, menu_list):
@@ -75,7 +79,7 @@ class MyMenuAdditions(GObject.GObject):
         self.window.manual_merge_actions("gnc-plugin-menu-additions-actions",self.group,self.merge_id)
 
     def action_cb (self, action_obj, **kywds):
-        print "action_cb",action_obj,kywds
-        print "name",action_obj.get_name()
+        print("action_cb",action_obj,kywds)
+        print("name",action_obj.get_name())
         #self.menu_callbacks[menuitem.ae.name](args)
         pass

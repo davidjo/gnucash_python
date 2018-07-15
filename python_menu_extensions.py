@@ -9,6 +9,9 @@
 
 import sys
 
+import gi
+gi.require_version('Gtk', '3.0')
+
 from gi.repository import GObject
 
 from gi.repository import Gtk
@@ -70,9 +73,9 @@ class PythonMenuAdditions(GObject.GObject):
 
         #if hash(window) in self.saved_windows:
         #    # what to do!!
-        #    print "add called more than once same window!!"
+        #    print("add called more than once same window!!")
         #    pdb.set_trace()
-        #    print "add called more than once same window!!"
+        #    print("add called more than once same window!!")
 
         per_window = PythonPerWindowMenuAdditions(window, self)
 
@@ -189,9 +192,9 @@ class PythonPerWindowMenuAdditions(GObject.GObject):
         #DEBUG( "Adding %s/%s [%s] as [%s]", ext_info->path, ext_info->ae.label,
         #       ext_info->ae.name, ext_info->typeStr );
 
-        #print "group",group
-        #print "menuitem",menuitm
-        #print "menuitem",menuitm.ae.as_tuple()
+        #print("group",group)
+        #print("menuitem",menuitm)
+        #print("menuitem",menuitm.ae.as_tuple())
         #pdb.set_trace()
 
         group.add_actions([menuitm.ae.as_tuple()],user_data=self.window)
@@ -199,17 +202,17 @@ class PythonPerWindowMenuAdditions(GObject.GObject):
         # so this implements the xml
         # with path giving the menu position
         #   <menuitem name="Python Reports" action="pythonreportsAction"/>
-        #print " preui",ui_manager.get_ui()
-        #print "add_ui",self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type
+        #print(" preui",ui_manager.get_ui())
+        #print("add_ui",self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type)
         ui_manager.add_ui(self.merge_id,menuitm.path,menuitm.name,menuitm.action,menuitm.type,False)
 
-        #print "postui",ui_manager.get_ui()
+        #print("postui",ui_manager.get_ui())
         ui_manager.ensure_update()
 
 
     def add_to_window (self, window, window_type):
 
-        print >> sys.stderr, "called add_to_window"
+        print("called add_to_window", file=sys.stderr)
         #pdb.set_trace()
 
         ui_manager = self.window.get_uimanager()
@@ -240,14 +243,14 @@ class PythonPerWindowMenuAdditions(GObject.GObject):
 
     def remove_from_window (self, window, window_type):
 
-        #print >> sys.stderr, "called remove_from_window"
+        #print("called remove_from_window", file=sys.stderr)
         #pdb.set_trace()
-        #print >> sys.stderr, "called remove_from_window"
+        #print("called remove_from_window", file=sys.stderr)
 
         # weird - I think both this code is done and the super class
         # because the subclass actions are done first in C
 
-        print "window", window
+        print("window", window)
 
         ui_merge = window.get_uimanager()
 

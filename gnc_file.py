@@ -47,7 +47,7 @@ class GncFileDialog(object):
         dialog.add_action_widget(button, response)
 
 
-    def gnc_file_dialog (self, title, filters, starting_dir, dialog_type):
+    def gnc_file_dialog (self, parent, title, filters, starting_dir, dialog_type):
 
         okbutton = Gtk.STOCK_OPEN
         ok_icon = None
@@ -82,11 +82,12 @@ class GncFileDialog(object):
             if title == None:
                 title = N_("Export")
 
-        print >> sys.stderr, "doing dialog type",dialog_type,okbutton
+        print("doing dialog type",dialog_type,okbutton, file=sys.stderr)
 
 
         #file_box = Gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL), backend=None)
-        file_box = Gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+        #file_box = Gtk.FileChooserDialog(title=title, parent=None, action=action, buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+        file_box = Gtk.FileChooserDialog(title=title, parent=parent, action=action, buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
 
         if ok_icon:
             self.gnc_gtk_dialog_add_button(file_box, okbutton, ok_icon, Gtk.ResponseType.ACCEPT)
@@ -97,8 +98,6 @@ class GncFileDialog(object):
             file_box.set_current_folder(starting_dir)
 
         file_box.set_modal(True)
-
-        # file_box.set_transient_for(gnc_ui_get_toplevel())
 
         if filters != None:
 

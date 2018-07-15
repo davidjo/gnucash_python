@@ -38,7 +38,7 @@ def method_function_returns_gobject_instance(method_function, cls):
     pdb.set_trace()
     assert( 'instance' == INSTANCE_ARGUMENT )
     def new_function(*args):
-        print "new_function being CALLED"
+        print("new_function being CALLED")
         pdb.set_trace()
         kargs = { INSTANCE_ARGUMENT : method_function(*args) }
         if kargs['instance'] == None:
@@ -50,8 +50,8 @@ def method_function_returns_gobject_instance(method_function, cls):
             #newobj = cls( **kargs )
             # note that here we loose the SWIG wrapper!!
             Cgobject = PyGObjectCAPI()
-            obj_ptr = kargs[INSTANCE_ARGUMENT].__long__()
-            newobj = Cgobject.pygobject_new(obj_ptr)
+            obj_ptr = kargs[INSTANCE_ARGUMENT].__int__()
+            newobj = Cgobject.to_object(obj_ptr)
             #if newobj.instance == None:
             #    raise RuntimeError("Instance does not exist for class 2 %s"%newobj.__class__.__name__)
             return newobj
@@ -118,7 +118,7 @@ pdb.set_trace()
 
 #GncMainWindow.book = property( GncMainWindow.get_book )
 
-print "junk"
+print("junk")
 
 class GncPluginPage(GnuCashCoreClass):
     # the main window instance
@@ -137,4 +137,4 @@ GncPluginPage.add_constructor_and_methods_with_prefix('gnc_plugin_page_', 'new')
 #GncPluginPage.book = property( GncPluginPage.get_book )
 
 
-print "junk"
+print("junk")

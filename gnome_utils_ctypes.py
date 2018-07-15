@@ -21,6 +21,8 @@ from pygobjectcapi import PyGObjectCAPI
 
 import gnucash_log
 
+from date_ctypes import TM as TM
+
 
 # junkily define this for the moment
 # define a function equivalent to N_ for internationalization
@@ -77,6 +79,8 @@ libgnc_gnomeutils.gnc_gui_init.restype = c_void_p
 
 def gnc_gui_init ():
 
+    print("WARNING WARNING - should NOT be calling this routine", file=sys.stderr)
+
     # OK - this does work if I use the right restype for gnc_gui_init!!
     # note that the gnc_gui_init just returns main window object pointer
     # if already called - we assume gnc_gui_init has already been called here
@@ -92,7 +96,7 @@ def gnc_gui_init ():
     # that is a GType class consists of data and functions
     # (this is because we need to register a python object type to be associated
     # with a GType via pygobject C function pygobject_register_class)
-    # using pygobject_new wraps the data but not the functions - as they are
+    # using pygobject_new (mapped to to_object) wraps the data but not the functions - as they are
     # defined as simple C functions
     # to add the functions to the python gobject looks like we need to define
     # new python functions which call the underlying C functions from the library
@@ -100,7 +104,7 @@ def gnc_gui_init ():
 
     # call like this:
     Cgobject = PyGObjectCAPI()
-    main_window = Cgobject.pygobject_new(main_window_ptr)
+    main_window = Cgobject.to_object(main_window_ptr)
 
     pdb.set_trace()
 
@@ -182,27 +186,44 @@ libgnc_gnomeutils.gnc_handle_date_accelerator.argtypes = [ c_void_p, c_void_p, c
 libgnc_gnomeutils.gnc_handle_date_accelerator.restype = c_bool
 
 
-libgnc_gnomeutils.gnc_ui_get_toplevel.argtypes = []
-libgnc_gnomeutils.gnc_ui_get_toplevel.restype = c_void_p
+# renamed essentially in 3.2 to gnc_ui_get_main_window
+#libgnc_gnomeutils.gnc_ui_get_toplevel.argtypes = []
+#libgnc_gnomeutils.gnc_ui_get_toplevel.restype = c_void_p
+libgnc_gnomeutils.gnc_ui_get_main_window.argtypes = [ c_void_p ]
+libgnc_gnomeutils.gnc_ui_get_main_window.restype = c_void_p
 
 
 # this definition needs to be here as otherwise get circular definitions
 # if in gnc_main_window.py
 
-def ui_get_toplevel ():
+#def ui_get_toplevel ():
+def ui_get_main_window (widget):
 
     #global Cgobject
 
-    ui_top_ptr = libgnc_gnomeutils.gnc_ui_get_toplevel()
+    ui_top_ptr = libgnc_gnomeutils.gnc_ui_get_main_window(None)
 
     if ui_top_ptr != None:
         # need to wrap returned gtk widget
         Cgobject = PyGObjectCAPI()
-        ui_toplevel = Cgobject.pygobject_new(ui_top_ptr)
+        ui_toplevel = Cgobject.to_object(ui_top_ptr)
     else:
         ui_toplevel = None
 
     return ui_toplevel
+
+# in python 3 we need to do unicode <-> conversion
+# so specific implementation here - remove all external access via gnome_utils_ctypes.libgnc_gnomeutils.gnc_window_show_progress
+
+def window_show_progress (progress_str, percnt):
+    libgnc_gnomeutils.gnc_window_show_progress(progress_str.encode('utf-8'), percnt)
+
+def gnc_handle_date_accelerator (event, dttm, txtstr):
+    event_ptr = hash(event)
+    tm_ptr = ctypes.addressof(dttm)
+    retval = gnome_utils_ctypes.libgnc_gnomeutils.gnc_handle_date_accelerator(event_ptr,tm_ptr,txtstr.encode('utf-8'))
+    return retval
+
 
 
 # unfortunately gnc_error_dialog uses variable argument lists
@@ -218,7 +239,7 @@ from gi.repository import Gtk
 def gnc_error_dialog (parent, errmsg):
 
     if parent == None:
-        parent = ui_get_toplevel()
+        parent = gnc_ui_get_main_window(None)
 
     dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.DIALOG_MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT,
                     Gtk.MessageType.ERROR,Gtk.ButtonsType.CLOSE,N_(errmsg))
@@ -234,7 +255,7 @@ def gnc_error_dialog (parent, errmsg):
 def gnc_verify_dialog (parent, yes_is_default, errmsg):
 
     if parent == None:
-        parent = ui_get_toplevel()
+        parent = gnc_ui_get_main_window(None)
 
     dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT,
                     Gtk.MessageType.QUESTION,Gtk.ButtonsType.YES_NO,N_(errmsg))

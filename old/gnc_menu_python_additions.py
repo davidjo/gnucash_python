@@ -92,7 +92,7 @@ class GncPluginPythonMenuAdditions(GncPluginPython):
 
     def add_to_window (self, window, window_type):
 
-        print >> sys.stderr, "called add_to_window"
+        print("called add_to_window", file=sys.stderr)
 
         super(GncPluginPythonMenuAdditions,self).add_to_window(window, window_type)
 
@@ -140,9 +140,9 @@ class GncPluginPythonMenuAdditions(GncPluginPython):
 
     def remove_from_window (self, window, window_type):
 
-        print >> sys.stderr, "called remove_from_window"
+        print("called remove_from_window", file=sys.stderr)
         pdb.set_trace()
-        print >> sys.stderr, "called remove_from_window"
+        print("called remove_from_window", file=sys.stderr)
 
         # need to map the window somehow to a window object
         window = gnc_main_window.main_window_wrap(window)

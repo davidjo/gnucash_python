@@ -31,24 +31,25 @@ def N_(msg):
     return msg
 
 
+
 def report_starting (report_name):
-  gnome_utils_ctypes.libgnc_gnomeutils.gnc_window_show_progress(N_("Building '%s' report ..."%report_name), 0.0)
+  gnome_utils_ctypes.window_show_progress(N_("Building '%s' report ..."%report_name), 0.0)
 
 def report_render_starting (report_name):
   if report_name == None or report_name == "":
       rptnam = "Untitled"
   else:
       rptnam = report_name
-  gnome_utils_ctypes.libgnc_gnomeutils.gnc_window_show_progress(N_("Rendering '%s' report ..."%rptnam), 0)
+  gnome_utils_ctypes.window_show_progress(N_("Rendering '%s' report ..."%rptnam), 0)
 
 def report_percent_done (percent):
   if percent > 100.0:
       #(gnc:warn "report more than 100% finished. " percent))
       pass
-  gnome_utils_ctypes.libgnc_gnomeutils.gnc_window_show_progress("", percent)
+  gnome_utils_ctypes.window_show_progress("", percent)
 
 def report_finished():
-  gnome_utils_ctypes.libgnc_gnomeutils.gnc_window_show_progress("", -1.0)
+  gnome_utils_ctypes.window_show_progress("", -1.0)
 
 
 
@@ -66,7 +67,7 @@ def account_get_balance_at_date (account, date, include_children=False):
 def account_get_comm_balance_at_date (account, date, include_children=False):
 
     #pdb.set_trace()
-    #if account.GetName().find('WFM') >= 0: pdb.set_trace()
+    #if account.GetName().find('ILMN') >= 0: pdb.set_trace()
 
     balance_collector = CommodityCollector()
 
@@ -88,19 +89,41 @@ def account_get_comm_balance_at_date (account, date, include_children=False):
     # should we assume this is general and always search for the next day
     # (unless thats the current day)
 
-    curbook = sw_app_utils.get_current_book()
-    tmpqry = gnucash.Query.CreateFor(curbook.GNC_ID_SPLIT)
-    tmpqry.set_book(curbook)
-    # apparently the python bindings only wrap the core query functions in libqof/qof
-    # not the additional functions in eg engine/Query.c
-    #tmpqry.AddSingleAccountMatch(account,gnucash.QOF_QUERY_AND)
-    #tmpqry.AddDateMatchTS(False,date,True,date,gnucash.QOF_QUERY_AND)
-    engine_ctypes.AddSingleAccountMatch(tmpqry,account,gnucash.QOF_QUERY_AND)
-    engine_ctypes.AddDateMatchTS(tmpqry,False,date,True,date,gnucash.QOF_QUERY_AND)
-    tmpqry.set_sort_order([gnucash.gnucash_core_c.SPLIT_TRANS,gnucash.gnucash_core_c.TRANS_DATE_POSTED],[gnucash.gnucash_core_c.QUERY_DEFAULT_SORT],[])
-    tmpqry.set_sort_increasing(True,True,True)
-    tmpqry.set_max_results(1)
-    splitlst = tmpqry.Run(gnucash.Split)
+    if True:
+
+        # use original gnucash.Query function
+
+        curbook = sw_app_utils.get_current_book()
+        tmpqry = gnucash.Query.CreateFor(curbook.GNC_ID_SPLIT)
+        tmpqry.set_book(curbook)
+        # apparently the python bindings only wrap the core query functions in libqof/qof
+        # not the additional functions in eg engine/Query.c
+        #tmpqry.AddSingleAccountMatch(account,gnucash.QOF_QUERY_AND)
+        #tmpqry.AddDateMatchTT(False,date,True,date,gnucash.QOF_QUERY_AND)
+        engine_ctypes.AddSingleAccountMatch(tmpqry,account,gnucash.QOF_QUERY_AND)
+        engine_ctypes.AddDateMatchTT(tmpqry,False,date,True,date,gnucash.QOF_QUERY_AND)
+        tmpqry.set_sort_order([gnucash.gnucash_core_c.SPLIT_TRANS,gnucash.gnucash_core_c.TRANS_DATE_POSTED],[gnucash.gnucash_core_c.QUERY_DEFAULT_SORT],[])
+        tmpqry.set_sort_increasing(True,True,True)
+        tmpqry.set_max_results(1)
+        splitlst = tmpqry.Run(gnucash.Split)
+
+    if False:
+
+        # use hacked up ctypes version to deal with char pointer issues
+
+        curbook = sw_app_utils.get_current_book()
+        tmpqry = engine_ctypes.CreateFor(curbook.GNC_ID_SPLIT)
+        tmpqry.query.set_book(curbook)
+        # apparently the python bindings only wrap the core query functions in libqof/qof
+        # not the additional functions in eg engine/Query.c
+        #tmpqry.AddSingleAccountMatch(account,gnucash.QOF_QUERY_AND)
+        #tmpqry.AddDateMatchTT(False,date,True,date,gnucash.QOF_QUERY_AND)
+        engine_ctypes.AddSingleAccountMatch(tmpqry.query,account,gnucash.QOF_QUERY_AND)
+        engine_ctypes.AddDateMatchTT(tmpqry.query,False,date,True,date,gnucash.QOF_QUERY_AND)
+        tmpqry.query.set_sort_order([gnucash.gnucash_core_c.SPLIT_TRANS,gnucash.gnucash_core_c.TRANS_DATE_POSTED],[gnucash.gnucash_core_c.QUERY_DEFAULT_SORT],[])
+        tmpqry.query.set_sort_increasing(True,True,True)
+        tmpqry.query.set_max_results(1)
+        splitlst = tmpqry.query.Run(gnucash.Split)
 
     # do we need these??
     #invqry.destroy()
@@ -108,6 +131,7 @@ def account_get_comm_balance_at_date (account, date, include_children=False):
 
     # by set_max_results there is only 1 split returned I think
     if len(splitlst) > 0:
+        #pdb.set_trace()
         balance_collector.add(account.GetCommodity(),splitlst[0].GetBalance())
 
     return balance_collector
@@ -151,6 +175,8 @@ def filter_accountlist_type (typelist, accounts):
 
 
 def monetary_to_string (value):
+    pdb.set_trace()
+    # this is wrong!!
     sw_app_utils.PrintAmount
 
 
@@ -287,7 +313,7 @@ class CommodityCollector(object):
         # ah - it looks up c in commoditylist
         # (pair (assoc c commoditylist))
         # the scheme code seems to return as second item a list of GncNumeric and empty list
-	if commod.get_unique_name() in self.commoditylist:
+        if commod.get_unique_name() in self.commoditylist:
             tmpcmdpr = self.commoditylist[commod.get_unique_name()]
             if sign:
                 tmpval = tmpcmdpr[1].total().neg()
@@ -352,7 +378,7 @@ def sum_collector_commodity (foreign_commodityclctr, domestic, exchange_fn):
             balance.add(domestic,val)
         else:
             #pdb.set_trace()
-            print "type exchange",callable(exchange_fn),str(type(exchange_fn))
+            print("type exchange",callable(exchange_fn),str(type(exchange_fn)))
             if callable(exchange_fn):
                 tmpval = exchange_fn(gnc_commodity_utilities.GncMonetary(curr,val), domestic)
             else:
@@ -363,7 +389,7 @@ def sum_collector_commodity (foreign_commodityclctr, domestic, exchange_fn):
 
     sumval = balance.getmonetary(domestic)
 
-    #print "sum collector total",sumval.amount.to_string()
+    #print("sum collector total",sumval.amount.to_string())
 
     return sumval
 

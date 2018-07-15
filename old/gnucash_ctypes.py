@@ -4,6 +4,9 @@
 
 # ctypes interface into gnucash libraries
 
+# qof section no longer useful from gnucash 3 onwards as all in libgncmod-engine now
+# the glib stuff is in glib_ctypes
+
 
 from ctypes.util import find_library
 

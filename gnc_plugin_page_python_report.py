@@ -1,5 +1,8 @@
-# finally we need to create a new class
+# finall ywe need to create a new class
 # to run reports in python
+
+# this is based on gnc-plugin-page-report.c in gnucash/report/report-gnome
+
 
 import sys
 
@@ -11,6 +14,10 @@ import pdb
 
 import traceback
 
+import gi
+
+gi.require_version('URLType', '1.0')
+gi.require_version('GncHtml', '0.1')
 
 from gi.repository import GObject
 
@@ -36,9 +43,9 @@ try:
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
     #from gi.repository import Gtk
     pass
-except Exception, errexc:
+except Exception as errexc:
     traceback.print_exc()
-    print >> sys.stderr, "Failed to import!!"
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
 #pdb.set_trace()
@@ -68,17 +75,6 @@ from gnc_html import HtmlView
 
 import gnucash_log
 from gnucash_log import ENTER
-
-
-libglibnm = ctypes.util.find_library("libglib-2.0")
-if libglibnm is None:
-    raise RuntimeError("Can't find a libglib-2.0 library to use.")
-
-libglib = ctypes.cdll.LoadLibrary(libglibnm)
-
-
-libglib.g_log_remove_handler.argtypes = [ctypes.c_char_p, ctypes.c_uint]
-libglib.g_log_remove_handler.restype = None
 
 
 
@@ -144,9 +140,7 @@ else:
 # add new class variables
 # so the python is paralleling the C code
 
-class GncPluginPagePythonReport(GncPluginPagePython):
-
-    __metaclass__ = girepo.GncPluginPageSubClassMeta
+class GncPluginPagePythonReport(GncPluginPagePython, metaclass=girepo.GncPluginPageSubClassMeta):
 
     #__girmetaclass__ = BasePluginPageClass
 
@@ -159,21 +153,24 @@ class GncPluginPagePythonReport(GncPluginPagePython):
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncPluginPagePythonReport'
 
-    # OK Im now thinking gobject warning messages were happening previously but just did not get the message
+    # so property adding has changed but signal adding has remained the same???
+    # - but thats a problem - we cant use report-id - it has to be report_id
+    # - python doesnt allow variable names with hyphen
+    # have to hope something in gnucash doesnt try to use report-id for this page
+    # but apparently the python wrapping takes care of this
+    # so you can use either _ or - in property names
 
-    __gproperties__ = {
-                       'report-id' : (int,                                    # type
-                                      N_('The numeric ID of the report.'),    # nick name
-                                      N_('The numeric ID of the report.'),    # description
-                                      -1,                                     # min value
-                                      GLib.MAXINT32,                          # max value
-                                      -1,                                     # default value
-                                      GObject.ParamFlags.READWRITE),          # flags
-                                      #GObject.ParamFlags.CONSTRUCT_ONLY | GObject.ParamFlags.READWRITE),      # flags
-                                      # cant figure out how to use GObject.ParamFlags.CONSTRUCT_ONLY
-                                      # not clear what the "constructor" is in python - __init__ ??
-                                      # but using in constr_init is definitely not
-                      }
+    report_id = GObject.Property(type=int,                                                  # type
+                                 default=-1,                                                # default value
+                                 nick=N_('The numeric ID of the report.'),                  # nick name
+                                 blurb=N_('The numeric ID of the report.'),                 # description
+                                 flags=GObject.ParamFlags.READWRITE,                        # flags
+                                 minimum=-1,                                                # min value
+                                 maximum=GLib.MAXINT32)                                     # max value
+                                 #GObject.ParamFlags.CONSTRUCT_ONLY | GObject.ParamFlags.READWRITE),      # flags
+                                 # cant figure out how to use GObject.ParamFlags.CONSTRUCT_ONLY
+                                 # not clear what the "constructor" is in python - __init__ ??
+                                 # but using in constr_init is definitely not
 
 
     def __init__ (self, report):
@@ -186,7 +183,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         # again we are passing the instance pointer in python rather than integer report id
         # - but the report instance contains the report id
         report_id = report.id
-        #print "init report_id",report_id
+        #print("init report_id",report_id)
         gnucash_log.dbglog("init report_id",report_id)
 
         # this property is set on the g_object_new statement
@@ -275,11 +272,11 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
         #pdb.set_trace()
 
-        #print >> sys.stderr, "before access private"
+        #print("before access private", file=sys.stderr)
 
         #priv = girepo.access_private_data()
 
-        #print >> sys.stderr, "after access private"
+        #print("after access private", file=sys.stderr)
 
         # variables from the private data structure
         # do we need any of these
@@ -372,10 +369,10 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
         # yes - here I think in C the reportId is passed - in python we are passing the report object
         # so ignore the above
-        report_Id = report.id
+        self.reportId = report.id
 
         # the report.id is a sequential count of number of reports run in the current gnucash run
-        #print "constructor report-id",report_Id
+        #print("constructor report-id",report_Id)
 
         # scheme passes the report_Id - in python we will pass the report instance
         self.constr_init(report)
@@ -386,7 +383,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         # again we are passing the instance pointer in python rather than integer report id
         # - but the report instance contains the report id
         report_id = report.id
-        #print "constr_init report-id","%x"%report_id
+        #print("constr_init report-id","%x"%report_id)
         #pdb.set_trace()
 
         # this sets the property in gnc_plugin_page_report
@@ -395,7 +392,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         # I thought is where the property report-id is stored
         # so we store it, access it just to re-store it???
         self.set_property("report-id",report_id)
-        #print "constr_init get report-id","%x"%self.get_property("report-id")
+        #print("constr_init get report-id","%x"%self.get_property("report-id"))
 
         # do some setup - for gnc_plugin_page_report lots of scheme stuff
         #gnc_plugin_page_report_setup(self)
@@ -409,7 +406,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         ui_desc_path = os.path.join(os.environ['HOME'],'.gnucash','ui',"gnc-plugin-page-python-report-ui.xml")
 
         if not os.path.exists(ui_desc_path):
-            print >> sys.stderr, "path does not exist", ui_desc_path
+            print("path does not exist", ui_desc_path, file=sys.stderr)
             pdb.set_trace()
 
         # need to set parent variables - are these properties?? yes!!
@@ -443,7 +440,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
         gnc_plugin.init_short_names(self.action_group, self.toolbar_labels)
 
-        print "actions added"
+        print("actions added")
         gnucash_log.dbglog("actions added")
 
 
@@ -467,13 +464,13 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         if property.name == 'report-id':
             return self.reportId
         else:
-            raise AttributeError, 'unknown property %s' % property.name
+            raise AttributeError('unknown property %s' % property.name)
 
     def do_set_property (self, property, value):
         if property.name == 'report-id':
             self.reportId = value
         else:
-            raise AttributeError, 'unknown property %s' % property.name
+            raise AttributeError('unknown property %s' % property.name)
 
 
     def get_cur_report (self):
@@ -487,11 +484,11 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
         self.cur_report = None
         self.initial_report = None
-	self.edited_reports = []
+        self.edited_reports = []
         self.name_change_cb_id = None
 
         report_id = self.get_property('report-id')
-        print "report_setup",report_id
+        print("report_setup",report_id)
         gnucash_log.dbglog("report_setup",report_id)
 
         # need to do something like this to follow scheme
@@ -509,7 +506,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
     def load_cb (self, url_type, url_location, url_label):
 
         #pdb.set_trace()
-        print "load_cb",str(url_type),url_location,url_label
+        print("load_cb",str(url_type),url_location,url_label)
 
         # we need to implement this - this is important for
         # getting the report to change on option changes
@@ -568,13 +565,66 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
         # some history stuff not got into yet
 
+
+    # new style widget loading as of gnucash 3.2
+
+    def load_uri (self, page):
+
+        #pdb.set_trace()
+        print("load_uri")
+
+        self.container.show_all()
+
+
+        # this sets the window for the progressbar
+        #gnc_window_set_progressbar_window( GNC_WINDOW(page->window) );
+
+        # this sets the minimum size of the progressbar to that allocated
+        #gnc_plugin_page_report_set_progressbar( page, TRUE );
+
+
+        # great - build_url is defined in gnc_html.c but not in gnc_html.h
+        # ctypes here we come!!
+
+        id_name = "id=%d"%self.reportId
+
+        child_name = gnc_html_ctypes.build_url( URLType.TYPE_REPORT, id_name, None )
+
+        (url_type, url_location, url_label) = self.html.html.parse_url(child_name)
+
+        self.html.show_url(url_type,url_location,url_label,report_cb=self.get_cur_report)
+
+
+        #gnc_plugin_page_report_set_progressbar( page, FALSE );
+
+        # this resets the window for the progressbar to NULL
+        #gnc_window_set_progressbar_window( NULL );
+
+        return False
+
+
+
+    def realize_uri (self, page):
+
+        #pdb.set_trace()
+        print("realize_uri")
+
+        GLib.idle_add(self.load_uri, page)
+
+
+    def main_window_page_changed (self, plugin_page, user_data):
+
+        #pdb.set_trace()
+        print("main_window_page_changed")
+
+
     # apparently for gobject introspection virtual methods (which GI recognises)
     # are overridden  by adding do_ to their name
 
     def do_create_widget (self):
 
         #pdb.set_trace()
-        print "do_create_widget"
+        print("do_create_widget")
 
         # calling stack showing report page html create stack
         #0  0x00000001001c6327 in gnc_html_init ()
@@ -617,13 +667,23 @@ class GncPluginPagePythonReport(GncPluginPagePython):
            # whats the equivalent here?
            # will use variables with approx name in C until figure this further
 
+           topLvl = gnome_utils_ctypes.ui_get_main_window(None)
+
            self.html = HtmlView()
+
+           #self.html.set_parent(topLvl)
 
            self.container = Gtk.Frame()
            # for some reason Gtk.ShadowType.NONE is not defined - even though it should be!!
            # plus Gtk.ShadowType knows its an enum and knows the values!!
            #self.container.set_shadow_type(Gtk.ShadowType.NONE)
            self.container.set_shadow_type(0)
+
+           # this doesnt appear to exist in python (we have a direct set_style)
+           # only get_style_context seems to exist
+           # the following seems to be the new way to do this
+           #self.container.set_style_context("GncReportPage")
+           self.container.get_path().iter_set_object_name(0,"GncReportPage")
 
            # this is the gnc_html_get_widget call in report system
            self.container.add(self.html.widget)
@@ -633,18 +693,17 @@ class GncPluginPagePythonReport(GncPluginPagePython):
            # otherwise need to do a ctypes call
            close_callback_type = ctypes.CFUNCTYPE(None,ctypes.c_void_p)
 
-           self.component_manager_id = sw_app_utils.libgnc_apputils.gnc_register_gui_component("window-report", None, close_callback_type(close_handler), hash(self))
+           #pdb.set_trace()
+
+           self.component_manager_id = sw_app_utils.libgnc_apputils.gnc_register_gui_component(b"window-report", None, close_callback_type(close_handler), hash(self))
            # debugging - doesnt appear to have any effect
-           #self.component_manager_id = sw_app_utils.libgnc_apputils.gnc_register_gui_component("window-report", None, None, None)
+           #self.component_manager_id = sw_app_utils.libgnc_apputils.gnc_register_gui_component(b"window-report", None, None, None)
 
            #session = _sw_app_utils.gnc_get_current_session()
            session = sw_app_utils.libgnc_apputils.gnc_get_current_session()
 
            #_sw_app_utils.gnc_gui_component_set_session(self.component_manager_id, session)
            sw_app_utils.libgnc_apputils.gnc_gui_component_set_session(self.component_manager_id, session)
-
-           # need this??
-           #gnc_html_set_urltype_cb(priv->html, gnc_plugin_page_report_check_urltype);
 
            # so far need this as this sets up for re-running report on option changes
            #gnc_html_set_load_cb(priv->html, gnc_plugin_page_report_load_cb, report);
@@ -671,13 +730,10 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
            #pdb.set_trace()
 
+           self.html.load_cb(url_type, url_location, url_label)
 
            # this seems to be the major drawing bit
            # im going to sort of assume that this is what draws in the above created window
-           #gnc_window_set_progressbar_window( GNC_WINDOW(page->window) );
-           #gnc_html_show_url(priv->html, type, url_location, url_label, 0);
-           #g_free(url_location);
-           #gnc_window_set_progressbar_window( NULL );
 
            # this is complicated now
            # if we follow the C/scheme self.cur_report is only defined
@@ -685,16 +741,17 @@ class GncPluginPagePythonReport(GncPluginPagePython):
            # essentially here C/scheme passes the report Id then looks it
            # up in load_cb
 
-           self.html.show_url(url_type,url_location,url_label,report_cb=self.get_cur_report)
 
-
-           #g_signal_connect(priv->container, "expose_event",
-           #                 G_CALLBACK(gnc_plugin_page_report_expose_event_cb), report);
+           #g_signal_connect(priv->container, "realize",
+           #                 G_CALLBACK(gnc_plugin_page_report_realize_uri), report);
 
            # we dont need report - this is self
            # apparently we can add arguments here which will be added to end
            # of arguments for expose_event_cb
-           self.container.connect("expose_event", self.expose_event_cb)
+           self.container.connect("realize", self.realize_uri)
+
+           #window = self.window
+           #window.connect("page_changed", self.main_window_page_changed)
 
            #gtk_widget_show_all( GTK_WIDGET(priv->container) );
 
@@ -702,10 +759,10 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
            #pdb.set_trace()
 
-           print "finished create_widget"
+           print("finished create_widget")
            gnucash_log.dbglog("finished create_widget")
 
-        except Exception, errexc:
+        except Exception as errexc:
            traceback.print_exc()
            pdb.set_trace()
 
@@ -725,20 +782,22 @@ class GncPluginPagePythonReport(GncPluginPagePython):
        #6  0x0000000104318615 in gtk_real_button_released ()
 
         global python_pages
-        print >> sys.stderr, "destroy_widget"
+        print("destroy_widget", file=sys.stderr)
         gnucash_log.dbglog_err("destroy_widget")
         try:
 
            sw_app_utils.libgnc_apputils.gnc_unregister_gui_component(self.component_manager_id)
            self.component_manager_id = 0
+           print("python_pages")
+           print(python_pages.keys())
            del python_pages[self.reportId]
 
-        except Exception, errexc:
+        except Exception as errexc:
            traceback.print_exc()
            pdb.set_trace()
 
     def do_save_page (self, key_file, group_name):
-        print >> sys.stderr, "save_page"
+        print("save_page", file=sys.stderr)
         gnucash_log.dbglog_err("save_page")
         # this is a biggy - the scheme version outputs the data needed to regenerate the report
         # - it appears to be saved under .gnucash/books in the .gcm for the book
@@ -757,7 +816,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         # for the moment create new dict with value as module and class name string
         #pdb.set_trace()
         pyitms = {}
-        for key,val in report_objects.python_reports_by_guid.iteritems():
+        for key,val in report_objects.python_reports_by_guid.items():
             pyitms[key] = "%s.%s"%(val.__class__.__module__,val.__class__.__name__)
         key_file.set_value(group_name, "PythonOptions", repr(pyitms))
         #key_file.set_value(group_name, "PythonOptions", json.dumps(report_objects.python_reports_by_guid))
@@ -765,28 +824,28 @@ class GncPluginPagePythonReport(GncPluginPagePython):
     # this is checked if exists before calling
     # currently only defined for register pages
     #def do_window_changed (self, *args):
-    #    print >> sys.stderr, "window_changed",len(args)
+    #    print("window_changed",len(args), file=sys.stderr)
     #    gnucash_log.dbglog_err("window_changed",len(args))
     #    pdb.set_trace()
 
     def do_page_name_changed (self, *args):
-        print >> sys.stderr, "page_name_changed",len(args)
+        print("page_name_changed",len(args), file=sys.stderr)
         gnucash_log.dbglog_err("page_name_changed",len(args))
         #pdb.set_trace()
 
     def do_update_edit_menu_actions (self, arg1):
-        print >> sys.stderr, "update_edit_menu_actions"
+        print("update_edit_menu_actions", file=sys.stderr)
         gnucash_log.dbglog_err("update_edit_menu_actions")
         pdb.set_trace()
 
     def do_finish_pending (self):
-        print >> sys.stderr, "finish_pending"
+        print("finish_pending", file=sys.stderr)
         gnucash_log.dbglog_err("finish_pending")
         return not self.reloading
 
 
     def option_change_cb (self):
-        print >> sys.stderr, "option_change_cb callback"
+        print("option_change_cb callback", file=sys.stderr)
         gnucash_log.dbglog_err("option_change_cb callback")
         if self.cur_report == None:
             return
@@ -804,11 +863,11 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         self.html.reload()
 
     def history_destroy_cb (self, data):
-        print >> sys.stderr, "history_destroy_cb callback"
+        print("history_destroy_cb callback", file=sys.stderr)
         gnucash_log.dbglog_err("history_destroy_cb callback")
 
     def expose_event_cb (self, widget, event):
-        print >> sys.stderr, "expose_event_cb callback"
+        print("expose_event_cb callback", file=sys.stderr)
         gnucash_log.dbglog_err("expose_event_cb callback")
 
         str1 = """
@@ -849,7 +908,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
         file_dialog = gnc_file.GncFileDialog()
 
-        filepath = file_dialog.gnc_file_dialog(title, None, default_dir, file_dialog.GNC_FILE_DIALOG_EXPORT)
+        filepath = file_dialog.gnc_file_dialog(gnome_utils_ctypes.ui_get_main_window(None), title, None, default_dir, file_dialog.GNC_FILE_DIALOG_EXPORT)
 
         if filepath.find('.') < 0:
             filepath = filepath + '.' + file_type.lower()
@@ -866,7 +925,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
             try:
                 os.stat(filepath)
                 errstr = None
-            except OSError, osex:
+            except OSError as osex:
                 errstr = osex.strerror
 
             if errstr != None:
@@ -898,25 +957,25 @@ class GncPluginPagePythonReport(GncPluginPagePython):
     # in our case rep is currently this class ie GncPluginPagePythonReport
 
     def forw_cb (self, action, rep):
-        print "forw_cb called"
+        print("forw_cb called")
         gnucash_log.dbglog("forw_cb called")
     def back_cb (self, action, rep):
-        print "back_cb called"
+        print("back_cb called")
         gnucash_log.dbglog("back_cb called")
     def reload_cb (self, action, rep):
-        print "reload_cb called"
+        print("reload_cb called")
         gnucash_log.dbglog("reload_cb called")
     def stop_cb (self, action, rep):
-        print "stop_cb called"
+        print("stop_cb called")
         gnucash_log.dbglog("stop_cb called")
     def save_cb (self, action, rep):
-        print "save_cb called"
+        print("save_cb called")
         gnucash_log.dbglog("save_cb called")
     def save_as_cb (self, action, rep):
-        print "save_as_cb called"
+        print("save_as_cb called")
         gnucash_log.dbglog("save_as_cb called")
     def export_cb (self, action, rep):
-        print "export_cb called"
+        print("export_cb called")
         gnucash_log.dbglog("export_cb called")
         # this appears to allow for a definition in the report template
         # not fully implementing this
@@ -944,7 +1003,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
             result = export_proc(self.cur_report, choice, filepath)
         else:
             result = self.html.export_to_file(filepath)
-            print "export_to_file",result
+            print("export_to_file",result)
 
         if not result:
 
@@ -955,41 +1014,48 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
         return
     def options_cb (self, action, rep):
-        print "options_cb called"
+        print("options_cb called")
         gnucash_log.dbglog("options_cb called")
         # not sure what class partitioning should be here yet
         # we have instance of this class for each report
         # ah - but we need separate instance for each variation of this report with
         # different options
-        result = self.cur_report.edit_options()
-        if result == None:
-            #gnc_warning_dialog(GTK_WIDGET(gnc_ui_get_toplevel()), "%s",
-            #                   _("There are no options for this report."));
-            #parent = gnc_gui_get_toplevel()
-            parent = None
-            Gtk.MessageDialog(parent,Gtk.DialogFlags.MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                    Gtk.MessageType.WARNING,Gtk.ButtonsType.CLOSE,N_("There are no options for this report."))
-        else:
+        if self.cur_report == None:
+            return
+        parent = self.get_window()
+        result = self.cur_report.edit_options(parent)
+        if result != None:
             self.add_edited_report(self.cur_report)
             pass
     def print_cb (self, action, rep):
-        print "print_cb called"
+        print("print_cb called")
         gnucash_log.dbglog("print_cb called")
     def exportpdf_cb (self, action, rep):
-        print "exportpdf_cb called"
+        print("exportpdf_cb called")
         gnucash_log.dbglog("exportpdf_cb called")
     def copy_cb (self, action, rep):
-        print "copy_cb called"
+        print("copy_cb called")
         gnucash_log.dbglog("copy_cb called")
 
+
+    def remove_edited_report (self, cur_report):
+        try:
+            self.edited_reports.remove(cur_report)
+        except ValueError:
+            pass
 
     def add_edited_report (self, cur_report):
         self.edited_reports.append(cur_report)
 
+    def raise_editor (self, cur_report):
+        pdb.set_trace()
+        if cur_report.report_editor_widget != None:
+            cur_report.report_editor_widget.present()
+
 
     @classmethod
     def recreate_page (cls, window, key_file, page_group):
-        print >> sys.stderr, "recreate_page",window, key_file, page_group
+        print("recreate_page",window, key_file, page_group, file=sys.stderr)
         gnucash_log.dbglog_err("recreate_page",window, key_file, page_group)
         # amazing - this is working - it being called if report was open on gnucash
         # close
@@ -1011,7 +1077,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
         # or normally gnc:restore-report-by-guid which is evaluated in the scheme version of
         # this function
         pyopts = key_file.get_value(page_group,'PythonOptions')
-        print "recreate_page",pyopts
+        print("recreate_page",pyopts)
         gnucash_log.dbglog("recreate_page",pyopts)
         # hmm - will this only have one key??
         pydict = eval(pyopts)
@@ -1029,7 +1095,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
     @classmethod
     def OpenNewReport (cls, report, window):
         global python_pages
-        print >> sys.stderr, "OpenNewReport",window
+        print("OpenNewReport",window, file=sys.stderr)
         gnucash_log.dbglog_err("OpenNewReport",window)
         # we are currently passing the report instance rather than the integer report id
         # as scheme does - note that the report id is defined by report.id
@@ -1046,7 +1112,7 @@ class GncPluginPagePythonReport(GncPluginPagePython):
             # not sure if crashes Im seeing are due to object deletion or something
             # with creating same report twice
             if report_id in python_pages:
-                print >> sys.stderr, "report already created",report_id
+                print("report already created",report_id, file=sys.stderr)
                 gnucash_log.dbglog_err("report already created",report_id)
                 return
 
@@ -1063,10 +1129,10 @@ class GncPluginPagePythonReport(GncPluginPagePython):
             #myreportp = ctypes.cast(myreportp,ctypes.POINTER(gnc_plugin_page.GncPluginPageOpaque))
             #myreportp = ctypes.cast(myreportp,ctypes.c_void_p)
             #pdb.set_trace()
-            #print >> sys.stderr, "OpenNewReport","0x%x"%ctypes.addressof(windowp)
-            #print >> sys.stderr, "OpenNewReport","0x%x"%ctypes.addressof(myreportp)
-            print >> sys.stderr, "OpenNewReport","0x%x"%windowp
-            print >> sys.stderr, "OpenNewReport","0x%x"%myreportp
+            #print("OpenNewReport","0x%x"%ctypes.addressof(windowp), file=sys.stderr)
+            #print("OpenNewReport","0x%x"%ctypes.addressof(myreportp), file=sys.stderr)
+            print("OpenNewReport","0x%x"%windowp, file=sys.stderr)
+            print("OpenNewReport","0x%x"%myreportp, file=sys.stderr)
             gnucash_log.dbglog_err("0x%x"%windowp)
             gnucash_log.dbglog_err("0x%x"%myreportp)
 
@@ -1077,9 +1143,9 @@ class GncPluginPagePythonReport(GncPluginPagePython):
 
             #pdb.set_trace()
 
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
-            print >> sys.stderr, "OpenReport error:",str(errexc)
+            print("OpenReport error:",str(errexc), file=sys.stderr)
             pdb.set_trace()
 
         return myreportpage

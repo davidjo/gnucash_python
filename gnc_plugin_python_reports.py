@@ -77,13 +77,11 @@ def close_handler (arg):
     pass
 
 dir(GncPluginPython)
-print type(GncPluginPython)
+print(type(GncPluginPython))
 #pdb.set_trace()
 
 
-class GncPluginPythonReports(GncPluginPython):
-
-    __metaclass__ = girepo.GncPluginSubClassMeta
+class GncPluginPythonReports(GncPluginPython, metaclass=girepo.GncPluginSubClassMeta):
 
     #__girmetaclass__ = BaseGncPluginClass
 
@@ -94,7 +92,8 @@ class GncPluginPythonReports(GncPluginPython):
     __gtype_name__ = 'GncPluginPythonReports'
 
     # add properties/signals here
-    #__gproperties__ =
+    #name = GObject.Property(type=int,...)
+    #__gsignals__ = ...
 
     # I think these are more consistent if they are class variables
     # unfortunately cant figure out how to have a method of the class
@@ -196,13 +195,13 @@ class GncPluginPythonReports(GncPluginPython):
 
         #pdb.set_trace()
 
-        #print >> sys.stderr, "before access class"
+        #print("before access class", file=sys.stderr)
 
         #priv = girepo.access_class_data(self)
 
-        #print >> sys.stderr, "after access class"
+        #print("after access class", file=sys.stderr)
 
-        #print >> sys.stderr, "after set_callbacks"
+        #print("after set_callbacks", file=sys.stderr)
 
 
     def plugin_init (self):
@@ -228,7 +227,7 @@ class GncPluginPythonReports(GncPluginPython):
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "called add_to_window"
+        print("called add_to_window", file=sys.stderr)
 
         super(GncPluginPythonReports,self).add_to_window(window, window_type)
 
@@ -248,9 +247,9 @@ class GncPluginPythonReports(GncPluginPython):
 
         self.menu_extensions.remove_from_window(window, window_type)
 
-        #print >> sys.stderr, "called remove_from_window"
+        #print("called remove_from_window", file=sys.stderr)
         #pdb.set_trace()
-        #print >> sys.stderr, "called remove_from_window"
+        #print("called remove_from_window", file=sys.stderr)
 
         super(GncPluginPythonReports,self).remove_from_window(save_window, window_type)
 
@@ -334,9 +333,9 @@ class GncPluginPythonReports(GncPluginPython):
             gnc_plugin_page_python_report.OpenReport(report,window)
             #gc.collect()
             gnucash_log.dbglog("call back done")
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
-            print >> sys.stderr, "error in reports_cb callback",str(errexc)
+            print("error in reports_cb callback",str(errexc), file=sys.stderr)
 
 
 # gdb call back for report

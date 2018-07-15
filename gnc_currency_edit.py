@@ -1,6 +1,9 @@
 
 # special currency widget
 
+import gi
+gi.require_version('Gtk', '3.0')
+
 from gi.repository import GObject
 
 from gi.repository import Gtk
@@ -15,8 +18,6 @@ import sw_app_utils
 import gnucash
 
 
-import qof_ctypes
-
 #import gnc_utils
 from gnc_utils import GncCBWEMixin
 
@@ -24,25 +25,33 @@ from gnc_utils import GncCBWEMixin
 def N_(msg):
     return msg
 
+# so this looks like needs some fixing
+# is seems to be using the ComboBox directly in gtk 3
+# no - it appears it always used ComboBox
+# so I must have changed it - because it was simpler I think
+# anyway in gtk 3 it appears Gtk.ComboBoxEntry has gone
+# yes its confirmed Gtk.ComboBoxEntry is gone in Gtk 3
+# - but looking at GtkComboBox dont see difference in python
+# implementation - we still have the model object
 
-#class GncCurrencyEdit(Gtk.ComboBoxEntry):
-class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
+# why did I do this?
+# it appears because I decided to implement everything in dialog_options
+# in python or maybe it didnt work????
+
+#class GncCurrencyEdit(Gtk.ComboBox):
+class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBox):
 
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncCurrencyEdit'
 
-    # OK Im now thinking gobject warning messages were happening previously but just did not get the message
+    mnemonic = GObject.Property(type=str,                                                  # type
+                                default="USD",                                             # default value
+                                nick=N_("Active currency's mnemonic"),                     # nick
+                                blurb=N_("Active currency's mnemonic"),                    # description
+                                flags=GObject.ParamFlags.READWRITE)                        # flags
+                                #minimum=-1,                                                # min value
+                                #maximum=GLib.MAXINT32)                                     # max value
 
-    # so why does the gnc_currency_edit_new say mnemonic is the only property
-    # but we have model and has-entry on the g_object_new which are also properties??
-
-    __gproperties__ = {
-                       'mnemonic' : (str,                                     # type
-                                      N_("Active currency's mnemonic"),       # nick name
-                                      N_("Active currency's mnemonic"),       # description
-                                      "USD",                                  # default value
-                                      GObject.ParamFlags.READWRITE),          # flags
-                      }
 
     cmtstr = """
     __gsignals__ = {
@@ -55,7 +64,13 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
 
         store = Gtk.ListStore(GObject.TYPE_STRING)
 
-        super(GncCurrencyEdit,self).__init__(model=store)
+        super(GncCurrencyEdit,self).__init__(model=store,has_entry=True)
+
+        # need to implement this!!
+        # Set the style context for this widget so it can be easily manipulated with css
+        # this method appears to be outdated - the path method seems to be new version
+        #self.set_style_context("GncCurrencyEdit")
+        self.get_path().iter_set_object_name(0,"GncCurrencyEdit")
 
         # why are these in the C init and the above in the C new??
         # as they are in the C init they will be done at the g_object_new call
@@ -68,8 +83,9 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
         # weird - I appear to need BOTH of these
         # without set_entry_text_column get a crash
         # without set_text_column no display of column!!
+        # set_text_column does not exist in Gtk 3
         self.set_entry_text_column(0)
-        self.set_text_column(0)
+        #self.set_text_column(0)
 
         # this is where it is in 
         self.require_list_item()
@@ -82,7 +98,7 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
     def add_item (self, commodity):
         model = self.get_model()
         prtstr = commodity.get_printname()
-        #print "currency added",prtstr
+        #print("currency added",prtstr)
         model.append((prtstr,))
 
     def fill_currencies (self):
@@ -95,12 +111,12 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
         if property.name == 'mnemonic':
             return self.mnemonic
         else:
-            raise AttributeError, 'unknown property %s' % property.name
+            raise AttributeError('unknown property %s' % property.name)
     def do_set_property (self, property, value):
         if property.name == 'mnemonic':
             self.mnemonic = value
         else:
-            raise AttributeError, 'unknown property %s' % property.name
+            raise AttributeError('unknown property %s' % property.name)
 
     def get_currency (self):
 
@@ -127,8 +143,29 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
         printname = currency.get_printname()
         self.set_by_string(printname)
 
+
+    def clear_display (self):
+
+        # is this ever used??
+        # - seems to have a bug
+
+        model = self.get_model()
+
+        entry = self.get_child()
+
+        self.handler_block_by_func(self.active_changed)
+
+        self.set_model(None)
+        self.set_text("")
+        self.set_active(-1)
+        self.set_model(model)
+
+        # this doesnt look right - surely should be unblock
+        self.handler_block_by_func(self.active_changed)
+
+
     def active_changed (self, *args):
-        print "active_changed currency",args
+        print("active_changed currency",args)
         widget = args[0]
 
         currency = self.get_currency()
@@ -140,7 +177,7 @@ class GncCurrencyEdit(GncCBWEMixin,Gtk.ComboBoxEntry):
 
 
     def mnemonic_changed (self, *args):
-        print "mnemonic_changed",args
+        print("mnemonic_changed",args)
         widget = args[0]
 
         currency = sw_app_utils.get_current_commodities().lookup('CURRENCY', self.get_property('mnemonic'))

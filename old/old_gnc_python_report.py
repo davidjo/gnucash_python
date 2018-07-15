@@ -2,12 +2,12 @@ import sys
 import os
 import pdb
 try:
-    import _sw_app_utils
+    import gnucash._sw_app_utils
     from gnucash import *
-    from _sw_core_utils import gnc_prefs_is_extra_enabled
+    from gnucash._sw_core_utils import gnc_prefs_is_extra_enabled
     import gtk
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
+except Exception as errexc:
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
 

@@ -45,7 +45,7 @@ def load_python_tools ():
         try:
             from tools.hello_world import HelloWorld
             python_tools_by_name['HelloWorld'] = HelloWorld()
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -56,7 +56,7 @@ def load_python_tools ():
 
         try:
             import tools
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 

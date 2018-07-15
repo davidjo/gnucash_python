@@ -11,7 +11,7 @@
 
 import sys
 
-import gobject
+from gi.repository import GObject
 
 import pdb
 
@@ -23,7 +23,7 @@ from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
 # Cgobject = PyGObjectCAPI()
-# Cgobject.pygobject_new(memory_address)
+# Cgobject.to_object(memory_address)
 
 # to get memory address from a gobject:
 #  address = hash(obj)
@@ -36,23 +36,23 @@ Cgobject = PyGObjectCAPI()
 gtyp = gnome_utils_ctypes.libgnc_gnomeutils.gnc_date_edit_get_type()
 
 # so looks like this will allow gnc_date_edit_class_init to be called eventually
-BadGncDateEdit = gobject.type_from_name('GNCDateEdit')
+BadGncDateEdit = GObject.type_from_name('GNCDateEdit')
 
 # this lists the properties
 # this is where gnc_date_edit_class_init is called
 # presumably will be called when need the the actual class instantiated
-#print >> sys.stderr, gobject.list_properties(BadGncDateEdit)
+#print(GObject.list_properties(BadGncDateEdit), file=sys.stderr)
 
 # this lists the signal names
-#print >> sys.stderr, gobject.signal_list_names(BadGncDateEdit)
+#print(GObject.signal_list_names(BadGncDateEdit), file=sys.stderr)
 
-#print >> sys.stderr, dir(BadGncDateEdit)
+#print(dir(BadGncDateEdit), file=sys.stderr)
 
 # create a dummy instance in order to get correct type
 # and this will call gnc_date_edit_init
 # if gnc_date_edit_class_init has not been called it will be called
 # before gnc_date_edit_init here
-tmpdateedit = gobject.new(gobject.type_from_name('GNCDateEdit'))
+tmpdateedit = GObject.new(GObject.type_from_name('GNCDateEdit'))
 
 BaseGncDateEdit = type(tmpdateedit)
 
@@ -61,9 +61,9 @@ BaseGncDateEdit = type(tmpdateedit)
 #class GncPluginExampleClass(type(tmpplugin)):
 #    pass
 
-#gobject.type_register(GncPluginExampleClass)
+#GObject.type_register(GncPluginExampleClass)
 
-#tmpexampl = gobject.new(GncPluginExampleClass)
+#tmpexampl = GObject.new(GncPluginExampleClass)
 
 
 
@@ -90,7 +90,7 @@ class GncDateEdit(BaseGncDateEdit):
         newdateedit_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_date_edit_new(time_int,show_time,use_24_format)
 
         # call like this:
-        newdateedit = Cgobject.pygobject_new(newdateedit_ptr)
+        newdateedit = Cgobject.to_object(newdateedit_ptr)
 
         return newdateedit
 

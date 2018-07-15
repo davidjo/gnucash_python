@@ -1,4 +1,7 @@
 
+# reimplementation of gnc_amount_edit in python
+# unused for the moment
+
 
 import sys
 
@@ -20,8 +23,11 @@ import pdb
 
 
 from sw_app_utils import GncPrintAmountInfo
+from sw_app_utils import PrintAmount
 
+import gnucash
 from gnucash import GncNumeric
+from gnucash.gnucash_core_c import GNC_HOW_RND_ROUND_HALF_UP
 
 
 # how to do internationalization in python
@@ -74,11 +80,11 @@ class GNCAmountEditPython(Gtk.Entry):
         self.connect("activate", self.activate)
 
     def changed_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "edit changed_cb",actionobj,userdata
+        print("edit changed_cb",actionobj,userdata, file=sys.stderr)
         self.need_to_parse = True
 
     def key_press_event (self, widget, event):
-        print "key_press_event", widget, event
+        print("key_press_event", widget, event)
         # this code changes keypad decimal key for currencies
         if event.keyval == Gdk.KEY_KP_Decimal:
             #if self.print_info.monetary:
@@ -108,7 +114,7 @@ class GNCAmountEditPython(Gtk.Entry):
 
     def activate (self, widget, event=None):
         # this function is called on Return/Enter
-        print "activate", widget, event
+        print("activate", widget, event)
 
 
     def set_amount (self, amount):

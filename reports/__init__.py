@@ -22,7 +22,7 @@ __all__ = [ os.path.basename(f)[:-3] for f in modules if not os.path.basename(f)
 for (module_loader, name, ispkg) in pkgutil.iter_modules([os.path.dirname(__file__)]):
     try:
         importlib.import_module('.'+name, __package__)
-    except Exception, errexc:
+    except Exception as errexc:
         traceback.print_exc()
         pdb.set_trace()
 

@@ -37,6 +37,8 @@ try:
     # check for introspection
     # if so add current path to girepository paths
     try:
+        import gi
+        gi.require_version('GIRepository', '2.0') 
         from gi.repository import GIRepository
     except ImportError:
         pass
@@ -45,26 +47,28 @@ try:
         rep = GIRepository.Repository.get_default()
         addrep = os.path.join(sys.path[0],"girepository")
         rep.prepend_search_path(addrep)
-        print "junk"
+        print("junk")
         # new feature - we apparently have no sys.argv
         # - fake up a null entry
         sys.argv = [ 'gnucash' ]
 
 
-    #print "loading CAPI"
+    #print("loading CAPI")
     #from pygobjectcapi import PyGObjectCAPI
 
     #Cgobject = PyGObjectCAPI()
     #Cgobject.disable_warning_redirections()
 
-    #print "done CAPI"
+    #print("done CAPI")
 
-    #print "system path"
-    #print sys.path
+    #print("system path")
+    #print(sys.path)
 
     # so this is weird - if we leave the Gdk import till needed
     # we get import error on Gdk.Color
     # import here and it works
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('Gdk', '3.0')
     from gi.repository import Gtk
     from gi.repository import Gdk
 
@@ -101,7 +105,7 @@ try:
     #pdb.set_trace()
 
     for plugin in plugins:
-        print "plugin loaded",plugin.get_name()
+        print("plugin loaded",plugin.get_name())
 
 
     import gnc_plugin_python_tools
@@ -123,8 +127,10 @@ try:
     # yes - looks like the import is enough
     import gnc_plugin_page_python_report
 
-    #import python_only_plugin 
-    #myplugin = python_only_plugin.MyPlugin()
+    # initial testing python plugin
+    if False:
+        import python_only_plugin 
+        myplugin = python_only_plugin.MyPlugin()
 
     import gnc_plugin_python_reports
 
@@ -135,10 +141,10 @@ try:
 
 
     #pdb.set_trace()
-    print "local_init loaded"
+    print("local_init loaded")
 
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import in local_init!!"
+except Exception as errexc:
+    print("Failed to import in local_init!!", file=sys.stderr)
     traceback.print_exc()
     pdb.set_trace()
 

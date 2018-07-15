@@ -58,7 +58,15 @@ libgnc_html.gnc_build_url.argtypes = [ URLType, gcharp, gcharp ]
 libgnc_html.gnc_build_url.restype = gcharp
 
 def build_url (urltype, location, label):
-    urlstr = libgnc_html.gnc_build_url(urltype, location, label)
-    return urlstr
+    #pdb.set_trace()
+    # for python 3 we need to convert from str type (unicode) to plain byte strings
+    urltype_byte = urltype.encode('utf-8')
+    location_byte = location.encode('utf-8')
+    if label != None:
+        label_byte = location.encode('utf-8')
+    else:
+        label_byte = None
+    urlstr = libgnc_html.gnc_build_url(urltype_byte, location_byte, label_byte)
+    return urlstr.decode('utf-8')
 
 

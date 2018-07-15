@@ -138,7 +138,18 @@ class HtmlScatter(object):
         else:
 
            #(gnc:warn "Scatter chart has no non-zero data")
-           pass
+
+           # we need to return a non-null ET document
+
+           #bodydiv = ET.Element('div', attrib={'id' : 'scatter1'})
+           #bodydiv.text = "\n"
+
+           #stdelm = ET.Element('p')
+           #bodydiv.append(stdelm)
+
+           bodydiv = ET.Element('p')
+
+           return bodydiv
 
 
 # and a new version which will do multiple lines in a plot

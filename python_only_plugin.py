@@ -1,3 +1,8 @@
+
+# this is the original attempt at adding python extensions
+# to the menus
+# only left for testing purposes
+
 import sys
 import os
 import pdb
@@ -30,11 +35,13 @@ try:
     # apparently sys.argv does not exist in side sub-interpreters
     # this fakes it for all subsequent usages I believe
     sys.argv = []
+    import gi
+    gi.require_version('Gtk', '3.0')
     from gi.repository import Gtk
     pass
-except Exception, errexc:
+except Exception as errexc:
     traceback.print_exc()
-    print >> sys.stderr, "Failed to import!!"
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
 
@@ -42,12 +49,12 @@ gncmainwindowtype = GObject.type_from_name('GncMainWindow')
 
 
 # this lists the properties
-#print >> sys.stderr, GObject.list_properties(gncmainwindowtype)
+#print(GObject.list_properties(gncmainwindowtype), file=sys.stderr)
 
 # this lists the signal names
-#print >> sys.stderr, GObject.signal_list_names(gncmainwindowtype)
+#print(GObject.signal_list_names(gncmainwindowtype), file=sys.stderr)
 
-#print >> sys.stderr, dir(gncmainwindowtype)
+#print(dir(gncmainwindowtype), file=sys.stderr)
 
 # can we access a function in a python module via ctypes?
 # - no because it needs to be a dylib not an so
@@ -113,7 +120,7 @@ class MyPlugin(GObject.GObject):
         self.plugin_init()
 
     def plugin_class_init (self):
-        print >> sys.stderr, "plugin_class_init called"
+        print("plugin_class_init called", file=sys.stderr)
         # try creating the ui xml file here
         ui_xml = """<ui>
   <menubar>
@@ -185,7 +192,7 @@ class MyPlugin(GObject.GObject):
 
         self.main_ui_merge.ensure_update()
 
-        print "merge_id",self.merge_id
+        print("merge_id",self.merge_id)
 
         # load the report classes and create instances
         # first import the report definitions
@@ -195,7 +202,7 @@ class MyPlugin(GObject.GObject):
         self.load_python_reports_menu()
 
     def plugin_init (self):
-        print >> sys.stderr, "python only plugin_init called"
+        print("python only plugin_init called", file=sys.stderr)
 
 
     def load_python_reports_menu (self):
@@ -242,13 +249,13 @@ class MyPlugin(GObject.GObject):
         return menuitm
 
     def reports_cb (self, actionobj, user_data=None):
-        print >> sys.stderr, "report_cb",actionobj,user_data
-        print >> sys.stderr, "report_cb",actionobj.get_name()
+        print("report_cb",actionobj,user_data, file=sys.stderr)
+        print("report_cb",actionobj.get_name(), file=sys.stderr)
         #(lambda (window)
         #  (let ((report (gnc:make-report
         #        (gnc:report-template-report-guid template))))
         #    (gnc-main-window-open-report report window)))))
-        print >> sys.stderr, "report_cb",user_data
+        print("report_cb",user_data, file=sys.stderr)
         window = user_data
 
         # junk test
@@ -268,33 +275,33 @@ class MyPlugin(GObject.GObject):
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(report,window)
             gnc_plugin_page_python_report.OpenReport(report,window)
             #gc.collect()
-            print "call back done"
-        except Exception, errexc:
+            print("call back done")
+        except Exception as errexc:
             traceback.print_exc()
-            print >> sys.stderr, "error in reports_cb callback",str(errexc)
+            print("error in reports_cb callback",str(errexc), file=sys.stderr)
 
     # unfortunately looks as though this wont work because of GIL issues
     # - in the python C plugin we lock the callback and plugin_finalize
     # this is crashing when we try a second call
 
     def plugin_finalize (self):
-        print >> sys.stderr, "python only plugin_finalize called"
+        print("python only plugin_finalize called", file=sys.stderr)
 
     def old_reports_cb (self, actionobj, user_data=None):
-        print >> sys.stderr, "reports_cb",actionobj,user_data
+        print("reports_cb",actionobj,user_data, file=sys.stderr)
         #pdb.set_trace()
         window = user_data
 
         try:
             #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(42,window)
             gnc_plugin_page_python_report.OpenReport(42,window)
-            print "call back done"
-        except Exception, errexc:
+            print("call back done")
+        except Exception as errexc:
             traceback.print_exc()
-            print >> sys.stderr, "error in reports_cb callback",str(errexc)
+            print("error in reports_cb callback",str(errexc), file=sys.stderr)
 
     def tools_cb (self,*args):
-        print >> sys.stderr, "tools_cb",args
+        print("tools_cb",args, file=sys.stderr)
 
 # gdb call back for report
 #0  0x0000000100040898 in gnc_html_report_stream_cb ()

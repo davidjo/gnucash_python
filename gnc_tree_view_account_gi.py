@@ -41,6 +41,7 @@ import gnucash.gnucash_core_c
 
 from gnucash.gnucash_core_c import string_to_guid as gnucash_core_string_to_guid
 
+#pdb.set_trace()
 
 def string_to_new_guid (cls, str):
     #pdb.set_trace()
@@ -59,7 +60,7 @@ from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
 # Cgobject = PyGObjectCAPI()
-# Cgobject.pygobject_new(memory_address)
+# Cgobject.to_object(memory_address)
 
 # to get memory address from a gobject:
 #  address = hash(obj)
@@ -106,7 +107,7 @@ if __name__ == '__main__':
         rep = GIRepository.Repository.get_default()
         addrep = os.path.join(sys.path[0],"girepository")
         rep.prepend_search_path(addrep)
-        print "junk"
+        print("junk")
         # new feature - we apparently have no sys.argv
         # - fake up a null entry
         sys.argv = [ 'gnucash' ]
@@ -115,17 +116,30 @@ if __name__ == '__main__':
 # be careful - if use wrong shared library can end up with
 # weird errors eg not a subclass of GObject
 
+#pdb.set_trace()
+
 # so we can load these at this point
 # (this probably will define GncTreeViewAccount, GncTreeView GTypes)
 try:
     import gi
+    # so we have big problems with circular references
+    # if use full Qof definition instant crash on import of GncTreeViewAccount here
+    # bootstrap version seems to work
+    #gi.require_version('GncTreeView', '0.1')
+    #gi.require_version('GncAccount', '0.1')
+    #gi.require_version('QofIdType', '0.1')
+    #gi.require_version('Qof', '0.1')
+    #from gi.repository import GncTreeView
+    #from gi.repository import QofIdType
+    #from gi.repository import Qof
+    #from gi.repository import GncAccount
+    gi.require_version('GncTreeViewAccount', '0.1')
     from gi.repository import GncTreeViewAccount
-    from gi.repository import GncAccount
-    from gi.repository import QofBook
+    #from gi.repository import QofBook
     #from gi.repository import GLib
-except Exception, errexc:
+except Exception as errexc:
     pdb.set_trace()
-    print "junk"
+    print("junk")
 
 # so we have to use the following to create new GncTreeViewAccount objects
 # but we do not get access to the additional functions the class defines
@@ -184,10 +198,10 @@ def WrapTreeViewAccount (newaccview):
 
 
     #for gtyp in gobject.type_children(gobject.type_from_name('GObject')):
-    #    print >> sys.stderr, "GType:",gtyp
+    #    print("GType:",gtyp, file=sys.stderr)
 
     #for gtyp in gobject.type_children(gobject.type_from_name('QofInstance')):
-    #    print >> sys.stderr, "QofInstance GType:",gtyp
+    #    print("QofInstance GType:",gtyp, file=sys.stderr)
 
     # can we add an instance variable - yes but not useful!!
     #pdb.set_trace()
@@ -195,26 +209,26 @@ def WrapTreeViewAccount (newaccview):
 
     # we dont really need to map these - we just call the base GObject function
 
-    newaccview.do_get_headers_visible = types.MethodType(do_get_headers_visible, newaccview, newaccview.__class__)
+    newaccview.do_get_headers_visible = types.MethodType(do_get_headers_visible, newaccview)
 
-    newaccview.do_set_headers_visible = types.MethodType(do_set_headers_visible, newaccview, newaccview.__class__)
+    newaccview.do_set_headers_visible = types.MethodType(do_set_headers_visible, newaccview)
 
-    newaccview.do_get_selection = types.MethodType(do_get_selection, newaccview, newaccview.__class__)
+    newaccview.do_get_selection = types.MethodType(do_get_selection, newaccview)
 
-    newaccview.do_set_selection = types.MethodType(do_set_selection, newaccview, newaccview.__class__)
+    newaccview.do_set_selection = types.MethodType(do_set_selection, newaccview)
 
 
-    newaccview.do_get_view_info = types.MethodType(do_get_view_info, newaccview, newaccview.__class__)
+    newaccview.do_get_view_info = types.MethodType(do_get_view_info, newaccview)
 
-    newaccview.do_set_view_info = types.MethodType(do_set_view_info, newaccview, newaccview.__class__)
+    newaccview.do_set_view_info = types.MethodType(do_set_view_info, newaccview)
 
-    newaccview.do_get_cursor_account = types.MethodType(do_get_cursor_account, newaccview, newaccview.__class__)
+    newaccview.do_get_cursor_account = types.MethodType(do_get_cursor_account, newaccview)
 
-    newaccview.do_select_subaccounts = types.MethodType(do_select_subaccounts, newaccview, newaccview.__class__)
+    newaccview.do_select_subaccounts = types.MethodType(do_select_subaccounts, newaccview)
 
-    newaccview.do_set_selected_accounts = types.MethodType(do_set_selected_accounts, newaccview, newaccview.__class__)
+    newaccview.do_set_selected_accounts = types.MethodType(do_set_selected_accounts, newaccview)
 
-    newaccview.do_get_selected_accounts = types.MethodType(do_get_selected_accounts, newaccview, newaccview.__class__)
+    newaccview.do_get_selected_accounts = types.MethodType(do_get_selected_accounts, newaccview)
 
 
 if True:
@@ -251,7 +265,7 @@ if True:
 
         vwinfo = GncTreeViewAccount.AccountViewInfo()
 
-        print >> sys.stderr, str(vwinfo),"0x%x"%hash(vwinfo)
+        print(str(vwinfo),"0x%x"%hash(vwinfo), file=sys.stderr)
 
         self.get_view_info(vwinfo)
 
@@ -260,21 +274,21 @@ if True:
     def do_set_view_info (self, vwinfo):
 
         #pdb.set_trace()
-        #print >> sys.stderr, "set_view_info 1",self
+        #print("set_view_info 1",self, file=sys.stderr)
         #gc.collect()
 
-        print >> sys.stderr, "0x%x"%hash(vwinfo)
+        print("0x%x"%hash(vwinfo), file=sys.stderr)
 
         self.set_view_info(vwinfo)
 
-        #print >> sys.stderr, "set_view_info 2"
+        #print("set_view_info 2", file=sys.stderr)
         #gc.collect()
 
 
     def do_get_cursor_account (self):
 
         pdb.set_trace()
-        print >> sys.stderr, "get_cursor_account"
+        print("get_cursor_account", file=sys.stderr)
 
         # yet again calling the direct introspection returns a py-gobject wrapped object
         # which gets destroyed after this routine - and destroys the underlying Account object!!
@@ -312,18 +326,18 @@ if True:
     def do_select_subaccounts (self, account):
 
         pdb.set_trace()
-        print >> sys.stderr, "select_subaccounts"
+        print("select_subaccounts", file=sys.stderr)
 
-        print >> sys.stderr, self
-        print >> sys.stderr, account
+        print(self, file=sys.stderr)
+        print(account, file=sys.stderr)
 
-        #account_ptr = ctypes.cast( account.instance.__long__(), ctypes.POINTER( AccountOpaque ) )
+        #account_ptr = ctypes.cast( account.instance.__int__(), ctypes.POINTER( AccountOpaque ) )
 
         #trvwptr = hash(self)
 
         #gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_select_subaccounts(trvwptr, account_ptr)
 
-        accgobj = Cgobject.pygobject_new(account.instance.__long__())
+        accgobj = Cgobject.to_object(account.instance.__int__())
 
         self.select_subaccounts(accgobj)
 
@@ -331,7 +345,7 @@ if True:
     def do_set_selected_accounts (self, account_list, show_last):
 
         #pdb.set_trace()
-        print >> sys.stderr, "set_selected_accounts 1",str(self)
+        print("set_selected_accounts 1",str(self), file=sys.stderr)
         gc.collect()
 
         # the issue seems to be the initial SWIG wrapped account list objects
@@ -345,7 +359,7 @@ if True:
         # the quark key for instance data is PyGObject::instance-data
         # this seems to contain the type info as PyTypeObject
 
-        print >> sys.stderr, "set_selected_accounts 1",str(account_list)
+        print("set_selected_accounts 1",str(account_list), file=sys.stderr)
 
         if len(account_list) > 0:
 
@@ -356,13 +370,13 @@ if True:
             # each time
             acclst = []
             for accobj in account_list:
-                acc_ptr = accobj.instance.__long__()
-                print >> sys.stderr, "set_selected_accounts 1a",str(accobj),accobj.GetName()
-                print >> sys.stderr, "set_selected_accounts 1a","%x"%acc_ptr
-                accgobj = Cgobject.pygobject_new(acc_ptr)
+                acc_ptr = accobj.instance.__int__()
+                print("set_selected_accounts 1a",str(accobj),accobj.GetName(), file=sys.stderr)
+                print("set_selected_accounts 1a","%x"%acc_ptr, file=sys.stderr)
+                accgobj = Cgobject.to_object(acc_ptr)
             #    if accgobj == None: pdb.set_trace()
-            #    print >> sys.stderr, "set_selected_accounts 1a",str(accgobj)
-            #    print >> sys.stderr, "set_selected_accounts 1a","%x"%hash(accgobj)
+            #    print("set_selected_accounts 1a",str(accgobj), file=sys.stderr)
+            #    print("set_selected_accounts 1a","%x"%hash(accgobj), file=sys.stderr)
             #    if not hash(accgobj) in self.accdict:
             #        self.accdict[hash(accgobj)] = [accobj, accgobj]
                 acclst.append(accgobj)
@@ -370,7 +384,7 @@ if True:
             #    # no such luck - it does not appear to be a true implementation
             #    # just a type definition
 
-            print >> sys.stderr, "set_selected_accounts 2",str(acclst)
+            print("set_selected_accounts 2",str(acclst), file=sys.stderr)
 
             self.set_selected_accounts(acclst, show_last)
 
@@ -378,16 +392,16 @@ if True:
             ## construct a g_list from list of accounts
             #glst_ptr = None
             #for accobj in account_list:
-            #    acc_ptr = ctypes.cast( accobj.instance.__long__(), ctypes.POINTER( AccountOpaque ) )
-            #    print >> sys.stderr, "set_selected_accounts 1a",str(accobj),accobj.GetName()
-            #    print >> sys.stderr, "swig  0x%x"%accobj.instance.__long__()
-            #    print >> sys.stderr, "ctyps 0x%x"%ctypes.addressof(acc_ptr.contents)
+            #    acc_ptr = ctypes.cast( accobj.instance.__int__(), ctypes.POINTER( AccountOpaque ) )
+            #    print("set_selected_accounts 1a",str(accobj),accobj.GetName(), file=sys.stderr)
+            #    print("swig  0x%x"%accobj.instance.__int__(), file=sys.stderr)
+            #    print("ctyps 0x%x"%ctypes.addressof(acc_ptr.contents), file=sys.stderr)
             #    glst_ptr = glib_ctypes.libglib.g_list_prepend(glst_ptr,acc_ptr)
-            #    #self.accdict[accobj.instance.__long__()] = accobj
+            #    #self.accdict[accobj.instance.__int__()] = accobj
             #glst_ptr = glib_ctypes.libglib.g_list_reverse(glst_ptr)
 
 
-            #print >> sys.stderr, "0x%x"%ctypes.addressof(glst_ptr)
+            #print("0x%x"%ctypes.addressof(glst_ptr), file=sys.stderr)
             ##pdb.set_trace()
 
 
@@ -395,18 +409,18 @@ if True:
             #gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_set_selected_accounts(trvwptr, glst_ptr, show_last)
 
 
-            #print >> sys.stderr, "glst ptr 0x%x"%ctypes.addressof(glst_ptr)
+            #print("glst ptr 0x%x"%ctypes.addressof(glst_ptr), file=sys.stderr)
             #glib_ctypes.libglib.g_list_free(glst_ptr)
 
 
-        print >> sys.stderr, "set_selected_accounts 3"
+        print("set_selected_accounts 3", file=sys.stderr)
         gc.collect()
 
 
     def do_get_selected_accounts (self):
 
         #pdb.set_trace()
-        print >> sys.stderr, "get_selected_accounts 1",str(self)
+        print("get_selected_accounts 1",str(self), file=sys.stderr)
         gc.collect()
 
         # annoying - using introspection here isnt going to work either
@@ -422,7 +436,7 @@ if True:
         glst = self.get_selected_accounts()
 
         # this does not convert!!
-        #print >> sys.stderr, "tree view glst"%str(glst)
+        #print("tree view glst"%str(glst), file=sys.stderr)
 
         # we need a much better way of doing this
         # need to be able to hook into the SWIG base functions using the
@@ -431,30 +445,30 @@ if True:
         acc_lst = []
         acctype = swighelpers.get_swig_type("_p_Account")
         for gelm in glst:
-            print >> sys.stderr, "gelm ",str(gelm)
+            print("gelm ",str(gelm), file=sys.stderr)
             account_ptr = hash(gelm)
-            print >> sys.stderr, "account_ptr 0x%x"%account_ptr
+            print("account_ptr 0x%x"%account_ptr, file=sys.stderr)
             accinst = swighelpers.int_to_swig(account_ptr,acctype);
             account = gnucash.Account(instance=accinst)
         #    #accinst = swighelpers.int_to_swig(account_ptr,"_p_Account")
             acc_lst.append(account)
 
-        #print >> sys.stderr, "get_selected_accounts 1a",str(acc_lst)
+        #print("get_selected_accounts 1a",str(acc_lst), file=sys.stderr)
 
 
         #trvwptr = hash(self)
-        #print >> sys.stderr, "tree view",self
-        #print >> sys.stderr, "tree view 0x%x"%trvwptr
+        #print("tree view",self, file=sys.stderr)
+        #print("tree view 0x%x"%trvwptr, file=sys.stderr)
 
         #glst_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_get_selected_accounts(trvwptr)
 
-        #print >> sys.stderr, glst_ptr
+        #print(glst_ptr, file=sys.stderr)
         #glst_ptr = ctypes.cast( glst_ptr, ctypes.POINTER( glib_ctypes.GListRaw ) )
-        #print >> sys.stderr, glst_ptr
+        #print(glst_ptr, file=sys.stderr)
 
         #glst_len = glib_ctypes.libglib.g_list_length(glst_ptr)
-        #print >> sys.stderr, glst_ptr
-        #print >> sys.stderr, glst_len
+        #print(glst_ptr, file=sys.stderr)
+        #print(glst_len, file=sys.stderr)
 
         ##curbook = sw_app_utils.get_current_book()
 
@@ -466,12 +480,12 @@ if True:
         #acctype = swighelpers.get_swig_type("_p_Account")
         #acc_lst = []
         #glst_ptr_base = glst_ptr
-        #for irng in xrange(glst_len):
+        #for irng in range(glst_len):
         #    #gelm1 = glib_ctypes.libglib.g_list_nth_data(glst_ptr_base,irng)
         #    gelm = glst_ptr.contents.data
         #    glst_ptr = glib_ctypes.g_list_next(glst_ptr)
         #    account_ptr = gelm
-        #    print >> sys.stderr, "account_ptr 0x%x"%account_ptr
+        #    print("account_ptr 0x%x"%account_ptr, file=sys.stderr)
         #    accinst = swighelpers.int_to_swig(account_ptr,acctype);
         #    #accinst = swighelpers.int_to_swig(account_ptr,"_p_Account")
         #    account = gnucash.Account(instance=accinst)

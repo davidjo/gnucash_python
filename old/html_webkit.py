@@ -49,5 +49,5 @@ GncHtmlWebkit.add_constructor_and_methods_with_prefix('gnc_html_webkit_', 'new')
 # we cannot instatiate until we have a screen!!
 
 pdb.set_trace()
-print "junk"
+print("junk")
 

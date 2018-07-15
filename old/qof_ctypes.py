@@ -1,6 +1,6 @@
 
-
 # ctypes interface into libqof
+# no longer used from gnucash 3 onwards as all in libgncmod-engine now
 
 
 import time
@@ -155,7 +155,7 @@ def qof_strftime(format,tm):
     buf = create_string_buffer(256)
     bufptr = cast(byref(buf),c_char_p)
     retval = libgnc_qof.qof_strftime(bufptr,256,format,byref(newtm))
-    print "qof_strftime", buf.value
+    print("qof_strftime", buf.value)
     return buf.value
 
 # unfortunately this function is local

@@ -40,15 +40,17 @@ import gi
 
 # now create a new plugin in python
 
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
 
 try:
     from gi.repository import GObject
+    gi.require_version('GncPlugin', '0.1')
     from gi.repository import GncPlugin
-except Exception, errexc:
+except Exception as errexc:
     traceback.print_exc()
-    print >> sys.stderr, "Failed to import!!"
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
 
@@ -78,18 +80,18 @@ if True:
     # well GncPlugin.Plugin is the GObject object for subclassing
     # GncPlugin.PluginClass is the class structure object
 
-    print >> sys.stderr, GObject.type_query(GncPlugin.Plugin)
+    print(GObject.type_query(GncPlugin.Plugin), file=sys.stderr)
     typptr = GObject.type_query(GncPlugin.Plugin)
-    print >> sys.stderr, "gtype",typptr.type_name
-    print >> sys.stderr, "gtype",typptr.type
-    print >> sys.stderr, "gtype",typptr.class_size
-    print >> sys.stderr, "gtype",typptr.instance_size
+    print("gtype",typptr.type_name, file=sys.stderr)
+    print("gtype",typptr.type, file=sys.stderr)
+    print("gtype",typptr.class_size, file=sys.stderr)
+    print("gtype",typptr.instance_size, file=sys.stderr)
 
     # this lists the properties
-    print >> sys.stderr, GObject.list_properties(GncPlugin.Plugin)
+    print(GObject.list_properties(GncPlugin.Plugin), file=sys.stderr)
 
     # this lists the signal names
-    print >> sys.stderr, GObject.signal_list_names(GncPlugin.Plugin)
+    print(GObject.signal_list_names(GncPlugin.Plugin), file=sys.stderr)
 
     BaseGncPlugin = GncPlugin.Plugin
     BaseGncPluginClass = GncPlugin.PluginClass
@@ -107,9 +109,7 @@ python_plugins = {}
 # using __metaclass__ still calls parent metaclass functions if the sub subclass
 # does not define __metaclass__
 
-class GncPluginPython(BaseGncPlugin):
-
-    __metaclass__ = girepo.GncPluginMeta
+class GncPluginPython(BaseGncPlugin, metaclass=girepo.GncPluginMeta):
 
     __girmetaclass__ = GncPlugin.PluginClass
 
@@ -182,12 +182,12 @@ class GncPluginPython(BaseGncPlugin):
         # we cannot easily get access to the instance private data structure
         # without including the full private data struct
 
-        print >> sys.stderr, "before super access class"
+        print("before super access class", file=sys.stderr)
 
         #priv = self.access_class_data()
         priv = girepo.access_class_data(self)
 
-        print >> sys.stderr, "after super access class"
+        print("after super access class", file=sys.stderr)
 
         # sort of emulate the functions called in gnc_plugin.c
         # this is whats in the class_init function
@@ -215,7 +215,7 @@ class GncPluginPython(BaseGncPlugin):
         # will this work as a classmethod for gir wrapping
         # following the C code this should initialize this classes parent class data
 
-        print "doing parent class_init"
+        print("doing parent class_init")
 
         #pdb.set_trace()
 
@@ -234,7 +234,7 @@ class GncPluginPython(BaseGncPlugin):
         #                        "report-id", reportId, NULL );
 
         # call like this:
-        #newplugin = Cgobject.pygobject_new(plugin_page)
+        #newplugin = Cgobject.to_object(plugin_page)
 
         return newplugin
 
@@ -251,7 +251,7 @@ class GncPluginPython(BaseGncPlugin):
 
     def add_to_window (self, window, window_type):
 
-        print >> sys.stderr, "called super add_to_window"
+        print("called super add_to_window", file=sys.stderr)
         #pdb.set_trace()
 
         # now this is confusing - this can be called multiple times
@@ -264,9 +264,9 @@ class GncPluginPython(BaseGncPlugin):
 
         if hash(window) in self.saved_windows:
             # what to do!!
-            print "add called more than once same window!!"
+            print("add called more than once same window!!")
             pdb.set_trace()
-            print "add called more than once same window!!"
+            print("add called more than once same window!!")
 
         if self.actions_name != None:
 
@@ -289,9 +289,9 @@ class GncPluginPython(BaseGncPlugin):
 
     def remove_from_window (self, window, window_type):
 
-        #print >> sys.stderr, "called super remove_from_window"
+        #print("called super remove_from_window", file=sys.stderr)
         #pdb.set_trace()
-        #print >> sys.stderr, "called super remove_from_window"
+        #print("called super remove_from_window", file=sys.stderr)
 
 
         # extend the functionality of the main window
@@ -312,9 +312,9 @@ class GncPluginPython(BaseGncPlugin):
 
             if self.actions_name != None:
                 # what to do!!
-                print "remove called and no saved window!!"
+                print("remove called and no saved window!!")
                 pdb.set_trace()
-                print "remove called and no saved window!!"
+                print("remove called and no saved window!!")
 
 
 
@@ -360,20 +360,20 @@ def update_actions (action_group, action_names, property_name, value):
             #g_warning("No such action with name '%s' in action group %s (size %d)",
             #          action_names[i], gtk_action_group_get_name(action_group),
             #          g_list_length(gtk_action_group_list_actions(action_group)));
-            print >> sys.stderr, "No such action with name '%s' in action group %s (size %d)"%( \
+            print("No such action with name '%s' in action group %s (size %d)"%( \
                       action_name, action_group.get_name(),
-                      len(action_group.list_actions()))
+                      len(action_group.list_actions())), file=sys.stderr)
 
 if False:
 
     GObject.type_register(GncPluginPython)
 
-    print >> sys.stderr, GObject.type_query(GncPluginPython)
+    print(GObject.type_query(GncPluginPython), file=sys.stderr)
     typptr = GObject.type_query(GncPluginPython)
-    print >> sys.stderr, "gtype",typptr.type_name
-    print >> sys.stderr, "gtype",typptr.type
-    print >> sys.stderr, "gtype",typptr.class_size
-    print >> sys.stderr, "gtype",typptr.instance_size
+    print("gtype",typptr.type_name, file=sys.stderr)
+    print("gtype",typptr.type, file=sys.stderr)
+    print("gtype",typptr.class_size, file=sys.stderr)
+    print("gtype",typptr.instance_size, file=sys.stderr)
 
     #pdb.set_trace()
 
@@ -391,9 +391,7 @@ if True:
     # the plugin_name - only the lowest subclass definition could be used
     # only one level of subclassing makes sense
 
-    class GncPluginPythonTest(GncPluginPython):
-
-        __metaclass__ = girepo.GncPluginSubClassMeta
+    class GncPluginPythonTest(GncPluginPython, metaclass=girepo.GncPluginSubClassMeta):
 
         #__girmetaclass__ = GncPlugin.PluginClass
         #__girmetaclass__ = BaseGncPluginClass
@@ -401,19 +399,19 @@ if True:
         plugin_name = "GncPluginPythonTest"
 
         def __init__ (self):
-            print "python gobject","%x"%hash(self)
-            print "python gtype obj klass %s address %x"%(str(self.__class__),hash(gi.GObject.type_class_peek(self)))
+            print("python gobject","%x"%hash(self))
+            print("python gtype obj klass %s address %x"%(str(self.__class__),hash(GObject.type_class_peek(self))))
             super(GncPluginPythonTest,self).__init__()
-            print "python gtype obj klass %s address %x"%(str(self.__class__),hash(gi.GObject.type_class_peek(self)))
+            print("python gtype obj klass %s address %x"%(str(self.__class__),hash(GObject.type_class_peek(self))))
 
     GObject.type_register(GncPluginPythonTest)
 
-    print >> sys.stderr, GObject.type_query(GncPluginPythonTest)
+    print(GObject.type_query(GncPluginPythonTest), file=sys.stderr)
     typptr = GObject.type_query(GncPluginPythonTest)
-    print >> sys.stderr, "gtype",typptr.type_name
-    print >> sys.stderr, "gtype",typptr.type
-    print >> sys.stderr, "gtype",typptr.class_size
-    print >> sys.stderr, "gtype",typptr.instance_size
+    print("gtype",typptr.type_name, file=sys.stderr)
+    print("gtype",typptr.type, file=sys.stderr)
+    print("gtype",typptr.class_size, file=sys.stderr)
+    print("gtype",typptr.instance_size, file=sys.stderr)
 
     #pdb.set_trace()
 
@@ -421,5 +419,5 @@ if True:
 
     #pdb.set_trace()
 
-    #print "junk"
+    #print("junk")
 

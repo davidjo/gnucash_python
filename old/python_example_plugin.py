@@ -1,3 +1,6 @@
+
+# original python example plugin - no longer used - gnc_plugin_python_example is new version
+
 import sys
 import os
 import pdb
@@ -20,15 +23,15 @@ try:
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
     #from gi.repository import Gtk
     pass
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
+except Exception as errexc:
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
-print >> sys.stderr, "before pythonplugin"
+print("before pythonplugin", file=sys.stderr)
 
 import pythonplugin
 
-print >> sys.stderr, "after pythonplugin"
+print("after pythonplugin", file=sys.stderr)
 
 
 import gnc_plugin_page_report
@@ -41,7 +44,7 @@ class MyPlugin(object):
         pass
 
     def plugin_class_init (self):
-        print >> sys.stderr, "plugin_class_init called"
+        print("plugin_class_init called", file=sys.stderr)
         # try creating the ui xml file here
         ui_xml = \
 """
@@ -89,14 +92,14 @@ class MyPlugin(object):
         return self.myactions
 
     def plugin_init (self):
-        print >> sys.stderr, "plugin_init called"
+        print("plugin_init called", file=sys.stderr)
 
     def plugin_finalize (self):
-        print >> sys.stderr, "plugin_finalize called"
+        print("plugin_finalize called", file=sys.stderr)
 
     def plugin_action_callback (self,actionobj,dataobj):
-        print >> sys.stderr, "plugin_action_callback called",actionobj
-        print >> sys.stderr, "plugin_action_callback called",actionobj.get_name()
+        print("plugin_action_callback called",actionobj, file=sys.stderr)
+        print("plugin_action_callback called",actionobj.get_name(), file=sys.stderr)
         # this gets access to the underlying C pointer
         #ctypes.pythonapi.PyCObject_AsVoidPtr.restype = ctypes.c_long
         #ctypes.pythonapi.PyCObject_AsVoidPtr.argtypes = [ctypes.py_object]
@@ -112,9 +115,9 @@ class MyPlugin(object):
             try:
                 #gnc_plugin_page_python_report.GncPluginPagePythonReport.OpenReport(42,window)
                 gnc_plugin_page_python_report.OpenReport(42,window)
-            except Exception, errexc:
-                print >> sys.stderr, "error in plugin_action callback",str(errexc)
-            print  "junke"
+            except Exception as errexc:
+                print("error in plugin_action callback",str(errexc), file=sys.stderr)
+            print("junke")
 
 # gdb call back for report
 #0  0x0000000100040898 in gnc_html_report_stream_cb ()

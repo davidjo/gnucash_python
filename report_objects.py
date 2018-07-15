@@ -2,7 +2,14 @@
 # add a Report object for details of each report
 # not sure what to inherit from
 
-import gobject
+import gi
+
+gi.require_version('Gtk', '3.0')
+
+from gi.repository import GObject
+
+from gi.repository import Gtk
+
 
 import gnucash_log
 
@@ -257,7 +264,7 @@ class Report(object):
                 Report.report_ids[self.id] = self
                 return self.id
         Report.report_next_serial_id += 1
-        while Report.report_next_serial_id < gobject.G_MAXINT:
+        while Report.report_next_serial_id < GObject.G_MAXINT:
             new_id = Report.report_next_serial_id 
             if not new_id in Report.report_ids:
                 Report.report_ids[new_id] = self
@@ -270,48 +277,38 @@ class Report(object):
     def get_editor (self):
         return self.report_editor_widget
 
+    def set_editor (self, editor):
+        self.report_editor_widget = editor
+
     def get_report_type (self):
         return self.report_type
 
-    def options_editor (self):
-        # this changes the editor for some report type
-        if self.report_type.report_guid == 'd8ba4a2e89e8479ca9f6eccdeb164588':
-            #gnc-column-view-edit-options
-            pass
-        else:
-            return self.default_params_editor
-
-    def edit_options (self):
+    def raise_editor (self):
         if self.report_editor_widget != None:
-           gnucash_log.dbglog(type(self.report_editor_widget))
+           #gnucash_log.dbglog(type(self.report_editor_widget))
            self.report_editor_widget.present()
-        else:
-           if self.options != None:
-               options_editor = self.options_editor()
-               self.report_editor_widget = options_editor(self.options)
-           else:
-               # what to do about a parent??
-               #parent = self.win.dialog
-               dialog = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,
-                       gtk.MESSAGE_WARNING,gtk.BUTTONS_OK,N_("This report has no options."))
-               dialog.connect("response", self.dialog_destroy)
-               dialog.show()
+           return True
+        return False
 
     # yet I think in python we need to invert the arguments here report first, options next
     # not clear why the report editor isnt just part of the Report object
     # - yes Im thinking this makes much more sense -  in which case the report argument becomes self
 
-    def default_params_editor (self, options):
+    def default_params_editor (self, options, parent):
 
-       editor = self.get_editor()
-       if editor != None:
-           editor.present()
-           # why return NULL here - doesnt make sense
-           # maybe we never get here in real code
-           # this whole test does not make sense
-           # returning this makes the process cyclic
-           # return None
-           return editor
+       # code changed at 3.2
+       #editor = self.get_editor()
+       #if editor != None:
+       #    editor.present()
+       #    # why return NULL here - doesnt make sense
+       #    # maybe we never get here in real code
+       #    # this whole test does not make sense
+       #    # returning this makes the process cyclic
+       #    # return None
+       #    return editor
+
+       if self.raise_editor():
+           return None
        else:
 
            # is this just used for the callbacks??
@@ -335,7 +332,7 @@ class Report(object):
            # so for in python only need this
            title = rpttyp.get_template_name()
 
-           default_params_data.win = dialog_options.DialogOption.OptionsDialog_New(title)
+           default_params_data.win = dialog_options.DialogOption.OptionsDialog_New(N_(title), parent)
 
            default_params_data.win.build_contents(default_params_data.db)
            default_params_data.db.clean()
@@ -354,6 +351,50 @@ class Report(object):
            #return default_params_data.win.dialog
            return default_params_data.win.widget()
 
+    def edit_options (self, parent):
+
+        #pdb.set_trace()
+
+        if self.raise_editor():
+            return True
+
+        if self.options == None:
+
+            #gnc_warning_dialog(parent, "%s",
+            #                   _("There are no options for this report."));
+            if parent != None:
+                parent = gnome_utils_ctypes.ui_get_main_window(None)
+            dialog = Gtk.MessageDialog(parent,Gtk.DialogFlags.MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                             Gtk.MessageType.WARNING,Gtk.ButtonsType.CLOSE,N_("There are no options for this report."))
+
+            #if parent != None:
+            #    dailog.set_taskbar_hint(False)
+
+            dialog.run()
+            dialog.destroy()
+
+            # this looks completely wrong for gi gtk
+            ## what to do about a parent??
+            ##parent = self.win.dialog
+            #dialog = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,
+            #        gtk.MESSAGE_WARNING,gtk.BUTTONS_OK,N_("This report has no options."))
+            #dialog.connect("response", self.dialog_destroy)
+            #dialog.show()
+
+            return False
+
+        # Multi-column type reports need a special options dialog 
+        if self.report_type != None:
+            if self.report_type.report_guid == 'd8ba4a2e89e8479ca9f6eccdeb164588':
+                #options_widget = gnc-column-view-edit-options (options,report)
+                pass
+            else:
+                options_widget = self.default_params_editor(self.options, parent)
+
+        self.set_editor(options_widget)
+
+        return True
+
     def run (self):
         # this is based on gnc:report-run in report/report-system/report.scm
         gnucash_log.dbglog("run_report")
@@ -362,7 +403,7 @@ class Report(object):
         try:
             # this is the call to gnc:report-render-html in report/report-system/report.scm
             htmlstr = self.render_html(headers=True)
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             htmlstr = None
         #self.unset_busy_cursor()
@@ -473,7 +514,7 @@ def load_python_reports ():
             from reports.hello_world import HelloWorld
             python_reports_by_name['HelloWorld'] = HelloWorld()
             python_reports_by_guid[python_reports_by_name['HelloWorld'].report_guid] = python_reports_by_name['HelloWorld']
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -481,7 +522,7 @@ def load_python_reports ():
             from reports.price_scatter import PriceScatter
             python_reports_by_name['PriceScatter'] = PriceScatter()
             python_reports_by_guid[python_reports_by_name['PriceScatter'].report_guid] = python_reports_by_name['PriceScatter']
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -489,7 +530,7 @@ def load_python_reports ():
             from reports.cash_flow import CashFlow
             python_reports_by_name['CashFlow'] = CashFlow()
             python_reports_by_guid[python_reports_by_name['CashFlow'].report_guid] = python_reports_by_name['CashFlow']
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -498,7 +539,7 @@ def load_python_reports ():
             from reports.portfolio import Portfolio
             python_reports_by_name['Portfolio'] = Portfolio()
             python_reports_by_guid[python_reports_by_name['Portfolio'].report_guid] = python_reports_by_name['Portfolio']
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -506,7 +547,7 @@ def load_python_reports ():
             from reports.advanced_portfolio import AdvancedPortfolio
             python_reports_by_name['AdvancedPortfolio'] = AdvancedPortfolio()
             python_reports_by_guid[python_reports_by_name['AdvancedPortfolio'].report_guid] = python_reports_by_name['AdvancedPortfolio']
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -514,7 +555,7 @@ def load_python_reports ():
             from reports.gains import CapitalGains
             python_reports_by_name['CapitalGains'] = CapitalGains()
             python_reports_by_guid[python_reports_by_name['CapitalGains'].report_guid] = python_reports_by_name['CapitalGains']
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -523,7 +564,7 @@ def load_python_reports ():
             from reports.dividends import Dividends
             python_reports_by_name['Dividends'] = Dividends()
             python_reports_by_guid[python_reports_by_name['Dividends'].report_guid] = python_reports_by_name['Dividends']
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 
@@ -537,7 +578,7 @@ def load_python_reports ():
 
         try:
             import reports
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
             pdb.set_trace()
 

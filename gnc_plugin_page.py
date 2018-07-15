@@ -2,7 +2,7 @@ import sys
 import os
 import pdb
 
-print >> sys.stderr, "trying plugin page"
+print("trying plugin page", file=sys.stderr)
 
 try:
     #import _sw_app_utils
@@ -10,11 +10,11 @@ try:
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
     #from gi.repository import Gtk
     pass
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
+except Exception as errexc:
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
-print >> sys.stderr, "trying plugin page"
+print("trying plugin page", file=sys.stderr)
 
 from ctypes import *
 
@@ -53,9 +53,9 @@ GCallback = c_void_p
 try:
     from gi.repository import GObject
     from gi.repository import GncPluginPage
-except Exception, errexc:
+except Exception as errexc:
     traceback.print_exc()
-    print >> sys.stderr, "Failed to import!!"
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
 
@@ -71,9 +71,7 @@ BaseGncPluginPageClass = GncPluginPage.PluginPageClass
 #python_pluginpages = {}
 
 
-class GncPluginPagePython(BaseGncPluginPage):
-
-    __metaclass__ = girepo.GncPluginPageMeta
+class GncPluginPagePython(BaseGncPluginPage, metaclass=girepo.GncPluginPageMeta):
 
     __girmetaclass__ = GncPluginPage.PluginPageClass
 
@@ -126,11 +124,11 @@ class GncPluginPagePython(BaseGncPluginPage):
         # do this or use GObject.GObject.__init__(self)
         super(GncPluginPagePython,self).__init__()
 
-        print >> sys.stderr, "before super access class"
+        print("before super access class", file=sys.stderr)
 
         priv = girepo.access_class_data(self)
 
-        print >> sys.stderr, "after super access class"
+        print("after super access class", file=sys.stderr)
 
 
         # NOTA BENE these are python only versions of these variables
@@ -249,14 +247,14 @@ class GncPluginPagePython(BaseGncPluginPage):
     def add_book (self, book):
         #pdb.set_trace()
         # we need to convert from the SWIG gnucash book obj to the GObject type here
-        book_ptr = book.instance.__long__()
-        bookobj = Cgobject.pygobject_new(book_ptr)
+        book_ptr = book.instance.__int__()
+        bookobj = Cgobject.to_object(book_ptr)
         super(GncPluginPagePython,self).add_book(bookobj)
 
     def has_book (self, book):
         pdb.set_trace()
-        book_ptr = book.instance.__long__()
-        bookobj = Cgobject.pygobject_new(book_ptr)
+        book_ptr = book.instance.__int__()
+        bookobj = Cgobject.to_object(book_ptr)
         retval = super(GncPluginPagePython,self).has_book(bookobj)
         return retval
 

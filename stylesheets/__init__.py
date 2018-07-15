@@ -80,16 +80,16 @@ class StyleTable(collections.defaultdict):
                     attrs = val['attribute']
                 else:
                     # what to do about extras
-                    print val
+                    print(val)
                     pdb.set_trace()
-                    print val
+                    print(val)
             return (tg, attrs)
         else:
             return (None, None)
 
 # not quite what I thought - this is a standalone function
 def update(orig_dict, new_dict):
-    for key, val in new_dict.iteritems():
+    for key, val in new_dict.items():
         if isinstance(val, collections.Mapping):
             tmp = update(orig_dict.get(key, StyleTable()), val)
             orig_dict[key] = tmp
@@ -201,10 +201,10 @@ class StylesheetTemplate(object):
 
     def register_font_options (self):
 
-        font_family = gnc_report_system_ctypes.libgnc_reportsystem.gnc_get_default_report_font_family()
+        font_family = gnc_report_system_ctypes.get_default_report_font_family()
 
         self.options.register_option(FontOption(N_("Fonts"), N_("Title"),"a",
-                                                         N_("Font info for the report title."),
+                                N_("Font info for the report title."),
                                                          font_family+" Bold 15"))
         self.options.register_option(FontOption(N_("Fonts"), N_("Account link"),"b",
                                                          N_("Font info for account name."),

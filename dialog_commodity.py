@@ -3,7 +3,7 @@
 import locale
 
 locale.setlocale(locale.LC_ALL, "")
-#junk.sort(cmp=locale.strcoll)
+#junk.sort(key=locale.strxfrm)
 
 
 from gi.repository import Gtk
@@ -90,7 +90,7 @@ class DialogCommodity(object):
                 # protect against missing builder handler setup
                 try:
                     retval = self.win.selection
-                except Exception, errexc:
+                except Exception as errexc:
                     traceback.print_exc()
                     retval = None
                 done = True
@@ -123,7 +123,7 @@ class SelectCommodityWindow(object):
         builder = GncBuilder()
         builder.add_from_file("dialog-commodity.glade", "liststore1")
         builder.add_from_file("dialog-commodity.glade", "liststore2")
-        builder.add_from_file("dialog-commodity.glade", "Security Selector Dialog")
+        builder.add_from_file("dialog-commodity.glade", "security_selector_dialog")
 
         self.builder_handlers = { \
                                 # 'onDeleteWindow' : Gtk.main_guit,
@@ -136,7 +136,7 @@ class SelectCommodityWindow(object):
 
         builder.connect_signals({})
 
-        self.dialog = builder.get_object("Security Selector Dialog")
+        self.dialog = builder.get_object("security_selector_dialog")
         namespace_combo = builder.get_object("ss_namespace_cbwe")
         self.namespace_combo = NamespacePicker(namespace_combo)
         commodity_combo = builder.get_object("ss_commodity_cbwe")
@@ -181,7 +181,7 @@ class SelectCommodityWindow(object):
 
 
     def gnc_ui_select_commodity_new_cb (self, *args):
-        print "gnc_ui_select_commodity_new_cb",args
+        print("gnc_ui_select_commodity_new_cb",args)
 
         #w = args[1]
 
@@ -203,7 +203,7 @@ class SelectCommodityWindow(object):
 
 
     def gnc_ui_select_commodity_namespace_changed_cb (self, *args):
-        print "gnc_ui_select_commodity_namespace_changed_cb",args
+        print("gnc_ui_select_commodity_namespace_changed_cb",args)
 
         #ENTER("cbwe=%p, user_data=%p", cbwe, user_data)
 
@@ -217,7 +217,7 @@ class SelectCommodityWindow(object):
         self.commodity_combo.gnc_ui_update_commodity_picker(namespace,None)
 
     def gnc_ui_select_commodity_changed_cb (self, *args):
-        print ".gnc_ui_select_commodity_changed_cb",args
+        print(".gnc_ui_select_commodity_changed_cb",args)
         #pdb.set_trace()
 
         #ENTER("cbwe=%p, user_data=%p", cbwe, user_data)
@@ -235,7 +235,7 @@ class SelectCommodityWindow(object):
         try:
             #self.selection = table.lookup(namespace,fullname)
             self.selection = table.find_full(namespace,fullname)
-        except RuntimeError, errexc:
+        except RuntimeError as errexc:
             # fail to find it
             self.selection = None
 
@@ -292,8 +292,11 @@ class NamespacePicker(object):
             namespacecur = sw_app_utils.get_current_commodities().find_namespace('CURRENCY')
             namespaces = [ ('CURRENCY',namespacecur) ]
 
+        pdb.set_trace()
+
         #namespaces = g_list_sort(namespaces, collate)
-        namespaces.sort(cmp=lambda x,y: locale.strcoll(x[0],y[0]))
+        #namespaces.sort(cmp=lambda x,y: locale.strcoll(x[0],y[0]))
+        namespaces.sort(key=lambda x: locale.strxfrm(x[0]))
         current = 0
         match = 0
         #for node in namespaces:
@@ -350,7 +353,7 @@ class CommodityPicker(object):
         for commod in commodities:
             commodity_items.append(commod.get_printname())
         #commodity_items.sort(cmp=lambda x,y: locale.strcoll(x[0],y[0]))
-        commodity_items.sort(cmp=locale.strcoll)
+        commodity_items.sort(key=lambda x: locale.strxfrm(x[0]))
         match = 0
         for current,commod in enumerate(commodity_items):
             model.append((commod,))
@@ -451,11 +454,11 @@ class CommodityWindow(object):
         builder = GncBuilder()
         builder.add_from_file ("dialog-commodity.glade", "liststore2")
         builder.add_from_file ("dialog-commodity.glade", "adjustment1")
-        builder.add_from_file ("dialog-commodity.glade", "Security Dialog")
+        builder.add_from_file ("dialog-commodity.glade", "security_dialog")
 
         self.connect_signals({})
 
-        self.dialog = builder.get_object("Security Dialog")
+        self.dialog = builder.get_object("security_dialog")
         if parent != None:
             self.dialog.set_transient_for(parent)
         self.edit_commodity = None

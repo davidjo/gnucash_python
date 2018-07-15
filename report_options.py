@@ -38,9 +38,9 @@ try:
     import gnucash
     #from gnucash import *
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
-    print >> sys.stderr, str(errexc)
+except Exception as errexc:
+    print("Failed to import!!", file=sys.stderr)
+    print(str(errexc), file=sys.stderr)
     pdb.set_trace()
 
 import date_utils
@@ -90,9 +90,9 @@ class OptionsDB(object):
         if callback_id in self.callback_hash:
             del self.callback_hash[self.last_callback_id]
         else:
-            print "unregister callback - nonexistent ID!!", callback_id
+            print("unregister callback - nonexistent ID!!", callback_id)
             pdb.set_trace()
-            print "unregister callback - nonexistent ID!!", callback_id
+            print("unregister callback - nonexistent ID!!", callback_id)
     def run_callbacks (self):
         if self.options_changed:
             cblist = []
@@ -118,7 +118,7 @@ class OptionsDB(object):
                     callback()
     def register_option (self, new_option):
         name = new_option.name
-	section = new_option.section
+        section = new_option.section
         if section in self.option_hash:
             self.option_hash[section][name] = new_option
         else:
@@ -848,15 +848,15 @@ class DateOption(OptionBase):
 
         self.option_data = (subtype, show_time, relative_date_list)
         #self.option_data_fns = (lambda : len(relative_date_list),
-        #                        lambda (x): relative_date_list[x],
-        #                        lambda (x): self.get_relative_date_string(relative_date_list[x]),
-        #                        lambda (x): self.get_relative_date_desc(relative_date_list[x]),
-        #                        lambda (x): relative_date_list.index(x))
+        #                        lambda x: relative_date_list[x],
+        #                        lambda x: self.get_relative_date_string(relative_date_list[x]),
+        #                        lambda x: self.get_relative_date_desc(relative_date_list[x]),
+        #                        lambda x: relative_date_list.index(x))
         self.option_data_fns = (lambda : len(self.option_data[2]),
-                                lambda (x): self.option_data[2][x],
-                                lambda (x): self.get_relative_date_string(self.option_data[2][x]),
-                                lambda (x): self.get_relative_date_desc(self.option_data[2][x]),
-                                lambda (x): self.option_data[2].index(x))
+                                lambda x: self.option_data[2][x],
+                                lambda x: self.get_relative_date_string(self.option_data[2][x]),
+                                lambda x: self.get_relative_date_desc(self.option_data[2][x]),
+                                lambda x: self.option_data[2].index(x))
         # two False slots in addition
         self.strings_getter = None
         #self.widget_changed_cb = None
@@ -909,7 +909,7 @@ class DateOption(OptionBase):
             return date_utils.relative_date_values[datestr]
         else:
             pdb.set_trace()
-            print "junk"
+            print("junk")
 
     def lookup_key (self, x):
         # return the index for a key string
@@ -940,7 +940,7 @@ class DateOption(OptionBase):
                 return fy_period
             else:
                 pdb.set_trace()
-                print optval
+                print(optval)
         elif self.option_data[0] == 'relative':
             if optval[0] == 'absolute':
                 # is this ever possible??
@@ -952,7 +952,7 @@ class DateOption(OptionBase):
                 return fy_period
             else:
                 pdb.set_trace()
-                print optval
+                print(optval)
         else:
             #pdb.set_trace()
             # still not sure how both version works
@@ -1150,10 +1150,10 @@ class NumberRangeOption(OptionBase):
 
         self.option_data = (lower_bound, upper_bound, num_decimals, step_size)
 
-        #print "NumberRange default",self
-        #print "NumberRange default",self.section,self.name
-        #print "NumberRange default",self.default_value
-        #print "NumberRange option_data",self.option_data
+        #print("NumberRange default",self)
+        #print("NumberRange default",self.section,self.name)
+        #print("NumberRange default",self.default_value)
+        #print("NumberRange option_data",self.option_data)
 
         ## debug the setter
         #self.super_setter = self.setter
@@ -1179,10 +1179,10 @@ class NumberRangeOption(OptionBase):
 
     #def get_value (self):
     #    #pdb.set_trace()
-    #    #print "NumberRange get_value",self
-    #    #print "NumberRange get_value",self.section,self.name
-    #    #print "NumberRange get_value",self.default_value
-    #    #print "NumberRange get_value",self.option_data
+    #    #print("NumberRange get_value",self)
+    #    #print("NumberRange get_value",self.section,self.name)
+    #    #print("NumberRange get_value",self.default_value)
+    #    #print("NumberRange get_value",self.option_data)
     #    if self.option_value == None:
     #        return self.get_default_value()
     #    return self.option_value

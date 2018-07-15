@@ -12,7 +12,7 @@ from datetime import datetime
 import pdb
 
 
-import qof_ctypes
+import date_ctypes
 
 
 from gnc_builder import GncBuilder
@@ -63,7 +63,7 @@ class DateFormat(object):
 
 
 
-class GncDateFormat(Gtk.HBox):
+class GncDateFormat(Gtk.Box):
 
     # ah - this is something I think Ive missed - we can name the GType here
     __gtype_name__ = 'GncDateFormat'
@@ -90,7 +90,7 @@ class GncDateFormat(Gtk.HBox):
 
     def __init__ (self):
 
-        super(GncDateFormat,self).__init__()
+        super(GncDateFormat,self).__init__(orientation=Gtk.Orientation.HORIZONTAL)
 
         builder = GncBuilder()
         builder.add_from_file("gnc-date-format.glade", "format-liststore")
@@ -125,7 +125,7 @@ class GncDateFormat(Gtk.HBox):
         self.sample_label = builder.get_object("sample_label")
 
         self.custom_entry.handler_block_by_func(self.changed_cb)
-        self.set_format(qof_ctypes.qof_date_format_get())
+        self.set_format(date_ctypes.qof_date_format_get())
         self.custom_entry.handler_unblock_by_func(self.changed_cb)
 
         dialog = builder.get_object("GNC Date Format")
@@ -158,20 +158,20 @@ class GncDateFormat(Gtk.HBox):
 
         sel_option = self.format_combobox.get_active()
 
-        if sel_option == qof_ctypes.QofDateFormat.QOF_DATE_FORMAT_CUSTOM:
+        if sel_option == date_ctypes.QofDateFormat.QOF_DATE_FORMAT_CUSTOM:
             format = self.custom_entry.get_text()
             enable_year = False
             enable_month = False
             check_modifiers = False
             enable_custom = True
-        elif sel_option == qof_ctypes.QofDateFormat.QOF_DATE_FORMAT_LOCALE or \
-             sel_option == qof_ctypes.QofDateFormat.QOF_DATE_FORMAT_UTC:
-            format = qof_ctypes.qof_date_format_get_string(sel_option)
+        elif sel_option == date_ctypes.QofDateFormat.QOF_DATE_FORMAT_LOCALE or \
+             sel_option == date_ctypes.QofDateFormat.QOF_DATE_FORMAT_UTC:
+            format = date_ctypes.qof_date_format_get_string(sel_option)
             enable_year = False
             enable_month = False
             check_modifiers = False
             enable_custom = False
-        elif sel_option == qof_ctypes.QofDateFormat.QOF_DATE_FORMAT_ISO:
+        elif sel_option == date_ctypes.QofDateFormat.QOF_DATE_FORMAT_ISO:
             self.month_number.set_active(True)
             enable_year = True
             enable_month = False
@@ -189,9 +189,9 @@ class GncDateFormat(Gtk.HBox):
 
         if check_modifiers:
             if self.month_number.get_active():
-                format = qof_ctypes.qof_date_format_get_string(sel_option)
+                format = date_ctypes.qof_date_format_get_string(sel_option)
             else:
-                format = qof_ctypes.qof_date_text_format_get_string(sel_option)
+                format = date_ctypes.qof_date_text_format_get_string(sel_option)
                 if self.month_name.get_active():
                     indx = format.find('b')
                     if indx >= 0:
@@ -210,7 +210,7 @@ class GncDateFormat(Gtk.HBox):
         #secs_now = datetime.now()
         #today = datetime.localtime(secs_now)
         today = datetime.now()
-        date_string = qof_ctypes.qof_strftime(format, today)
+        date_string = date_ctypes.qof_strftime(format, today)
 
         self.sample_label.set_text(date_string)
 
@@ -223,12 +223,12 @@ class GncDateFormat(Gtk.HBox):
         return self.format_combobox.get_active()
 
     def compute_format (self):
-        print "compute_format"
+        print("compute_format")
         self.refresh()
         #pdb.set_trace()
         self.emit("format_changed",0)
 
     def changed_cb (self, *args):
-        print "changed_cb", args
+        print("changed_cb", args)
         #pdb.set_trace()
         self.compute_format()

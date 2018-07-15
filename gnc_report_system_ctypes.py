@@ -42,3 +42,12 @@ libgnc_reportsystem = ctypes.CDLL(libgnc_reportsystemnm)
 libgnc_reportsystem.gnc_get_default_report_font_family.argtypes = []
 libgnc_reportsystem.gnc_get_default_report_font_family.restype = ctypes.c_char_p
 
+# for python 3 need to map this as need conversion from c_char_p to python unicode
+
+def get_default_report_font_family ():
+
+    font_family_byte = libgnc_reportsystem.gnc_get_default_report_font_family()
+
+    return font_family_byte.decode('utf-8')
+
+

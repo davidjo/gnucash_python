@@ -22,7 +22,7 @@ import gnome_utils_ctypes
 
 import glib_ctypes
 
-import qof_ctypes
+#import qof_ctypes
 
 import gnucash
 
@@ -50,7 +50,7 @@ from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
 # Cgobject = PyGObjectCAPI()
-# Cgobject.pygobject_new(memory_address)
+# Cgobject.to_object(memory_address)
 
 # to get memory address from a gobject:
 #  address = hash(obj)
@@ -100,40 +100,40 @@ def new_with_root (root, show_root):
 
     #tmptreeview = GObject.new(GObject.type_from_name('GncTreeView'))
     #tmptreeviewaccount = GObject.new(GObject.type_from_name('GncTreeViewAccount'))
-    #print "trying 1"
-    #print tmptreeviewaccount
-    #print "trying 2"
+    #print("trying 1")
+    #print(tmptreeviewaccount)
+    #print("trying 2")
     #newaccview = GObject.new(GObject.type_from_name('GncTreeViewAccount'))
 
 
-    account_ptr = ctypes.cast( root.instance.__long__(), ctypes.POINTER( AccountOpaque ) )
+    account_ptr = ctypes.cast( root.instance.__int__(), ctypes.POINTER( AccountOpaque ) )
 
     newaccview_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_new_with_root(account_ptr, show_root)
 
     # call like this:
-    newaccview = Cgobject.pygobject_new(newaccview_ptr)
+    newaccview = Cgobject.to_object(newaccview_ptr)
 
 
-    newaccview.do_get_headers_visible = types.MethodType(do_get_headers_visible, newaccview, newaccview.__class__)
+    newaccview.do_get_headers_visible = types.MethodType(do_get_headers_visible, newaccview)
 
-    newaccview.do_set_headers_visible = types.MethodType(do_set_headers_visible, newaccview, newaccview.__class__)
+    newaccview.do_set_headers_visible = types.MethodType(do_set_headers_visible, newaccview)
 
-    newaccview.do_get_selection = types.MethodType(do_get_selection, newaccview, newaccview.__class__)
+    newaccview.do_get_selection = types.MethodType(do_get_selection, newaccview)
 
-    newaccview.do_set_selection = types.MethodType(do_set_selection, newaccview, newaccview.__class__)
+    newaccview.do_set_selection = types.MethodType(do_set_selection, newaccview)
 
 
-    newaccview.do_get_view_info = types.MethodType(get_view_info, newaccview, newaccview.__class__)
+    newaccview.do_get_view_info = types.MethodType(get_view_info, newaccview)
 
-    newaccview.do_set_view_info = types.MethodType(set_view_info, newaccview, newaccview.__class__)
+    newaccview.do_set_view_info = types.MethodType(set_view_info, newaccview)
 
-    newaccview.do_get_cursor_account = types.MethodType(get_cursor_account, newaccview, newaccview.__class__)
+    newaccview.do_get_cursor_account = types.MethodType(get_cursor_account, newaccview)
 
-    newaccview.do_select_subaccounts = types.MethodType(select_subaccounts, newaccview, newaccview.__class__)
+    newaccview.do_select_subaccounts = types.MethodType(select_subaccounts, newaccview)
 
-    newaccview.do_set_selected_accounts = types.MethodType(set_selected_accounts, newaccview, newaccview.__class__)
+    newaccview.do_set_selected_accounts = types.MethodType(set_selected_accounts, newaccview)
 
-    newaccview.do_get_selected_accounts = types.MethodType(get_selected_accounts, newaccview, newaccview.__class__)
+    newaccview.do_get_selected_accounts = types.MethodType(get_selected_accounts, newaccview)
 
     return newaccview
 
@@ -163,16 +163,16 @@ def get_view_info (self):
 
     vwinfo = AccountViewInfo()
 
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo.include_type)
+    print("0x%x"%ctypes.addressof(vwinfo), file=sys.stderr)
+    print("0x%x"%ctypes.addressof(vwinfo.include_type), file=sys.stderr)
 
     vwptr = ctypes.pointer(vwinfo)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr.contents)
+    print("0x%x"%ctypes.addressof(vwptr), file=sys.stderr)
+    print("0x%x"%ctypes.addressof(vwptr.contents), file=sys.stderr)
 
     trvwptr = hash(self)
-    print >> sys.stderr, "tree view",self
-    print >> sys.stderr, "tree view 0x%x"%trvwptr
+    print("tree view",self, file=sys.stderr)
+    print("tree view 0x%x"%trvwptr, file=sys.stderr)
 
     gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_get_view_info(trvwptr, ctypes.cast( vwptr, ctypes.c_void_p ) )
 
@@ -181,29 +181,29 @@ def get_view_info (self):
 def set_view_info (self, vwinfo):
 
     #pdb.set_trace()
-    #print "set_view_info 1",self
+    #print("set_view_info 1",self)
     #gc.collect()
 
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwinfo.include_type)
+    print("0x%x"%ctypes.addressof(vwinfo), file=sys.stderr)
+    print("0x%x"%ctypes.addressof(vwinfo.include_type), file=sys.stderr)
 
     vwptr = ctypes.pointer(vwinfo)
 
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr)
-    print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr.contents)
+    print("0x%x"%ctypes.addressof(vwptr), file=sys.stderr)
+    print("0x%x"%ctypes.addressof(vwptr.contents), file=sys.stderr)
 
     trvwptr = hash(self)
 
     gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_set_view_info(trvwptr, ctypes.cast( vwptr, ctypes.c_void_p ) )
 
-    #print "set_view_info 2"
+    #print("set_view_info 2")
     #gc.collect()
 
 
 def get_cursor_account (self):
 
-    #pdb.set_trace()
-    print "get_cursor_account"
+    pdb.set_trace()
+    print("get_cursor_account")
 
     trvwptr = hash(self)
 
@@ -212,27 +212,32 @@ def get_cursor_account (self):
     if account_ptr == None:
         return None
 
-    # bugger - we now hit the big problem - how to convert raw C pointers to swig instances
-    # ah - got a way - stupid but what can we do
-    # get the account guid and look it up 
-    curbook = sw_app_utils.get_current_book()
-    qof_ptr = ctypes.cast( account_ptr, ctypes.POINTER( qof_ctypes.QofInstanceOpaque ) )
-    acc_guid = qof_ctypes.libgnc_qof.qof_instance_get_guid(qof_ptr)
-    acc_guid_str = "".join([ "%02x"%x for x in acc_guid.contents.data ])
-    acc_guid = gnucash.GUID.string_to_guid(acc_guid_str)
-    account = gnucash.GUID.AccountLookup(acc_guid,curbook)
+    ## bugger - we now hit the big problem - how to convert raw C pointers to swig instances
+    ## ah - got a way - stupid but what can we do
+    ## get the account guid and look it up 
+    #curbook = sw_app_utils.get_current_book()
+    #qof_ptr = ctypes.cast( account_ptr, ctypes.POINTER( qof_ctypes.QofInstanceOpaque ) )
+    #acc_guid = qof_ctypes.libgnc_qof.qof_instance_get_guid(qof_ptr)
+    #acc_guid_str = "".join([ "%02x"%x for x in acc_guid.contents.data ])
+    #acc_guid = gnucash.GUID.string_to_guid(acc_guid_str)
+    #account = gnucash.GUID.AccountLookup(acc_guid,curbook)
+
+
+    accinst = swighelpers.int_to_swig(account_ptr,"_p_Account")
+    account = gnucash.Account(instance=accinst)
+
 
     return account
 
 def select_subaccounts (self, account):
 
     #pdb.set_trace()
-    print "select_subaccounts"
+    print("select_subaccounts")
 
-    print self
-    print account
+    print(self)
+    print(account)
 
-    account_ptr = ctypes.cast( account.instance.__long__(), ctypes.POINTER( AccountOpaque ) )
+    account_ptr = ctypes.cast( account.instance.__int__(), ctypes.POINTER( AccountOpaque ) )
 
     trvwptr = hash(self)
 
@@ -241,8 +246,8 @@ def select_subaccounts (self, account):
 
 def set_selected_accounts (self, account_list, show_last):
 
-    #pdb.set_trace()
-    #print "set_selected_accounts 1",self
+    pdb.set_trace()
+    #print("set_selected_accounts 1",self)
     #gc.collect()
 
     if len(account_list) > 0:
@@ -250,41 +255,41 @@ def set_selected_accounts (self, account_list, show_last):
         # construct a g_list from list of accounts
         glst_ptr = None
         for elm in account_list:
-            acc_ptr = ctypes.cast( elm.instance.__long__(), ctypes.POINTER( AccountOpaque ) )
+            acc_ptr = ctypes.cast( elm.instance.__int__(), ctypes.POINTER( AccountOpaque ) )
             glst_ptr = glib_ctypes.libglib.g_list_prepend(glst_ptr,acc_ptr)
         glst_ptr = glib_ctypes.libglib.g_list_reverse(glst_ptr)
 
-        print >> sys.stderr, "0x%x"%ctypes.addressof(glst_ptr)
-        #print >> sys.stderr, "0x%x"%ctypes.addressof(vwptr.contents)
+        print("0x%x"%ctypes.addressof(glst_ptr), file=sys.stderr)
+        #print("0x%x"%ctypes.addressof(vwptr.contents), file=sys.stderr)
         #pdb.set_trace()
 
         trvwptr = hash(self)
 
         gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_set_selected_accounts(trvwptr, glst_ptr, show_last)
 
-    #print "set_selected_accounts 2"
+    #print("set_selected_accounts 2")
     #gc.collect()
 
 
 def get_selected_accounts (self):
 
-    #pdb.set_trace()
-    #print "get_selected_accounts 1",self
+    pdb.set_trace()
+    #print("get_selected_accounts 1",self)
     #gc.collect()
 
     trvwptr = hash(self)
-    print >> sys.stderr, "tree view",self
-    print >> sys.stderr, "tree view 0x%x"%trvwptr
+    print("tree view",self, file=sys.stderr)
+    print("tree view 0x%x"%trvwptr, file=sys.stderr)
 
     glst_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_view_account_get_selected_accounts(trvwptr)
 
-    print glst_ptr
+    print(glst_ptr)
     glst_ptr = ctypes.cast( glst_ptr, ctypes.POINTER( glib_ctypes.GListRaw ) )
-    print glst_ptr
+    print(glst_ptr)
     
     glst_len = glib_ctypes.libglib.g_list_length(glst_ptr)
-    print glst_ptr
-    print glst_len
+    print(glst_ptr)
+    print(glst_len)
 
     curbook = sw_app_utils.get_current_book()
 
@@ -295,12 +300,12 @@ def get_selected_accounts (self):
     acctype = swighelpers.get_swig_type("_p_Account")
     acc_lst = []
     glst_ptr_base = glst_ptr
-    for irng in xrange(glst_len):
+    for irng in range(glst_len):
         #gelm1 = glib_ctypes.libglib.g_list_nth_data(glst_ptr_base,irng)
         gelm = glst_ptr.contents.data
         glst_ptr = glib_ctypes.g_list_next(glst_ptr)
         account_ptr = gelm
-        print >> sys.stderr, "account_ptr 0x%x"%account_ptr
+        print("account_ptr 0x%x"%account_ptr, file=sys.stderr)
         accinst = swighelpers.int_to_swig(account_ptr,acctype);
         #accinst = swighelpers.int_to_swig(account_ptr,"_p_Account")
         #qof_ptr = ctypes.cast( account_ptr, ctypes.POINTER( qof_ctypes.QofInstanceOpaque ) )

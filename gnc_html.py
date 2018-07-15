@@ -11,6 +11,20 @@ import ctypes
 
 import gc
 
+# need to load these differently for testing purposes
+if __name__ == '__main__':
+    import gi
+    gi.require_version('GIRepository', '2.0')
+    from gi.repository import GIRepository
+
+    rep = GIRepository.Repository.get_default()
+    addrep = os.path.join(sys.path[0],"girepository")
+    rep.prepend_search_path(addrep)
+
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('URLType', '1.0')
+
+
 from gi.repository import GObject
 
 from gi.repository import Gtk
@@ -32,7 +46,7 @@ def N_(msg):
 
 # great - after all this importing webkit locks gnucash up
 # and just importing WebView doesnt help either
-#print >> sys.stderr, "Before webview import"
+#print("Before webview import", file=sys.stderr)
 #import webkit
 #from webkit import WebView
 # OK have pinned this down to the gobject.threads_init()
@@ -41,7 +55,7 @@ def N_(msg):
 # UPDATE - now calling gobject.threads_init again 
 #sys.path.insert(0,"/opt/local/Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages/webkit")
 #webkit = __import__("webkit")
-#print >> sys.stderr, "After webview import"
+#print("After webview import", file=sys.stderr)
 
 # try accessing through gnucash type
 # THIS WORKS AND IS THE PREFERRED METHOD FOR THE MOMENT
@@ -115,8 +129,8 @@ class GncHtmlWebKitPrivate(ctypes.Structure):
                ]
 
 
-ctypes.pythonapi.PyString_AsString.argtypes = (ctypes.c_void_p,)
-ctypes.pythonapi.PyString_AsString.restype = ctypes.c_void_p
+ctypes.pythonapi.PyUnicode_AsUTF8.argtypes = (ctypes.py_object,)
+ctypes.pythonapi.PyUnicode_AsUTF8.restype = ctypes.c_void_p
 
 def fixup_html_string (privfld, docstr):
 
@@ -146,7 +160,13 @@ def fixup_html_string (privfld, docstr):
     print("python priv html_string offset %x"%GncHtmlWebKitPrivate.html_string.offset)
 
     # what to do about unicode??
-    new_value_str_ptr = ctypes.pythonapi.PyString_AsString(id(docstr))
+    # this was sneakily using the address of the string object as the C pointer
+    # we need to correct this to use the python object directly
+    # note docstr could be very long so this could use a lot of memory
+    # for the utf8 copy
+    #new_value_str_ptr = ctypes.pythonapi.PyString_AsString(id(docstr))
+    new_value_str_ptr = ctypes.pythonapi.PyUnicode_AsUTF8(docstr)
+
 
     print("python str address %x"%new_value_str_ptr)
 
@@ -191,15 +211,15 @@ class PythonHtmlWebkit(GncHtmlWebkit.HtmlWebkit):
     # web_view for the webkit function calls!!
 
     def do_show_data (self, data, datalen):
-        print "do_show_data",data[0:20],str(datalen)
+        print("do_show_data",data[0:20],str(datalen))
         pdb.set_trace()
 
         TEMPLATE_REPORT_FILE_NAME = "gnc-report-XXXXXX.html"
 
     def do_export_to_file (self, filename):
-        print "do_export_to_file",filename
+        print("do_export_to_file",filename)
         pdb.set_trace()
-        print "do_export_to_file",filename
+        print("do_export_to_file",filename)
 
 
 # GncHtml has register handlers which allow a url type
@@ -263,7 +283,7 @@ class HtmlView(object):
         if self.use_gncwebkit:
             # use gnucash access to webkit via gi wrapper
             self.html = GncHtmlWebkit.HtmlWebkit()
-            print >> sys.stderr, GObject.signal_list_names(GncHtmlWebkit.HtmlWebkit)
+            print(GObject.signal_list_names(GncHtmlWebkit.HtmlWebkit), file=sys.stderr)
             #pdb.set_trace()
             #self.html = PythonHtmlWebkit()
             # so this is annoying - the gir bindings are generating
@@ -275,13 +295,16 @@ class HtmlView(object):
             # bit fields - so all offsets after Gtk.Container are wrong!!
             # added a hack to GObjectField to handle this if know offset
             #prnt = GObjectField.Setup(self.html,"parent_instance")
-            self.privfld = GObjectField.Setup(self.html,"priv",offset_adjust_hack=-16,check_adjust_hack=144)
+            # for Gtk 2
+            #self.privfld = GObjectField.Setup(self.html,"priv",offset_adjust_hack=-16,check_adjust_hack=144)
+            # for Gtk 3
+            self.privfld = GObjectField.Setup(self.html,"priv",offset_adjust_hack=-8,check_adjust_hack=56)
             # note this creates the base scrolled window widget internally
             # we get the widget (a scrolled window) via html.get_widget()
             self.widget = self.html.get_widget()
-            print "webkit widget",type(self.widget)
-            print "webkit widget",self.widget
-            print "webkit widget",self.widget.get_child()
+            print("webkit widget",type(self.widget))
+            print("webkit widget",self.widget)
+            print("webkit widget",self.widget.get_child())
 
 
     # so the story so far is as follows
@@ -351,7 +374,8 @@ class HtmlView(object):
 
         # why is this here??
         # the self.container.show_all() in create_widget should show this widget
-        self.widget.show_all()
+        # indeed this is gone in 2.6.21a and 3.2
+        #self.widget.show_all()
 
     def reload (self):
         pdb.set_trace()
@@ -393,7 +417,7 @@ class HtmlView(object):
             try:
                 # try an implementation closer to the C/scheme
                 docstr = report.run()
-            except Exception, errexc:
+            except Exception as errexc:
                 traceback.print_exc()
                 docstr = baddocstr
             else:
@@ -426,7 +450,7 @@ class HtmlView(object):
             # for the impl_webkit_export_to_file call in impl_webkit_show_data
             # for the moment use our tricky helper function to accomplish this
             #pdb.set_trace()
-            print "hash self.html","%x"%hash(self.html)
+            print("hash self.html","%x"%hash(self.html))
             #pygignchelpers.show_data(self.html,docstr,len(docstr))
 
             # hacked up introspection/ctypes way to set html_string variable
@@ -452,7 +476,7 @@ class HtmlView(object):
             # of the PythonHtmlWebkit subclass
             #pdb.set_trace()
             #self.html.show_data(docstr,len(docstr))
-            #print "junk"
+            #print("junk")
 
 
     def set_load_cb (self, load_cb, load_cb_data=None):
@@ -507,3 +531,35 @@ def build_url (type, location, label):
 
     return urlstr
 
+
+def main ():
+
+    import girepo
+
+    # so this is how to get the address of the class structure!!
+    #trymod_klass = hash(GObject.type_class_peek(Try.Plugin))
+    #print("python gobject trymod klass address %x"%hash(GObject.type_class_peek(Try.Plugin)))
+
+    pdb.set_trace()
+
+    gobjflds = GncHtmlWebkit.HtmlWebkit.__info__.get_fields()
+    #gobjflds = Gtk.Container.__info__.get_fields()
+
+    for gobjfld in gobjflds:
+        print("gobjfld",gobjfld)
+        print("gobjfld",gobjfld.get_name())
+
+        field_info_obj = girepo.get_field_info(gobjfld)
+
+        offset = girepo.libgirepository.g_field_info_get_offset(field_info_obj)
+        print("gobjfld offset",offset)
+
+    #g_field_get_value(gobjfld, trymod_klass)
+    #g_field_get_value(Try.PluginClass.__dict__['__info__'].get_fields()[1], trymod_klass)
+    #g_field_get_value(Try.PluginClass.__dict__['__info__'].get_fields()[2], trymod_klass)
+
+    pass
+
+
+if __name__ == '__main__':
+    main()

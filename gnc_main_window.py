@@ -20,8 +20,8 @@ try:
     #from _sw_core_utils import gnc_prefs_is_extra_enabled
     from gi.repository import Gtk
     pass
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
+except Exception as errexc:
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
 
@@ -31,7 +31,7 @@ from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
 # Cgobject = PyGObjectCAPI()
-# Cgobject.pygobject_new(memory_address)
+# Cgobject.to_object(memory_address)
 
 # to get memory address from a gobject:
 #  address = hash(obj)
@@ -68,6 +68,8 @@ if False:
 
     def gnc_gui_init ():
 
+        # note that this function is only called by the python_only_plugin module now
+
         pdb.set_trace()
 
         main_window_ptr = libgnc_gnomeutils.gnc_gui_init()
@@ -87,9 +89,11 @@ elif False:
 
     def gnc_gui_init ():
 
+        # note that this function is only called by the python_only_plugin module now
+
         # ah - get why this works - because wrapping using codegen
         # registers the python type as the wrapper for the GType
-        # so when call pygobject_new with a gobject the GType
+        # so when call pygobject_new (called via to_object) with a gobject the GType
         # is looked up and the appropriate python wrapper used
 
         # note that gnc_gui_init is a special function I added
@@ -155,6 +159,8 @@ elif False:
 
     def gnc_gui_init ():
 
+        # note that this function is only called by the python_only_plugin module now
+
         global Cgobject
 
         #pdb.set_trace()
@@ -164,7 +170,7 @@ elif False:
 
         # call like this:
         #Cgobject = PyGObjectCAPI()
-        main_window = Cgobject.pygobject_new(main_window_ptr)
+        main_window = Cgobject.to_object(main_window_ptr)
 
         return main_window_wrap(main_window)
 
@@ -180,17 +186,21 @@ elif False:
         # we now need to add functions to the GncMainWindow object - mainly get_uimanager
         # using PyGObject/GTypes just gets storage - does not associate the functions with an object
 
-        main_window.get_uimanager = types.MethodType(get_uimanager, main_window, main_window.__class__)
+        # note that python 3 MethodType takes only 2 arguments
+        # - apparently you can also just do
+        #main_window.get_uimanager = get_uimanager.__get__(main_window)
 
-        main_window.manual_merge_actions = types.MethodType(manual_merge_actions, main_window, main_window.__class__)
+        main_window.get_uimanager = types.MethodType(get_uimanager, main_window)
 
-        main_window.merge_actions = types.MethodType(merge_actions, main_window, main_window.__class__)
+        main_window.manual_merge_actions = types.MethodType(manual_merge_actions, main_window)
 
-        main_window.unmerge_actions = types.MethodType(unmerge_actions, main_window, main_window.__class__)
+        main_window.merge_actions = types.MethodType(merge_actions, main_window)
 
-        main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window, main_window.__class__)
+        main_window.unmerge_actions = types.MethodType(unmerge_actions, main_window)
 
-        main_window.get_action_group = types.MethodType(get_action_group, main_window, main_window.__class__)
+        main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window)
+
+        main_window.get_action_group = types.MethodType(get_action_group, main_window)
 
         return main_window
 
@@ -204,7 +214,7 @@ elif False:
 
         # need to wrap ui_mgr
         #Cgobject = PyGObjectCAPI()
-        ui_mgr = Cgobject.pygobject_new(ui_mgr_ptr)
+        ui_mgr = Cgobject.to_object(ui_mgr_ptr)
 
         return ui_mgr
 
@@ -241,7 +251,7 @@ elif False:
 
         # need to wrap group
         #Cgobject = PyGObjectCAPI()
-        group = Cgobject.pygobject_new(group_ptr)
+        group = Cgobject.to_object(group_ptr)
 
         return group
 
@@ -266,7 +276,7 @@ elif False:
 
         # yes - we now can add menu items in python
         # we simply need the main window object wrapped either using
-        # a gncmainwindow module or ctypes and pygobject_new from gobject module
+        # a gncmainwindow module or ctypes and pygobject_new (mapped to to_object) from gobject module
         # (ctypes works now got right argument and return types)
         # currently using ctypes version
         # we apparently have to use the main window ui_merge object
@@ -288,7 +298,7 @@ elif False:
         # domain is GETTEXT_PACKAGE which appears to be the name "gnucash"
         self.set_translation_domain(actiongroup, "gnucash")
 
-        print "actions",actions
+        print("actions",actions)
 
 
         #actiongroup.add_actions([ 
@@ -362,6 +372,8 @@ else:
 
     from gi.repository import GncMainWindow
 
+    from gnome_utils_ctypes import libgnc_gnomeutils
+
 
     class GtkUIManagerOpaque(Structure):
         pass
@@ -373,6 +385,8 @@ else:
 
     def gnc_gui_init ():
 
+        # note that this function is only called by the python_only_plugin module now
+
         global Cgobject
 
         pdb.set_trace()
@@ -382,7 +396,7 @@ else:
 
         # call like this:
         #Cgobject = PyGObjectCAPI()
-        main_window = Cgobject.pygobject_new(main_window_ptr)
+        main_window = Cgobject.to_object(main_window_ptr)
 
         #return main_window_wrap(main_window)
         return main_window
@@ -399,22 +413,26 @@ else:
         # we now need to add functions to the GncMainWindow object - mainly get_uimanager
         # using PyGObject/GTypes just gets storage - does not associate the functions with an object
 
-        #main_window.get_uimanager = types.MethodType(get_uimanager, main_window, main_window.__class__)
+        # note that python 3 MethodType takes only 2 arguments
+        # - apparently you can also just do
+        #main_window.get_uimanager = get_uimanager.__get__(main_window)
 
-        #main_window.manual_merge_actions = types.MethodType(manual_merge_actions, main_window, main_window.__class__)
+        #main_window.get_uimanager = types.MethodType(get_uimanager, main_window)
 
-        #main_window.merge_actions = types.MethodType(merge_actions, main_window, main_window.__class__)
+        #main_window.manual_merge_actions = types.MethodType(manual_merge_actions, main_window)
 
-        #main_window.unmerge_actions = types.MethodType(unmerge_actions, main_window, main_window.__class__)
+        #main_window.merge_actions = types.MethodType(merge_actions, main_window)
 
-        #main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window, main_window.__class__)
+        #main_window.unmerge_actions = types.MethodType(unmerge_actions, main_window)
 
-        #main_window.get_action_group = types.MethodType(get_action_group, main_window, main_window.__class__)
+        #main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window)
+
+        #main_window.get_action_group = types.MethodType(get_action_group, main_window)
 
 
-        main_window.py_merge_actions = types.MethodType(py_merge_actions, main_window, main_window.__class__)
+        main_window.py_merge_actions = types.MethodType(py_merge_actions, main_window)
 
-        main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window, main_window.__class__)
+        main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window)
 
 
         # do we need to return it??
@@ -463,7 +481,7 @@ else:
         #GncMainWindow.gtk_action_group_set_translation_domain(actiongroup, "gnucash")
         self.set_translation_domain(actiongroup, "gnucash")
 
-        print "actions",actions
+        print("actions",actions)
 
 
         #actiongroup.add_actions([ 

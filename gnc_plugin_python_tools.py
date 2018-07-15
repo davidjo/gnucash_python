@@ -76,10 +76,7 @@ def close_handler (arg):
 
 
 
-class GncPluginPythonTools(GncPluginPython):
-
-
-    __metaclass__ = girepo.GncPluginSubClassMeta
+class GncPluginPythonTools(GncPluginPython, metaclass=girepo.GncPluginSubClassMeta):
 
     #__girmetaclass__ = BaseGncPluginClass
 
@@ -90,7 +87,7 @@ class GncPluginPythonTools(GncPluginPython):
     __gtype_name__ = 'GncPluginPythonTools'
 
     # add properties/signals here
-    #__gproperties__ =
+    #prop_name = GObject.Property(type=int,...)
 
     # I think these are more consistent if they are class variables
     # unfortunately cant figure out how to have a method of the class
@@ -196,11 +193,11 @@ class GncPluginPythonTools(GncPluginPython):
 
         #pdb.set_trace()
 
-        #print >> sys.stderr, "before access class"
+        #print("before access class", file=sys.stderr)
 
         #priv = girepo.access_class_data(self)
 
-        #print >> sys.stderr, "after access class"
+        #print("after access class", file=sys.stderr)
 
 
     # note that in the C the primary version of these functions are defined in
@@ -215,7 +212,7 @@ class GncPluginPythonTools(GncPluginPython):
 
         #pdb.set_trace()
 
-        print >> sys.stderr, "called do_add_to_window"
+        print("called do_add_to_window", file=sys.stderr)
 
         super(GncPluginPythonTools,self).add_to_window(window, window_type)
 
@@ -235,9 +232,9 @@ class GncPluginPythonTools(GncPluginPython):
 
         self.menu_extensions.remove_from_window(window, window_type)
 
-        #print >> sys.stderr, "called do_remove_from_window"
+        #printr("called do_remove_from_window", file=sys.stderr)
         #pdb.set_trace()
-        #print >> sys.stderr, "called do_remove_from_window"
+        #print("called do_remove_from_window", file=sys.stderr)
 
         super(GncPluginPythonTools,self).remove_from_window(save_window, window_type)
 
@@ -300,28 +297,28 @@ class GncPluginPythonTools(GncPluginPython):
         pdb.set_trace()
 
         gnucash_log.dbglog_err("tools_cb",actionobj,user_data)
-	gnucash_log.dbglog_err("tools_cb",actionobj.get_name())
+        gnucash_log.dbglog_err("tools_cb",actionobj.get_name())
 
         window = user_data
 
-        print "tools_cb",actionobj
-        print "tools_cb",actionobj.get_name()
+        print("tools_cb",actionobj)
+        print("tools_cb",actionobj.get_name())
 
         #pdb.set_trace()
 
         # junk test
         #trybook = sw_app_utils.get_current_book()
 
-        print "tools_cb","after book"
+        print("tools_cb","after book")
 
         try:
             tool_guid = actionobj.get_name()
             tool_obj = tool_objects.python_tools_by_guid[tool_guid]
             tool_obj.run()
             gnucash_log.dbglog("call back done")
-        except Exception, errexc:
+        except Exception as errexc:
             traceback.print_exc()
-            print >> sys.stderr, "error in tools_cb callback for ",str(errexc)
+            print("error in tools_cb callback for ",str(errexc), file=sys.stderr)
 
 
 #pdb.set_trace()

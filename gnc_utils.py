@@ -19,9 +19,6 @@ import sw_app_utils
 import gnucash
 
 
-import qof_ctypes
-
-
 def N_(msg):
     return msg
 
@@ -45,7 +42,8 @@ if True:
                  if not iter:
                      break
                  continue
-            id = self.get_data("changed_id")
+            #self.get_data("changed_id")
+            id = self.changed_id
             # we have an issue that something doesnt seem to be initialized right in the
             # currency text box - which leads to "random" numbers being returned for id
             # (once a currency has been selected things seem to work rightset)
@@ -59,7 +57,8 @@ if True:
             self.handler_unblock(id)
 
             index = self.get_active()
-            self.set_data("last_index",index)
+            #self.set_data("last_index",index)
+            self.last_index = index
             return
 
     def add_completion (self):
@@ -78,7 +77,7 @@ if True:
 
     def require_list_item (self):
 
-        print "gnc_cbwe_require_list_item",self
+        print("gnc_cbwe_require_list_item",self)
 
         self.add_completion()
 
@@ -90,35 +89,36 @@ if True:
             iter = model.get_iter_first()
             if iter:
                 self.set_active(0)
-        self.set_data("last_index",index)
+        self.last_index = index
         id = self.connect("changed", self.changed_cb)
         completion.connect("match_selected", self.match_selected_cb)
         entry.connect("focus-out-event", self.focus_out_cb)
 
-        print "gnc_cbwe_require_list_item",self,"changed_id",id
+        print("gnc_cbwe_require_list_item",self,"changed_id",id)
 
-        self.set_data("changed_id", id)
+        #self.set_data("changed_id", id)
+        self.changed_id = id
 
-        print "gnc_cbwe_require_list_item",self,"changed_id",id,self.get_data("changed_id")
+        print("gnc_cbwe_require_list_item",self,"changed_id",id,self.changed_id)
 
     def focus_out_cb (self, entry, event):
-        print "gnc_cbwe_focus_out_cb"
+        print("gnc_cbwe_focus_out_cb")
         text = entry.get_text()
         self.set_by_string(text)
-        index = self.get_data("last_index")
+        index = self.last_index
         self.set_active(index)
         return False
 
     def changed_cb (self, *args):
-        print "gnc_cbwe_changed_cb",args
+        print("gnc_cbwe_changed_cb",args)
         widget = args[0]
         index = widget.get_active()
         if index == -1:
             return
-        self.set_data("last_index",index)
+        self.last_index = index
 
     def match_selected_cb (self, *args):
-        print "gnc_cbwe_match_selected_cb",args
+        print("gnc_cbwe_match_selected_cb",args)
         column = self.get_entry_text_column()
         text = comp_model.get(comp_iter,0)
 
@@ -142,12 +142,12 @@ GncCBWEMixin.match_selected_cb = match_selected_cb
 def add_utils (combo_object):
     # try adding directly as attributes
     # this seems to work
-    combo_object.set_by_string = types.MethodType(set_by_string, combo_object, combo_object.__class__)
-    combo_object.add_completion = types.MethodType(add_completion, combo_object, combo_object.__class__)
-    combo_object.require_list_item = types.MethodType(require_list_item, combo_object, combo_object.__class__)
-    combo_object.focus_out_cb = types.MethodType(focus_out_cb, combo_object, combo_object.__class__)
-    combo_object.changed_cb = types.MethodType(changed_cb, combo_object, combo_object.__class__)
-    combo_object.match_selected_cb = types.MethodType(match_selected_cb, combo_object, combo_object.__class__)
+    combo_object.set_by_string = types.MethodType(set_by_string, combo_object)
+    combo_object.add_completion = types.MethodType(add_completion, combo_object)
+    combo_object.require_list_item = types.MethodType(require_list_item, combo_object)
+    combo_object.focus_out_cb = types.MethodType(focus_out_cb, combo_object)
+    combo_object.changed_cb = types.MethodType(changed_cb, combo_object)
+    combo_object.match_selected_cb = types.MethodType(match_selected_cb, combo_object)
 
 
 

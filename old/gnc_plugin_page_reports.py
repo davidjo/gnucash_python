@@ -44,9 +44,9 @@ import gnc_main_window
 try:
     from gi.repository import GObject
     from gi.repository import GncPluginPage
-except Exception, errexc:
+except Exception as errexc:
     traceback.print_exc()
-    print >> sys.stderr, "Failed to import!!"
+    print("Failed to import!!", file=sys.stderr)
     pdb.set_trace()
 
 

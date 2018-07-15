@@ -15,14 +15,11 @@ import sw_app_utils
 import gnucash
 
 
-import qof_ctypes
-
-
 def N_(msg):
     return msg
 
 
-class GncGeneralSelect(Gtk.HBox):
+class GncGeneralSelect(Gtk.Box):
 
     GNC_GENERAL_SELECT_TYPE_SELECT = 1
     GNC_GENERAL_SELECT_TYPE_EDIT = 2
@@ -33,16 +30,6 @@ class GncGeneralSelect(Gtk.HBox):
 
     # OK Im now thinking gobject warning messages were happening previously but just did not get the message
 
-    cmtstr = """
-    __gproperties__ = {
-                       'mnemonic' : (str,                                     # type
-                                      N_("Active currency's mnemonic"),       # nick name
-                                      N_("Active currency's mnemonic"),       # description
-                                      "USD",                                  # default value
-                                      GObject.ParamFlags.READWRITE),          # flags
-                      }
-    """
-
     __gsignals__ = {
                    'changed' : (GObject.SignalFlags.RUN_FIRST, None, (int,))
                    }
@@ -50,7 +37,9 @@ class GncGeneralSelect(Gtk.HBox):
 
     def __init__ (self, type, get_string, new_select, cb_arg):
 
-        super(GncGeneralSelect,self).__init__()
+        super(GncGeneralSelect,self).__init__(orientation=Gtk.Orientation.HORIZONTAL)
+
+        #self.set_orientation(Gtk.Orientation.HORIZONTAL)
 
         self.disposed = False
         self.selected_item = None
@@ -74,12 +63,12 @@ class GncGeneralSelect(Gtk.HBox):
 
 
     def select_cb (self, *args):
-        print "select_cb", args
-        print "select_cb", self
-        print "select_cb",self.selected_item
+        print("select_cb", args)
+        print("select_cb", self)
+        print("select_cb",self.selected_item)
         toplevel = self.get_toplevel()
         new_selection = self.new_select(self.cb_arg, self.selected_item, toplevel)
-        print "select_cb new_selection", new_selection
+        print("select_cb new_selection", new_selection)
         if new_selection == None:
             return
         self.set_selected(new_selection)
