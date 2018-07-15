@@ -4,6 +4,10 @@ import sys
 
 import os
 
+import gi
+
+gi.require_version('Gtk', '3.0')
+
 from gi.repository import GObject
 
 from gi.repository import Gtk
@@ -57,7 +61,15 @@ import gnc_tree_model_account_types
 
 from dialog_commodity import DialogCommodity
 
-import qof_ctypes
+
+#import qof_ctypes
+
+
+from pygobjectcapi import PyGObjectCAPI
+#from pygobjectcapi_gi import PyGObjectCAPI
+
+
+Cgobject = PyGObjectCAPI()
 
 
 
@@ -83,38 +95,79 @@ class EditAccountWindow(object):
 
         self.account = account
 
-        income_guid_str = qof_ctypes.GetAssociatedAccountGUIDString(self.account,"ofx/associated-income-account")
+        # as of gnucash 3 we now can get access to these via GObject properties supposedly
+        #pdb.set_trace()
 
-        print >> sys.stderr, "income_guid", income_guid_str
+        # this is how to convert from SWIG object to underlying GObject
+        # note not sure if this checks the SWIG object is a GObject!!
+        account_ptr = self.account.instance.__int__()
+        accountobj = Cgobject.to_object(account_ptr)
 
-        income_guid = qof_ctypes.GetAssociatedAccountGUID(self.account,"ofx/associated-income-account")
-
-        if income_guid != None:
-            self.income_account = gnucash.GUID.AccountLookup(income_guid, self.book)
-            if self.income_account != None:
-                print >> sys.stderr, "income_acc", self.income_account.GetName()
+        check_inc = accountobj.find_property("ofx-associated-income-account")
+        if check_inc != None:
+            income_accobj = accountobj.get_property("ofx-associated-income-account")
+            if income_accobj != None:
+                income_account_inst = swighelpers.int_to_swig(hash(income_accobj),"_p_Account")
+                income_account = gnucash.Account(instance=income_account_inst)
+                income_guid = income_account.GetGUID()
+                income_guid_str = income_guid.to_string()
+            else:
+                income_guid = None
+                income_guid_str = "None"
         else:
-            self.income_account = None
+            income_guid = None
+            income_guid_str = "None"
 
-        print >> sys.stderr, "income_guid", income_guid
+        #income_guid_str = qof_ctypes.GetAssociatedAccountGUIDString(self.account,"ofx/associated-income-account")
 
-        fee_guid_str = qof_ctypes.GetAssociatedAccountGUIDString(self.account,"ofx/associated-fee-account")
+        print("income_guid", income_guid_str, file=sys.stderr)
 
-        print >> sys.stderr, "fee_guid", fee_guid_str
+        #income_guid = qof_ctypes.GetAssociatedAccountGUID(self.account,"ofx/associated-income-account")
 
-        fee_guid = qof_ctypes.GetAssociatedAccountGUID(self.account,"ofx/associated-fee-account")
+        #if income_guid != None:
+        #    self.income_account = gnucash.GUID.AccountLookup(income_guid, self.book)
+        #    if self.income_account != None:
+        #        print("income_acc", self.income_account.GetName(), file=sys.stderr)
+        #else:
+        #    self.income_account = None
 
-        if fee_guid != None:
-            self.fee_account = gnucash.GUID.AccountLookup(fee_guid, self.book)
-            if self.fee_account != None:
-                print >> sys.stderr, "fee_acc", self.fee_account.GetName()
+        print("income_guid", income_guid, file=sys.stderr)
+
+        check_fee = accountobj.find_property("ofx-associated-fee-account")
+        if check_fee != None:
+            fee_accobj = accountobj.get_property("ofx-associated-fee-account")
+            if fee_accobj != None:
+                fee_account_inst = swighelpers.int_to_swig(hash(fee_accobj),"_p_Account")
+                fee_account = gnucash.Account(instance=fee_account_inst)
+                fee_guid = fee_account.GetGUID()
+                fee_guid_str = fee_guid.to_string()
+            else:
+                fee_guid = None
+                fee_guid_str = "None"
         else:
-            self.fee_account = None
+            fee_guid = None
+            fee_guid_str = "None"
+
+        #fee_guid_str = qof_ctypes.GetAssociatedAccountGUIDString(self.account,"ofx/associated-fee-account")
+
+        print("fee_guid", fee_guid_str, file=sys.stderr)
+
+        #fee_guid = qof_ctypes.GetAssociatedAccountGUID(self.account,"ofx/associated-fee-account")
+
+        #if fee_guid != None:
+        #    self.fee_account = gnucash.GUID.AccountLookup(fee_guid, self.book)
+        #    if self.fee_account != None:
+        #        print("fee_acc", self.fee_account.GetName(), file=sys.stderr)
+        #else:
+        #    self.fee_account = None
+
+        #pdb.set_trace()
 
         builder = GncBuilder()
-        builder.set_builder_dir(os.path.join(os.environ['HOME'],'.gnucash','gtkbuilder'))
-        builder.add_from_file("dialog-account.glade", "fraction_liststore")
-        builder.add_from_file("dialog-account.glade", "Account Dialog")
+        gnc_builder_dir = os.path.join(os.environ['HOME'],'.gnucash','gtkbuilder')
+        fname = os.path.join(gnc_builder_dir,"dialog-account.glade")
+        builder.add_from_file(fname, "fraction_liststore")
+        builder.add_from_file(fname, "account_dialog")
 
         # junkily we need to list all signals here
         # the gnucash code somehow figures all signals
@@ -143,7 +196,11 @@ class EditAccountWindow(object):
         #                            NULL, close_handler, fcd);
 
         # why is this not working - works for other objects??
-        self.dialog.set_data("dialog_info",self)
+        # as of gtk3 this is just a python property
+        # well thats not working!!
+        pdb.set_trace()
+        #self.dialog.set_data("dialog_info",self)
+        self.dialog.dialog_info = self
 
         if not self.dialog.get_modal():
              self.dialog.connect("response", self.response_cb)
@@ -238,15 +295,15 @@ class EditAccountWindow(object):
         builder.connect_signals(self.builder_handlers)
 
     def destroy_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "destroy_cb",actionobj,userdata
+        print("destroy_cb",actionobj,userdata, file=sys.stderr)
         self.dialog.destroy()
 
     def delete_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "delete_cb",actionobj,userdata
+        print("delete_cb",actionobj,userdata, file=sys.stderr)
         self.dialog.destroy()
 
     def response_cb (self, actionobj, response=None):
-        print >> sys.stderr, "response_cb",actionobj,response
+        print("response_cb",actionobj,response, file=sys.stderr)
         if response == Gtk.RESPONSE_OK or \
            response == Gtk.RESPONSE_CLOSE:
             #gnc_save_window_size(GNC_PREFS_GROUP, self.dialog)
@@ -255,23 +312,23 @@ class EditAccountWindow(object):
         self.dialog.destroy()
 
     def opening_equity_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "opening_equity_cb",actionobj,userdata
+        print("opening_equity_cb",actionobj,userdata, file=sys.stderr)
         use_equity = actionobj.get_active()
         self.transfer_account_scroll.set_sensitive(not use_equity)
 
 
     def name_changed_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "name_changed_cb",actionobj,userdata
+        print("name_changed_cb",actionobj,userdata, file=sys.stderr)
         self.set_name()
 
     def name_insert_text_cb (self, actionobj, text, text_length_or_position, userdata=None):
-        print >> sys.stderr, "name_insert_text_cb",actionobj,text,text_length_or_position,userdata
+        print("name_insert_text_cb",actionobj,text,text_length_or_position,userdata, file=sys.stderr)
         editable = actionobj
         separator = engine_ctypes.GetAccountSeparatorString()
         strsplt = text.split(separator)
         if len(strsplt) > 1:
             result = "".join(strsplt)
-            print >> sys.stderr, "name_insert_text_cb",result
+            print("name_insert_text_cb",result, file=sys.stderr)
             # how do I get the handler ID for these
             #editable.handler_block(self.name_insert_text_cb_id)
             editable.insert_text(result)
@@ -280,18 +337,18 @@ class EditAccountWindow(object):
             
 
     def fee_changed_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "fee_changed_cb",actionobj,userdata
+        print("fee_changed_cb",actionobj,userdata, file=sys.stderr)
         #self.set_name()
 
     def fee_insert_text_cb (self, actionobj, text, text_length_or_position, userdata=None):
-        print >> sys.stderr, "fee_insert_text_cb",actionobj,text,text_length_or_position,userdata
+        print("fee_insert_text_cb",actionobj,text,text_length_or_position,userdata, file=sys.stderr)
         editable = actionobj
         #separator = sw_engine.gnc_get_account_separator_string()
         separator = engine_ctypes.GetAccountSeparatorString()
         strsplt = text.split(separator)
         if len(strsplt) > 1:
             result = "".join(strsplt)
-            print >> sys.stderr, "fee_insert_text_cb",result
+            print("fee_insert_text_cb",result, file=sys.stderr)
             # how do I get the handler ID for these
             #editable.handler_block(self.fee_insert_text_cb_id)
             editable.insert_text(result)
@@ -300,18 +357,18 @@ class EditAccountWindow(object):
 
 
     def income_changed_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "income_changed_cb",actionobj,userdata
+        print("income_changed_cb",actionobj,userdata, file=sys.stderr)
         #self.set_name()
 
     def income_insert_text_cb (self, actionobj, text, text_length_or_position, userdata=None):
-        print >> sys.stderr, "income_insert_text_cb",actionobj,text,text_length_or_position,userdata
+        print("income_insert_text_cb",actionobj,text,text_length_or_position,userdata, file=sys.stderr)
         editable = actionobj
         #separator = sw_engine.gnc_get_account_separator_string()
         separator = engine_ctypes.GetAccountSeparatorString()
         strsplt = text.split(separator)
         if len(strsplt) > 1:
             result = "".join(strsplt)
-            print >> sys.stderr, "income_insert_text_cb",result
+            print("income_insert_text_cb",result, file=sys.stderr)
             # how do I get the handler ID for these
             #editable.handler_block(self.income_insert_text_cb_id)
             editable.insert_text(result)
@@ -320,12 +377,12 @@ class EditAccountWindow(object):
 
 
     def color_default_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "color_default_cb",actionobj,userdata
+        print("color_default_cb",actionobj,userdata, file=sys.stderr)
         color =  Gtk.Gdk.color_parse("#ededececebeb")
         self.color_entry_button.set_color(color)
 
     def commodity_changed_cb (self, actionobj, selected, userdata=None):
-        print >> sys.stderr, "commodity_changed_cb",actionobj,selected,userdata
+        print("commodity_changed_cb",actionobj,selected,userdata, file=sys.stderr)
 
         currency = actionobj.get_selected()
         if currency == None:
@@ -339,9 +396,9 @@ class EditAccountWindow(object):
         selection.unselect_all()
 
     def parent_changed_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "parent_changed_cb",actionobj,userdata
+        print("parent_changed_cb",actionobj,userdata, file=sys.stderr)
         parent_account = self.parent_tree.get_selected_account()
-        print >> sys.stderr, "parent_changed_cb",parent_account
+        print("parent_changed_cb",parent_account, file=sys.stderr)
         if parent_account == None:
             return
 
@@ -354,7 +411,7 @@ class EditAccountWindow(object):
         type_model = self.type_view.get_model()
 
     def type_changed_cb (self, selection, userdata=None):
-        print >> sys.stderr, "type_changed_cb",selection,userdata
+        print("type_changed_cb",selection,userdata, file=sys.stderr)
         sensitive = False
 
         type_id = gnc_tree_model_account_types.get_selection_single(selection)
@@ -453,13 +510,13 @@ class EditAccountWindow(object):
 
     def account_to_ui (self):
 
-        #print >> sys.stderr, dir(self.account)
+        #print(dir(self.account), file=sys.stderr)
 
         self.name_entry.set_text(self.account.GetName())
         self.description_entry.set_text(self.account.GetDescription())
         # the C code does not check for Not Set - how does it work??
         if self.account.GetColor() != None and self.account.GetColor() != 'Not Set':
-            print >> sys.stderr, "color is",self.account.GetColor()
+            print("color is",self.account.GetColor(), file=sys.stderr)
             self.color_entry_button.set_color(Gtk.Gdk.color_parse(self.account.GetColor()))
         self.commodity_edit.set_selected(self.account.GetCommodity())
         self.commodity_from_type(False)
@@ -491,7 +548,8 @@ class DialogEditAccount(object):
         self.window.set_border_width(0)
         self.window.connect('destroy-event', self.destroy_cb)
         self.window.connect('delete-event', self.delete_cb)
-        hbox = Gtk.HBox(homogeneous=False, spacing=5)
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        hbox.set_homogeneous(False)
         # using str= parameter does not work
         #label = Gtk.Label(str=N_("Enter Account Name:"))
         # which one to use??
@@ -517,7 +575,7 @@ class DialogEditAccount(object):
         self.window.destroy()
 
     def edit_account_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "edit_account_cb",actionobj,userdata
+        print("edit_account_cb",actionobj,userdata, file=sys.stderr)
 
         # I think all the following is done in the run function
 
@@ -530,7 +588,7 @@ class DialogEditAccount(object):
         #    return
 
         account_name = actionobj.get_text()
-        print "account name",account_name
+        print("account name",account_name)
         book = get_current_book()
         root = book.get_root_account()
         editacnt = root.LookupByName(account_name)

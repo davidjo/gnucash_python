@@ -4,7 +4,7 @@
 
 import gi
 
-gi.require_version('Gtk', '2.0')
+gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk
 
@@ -68,13 +68,13 @@ class HelloWorld(ToolTemplate):
         self.window.show_all()
 
     def destroy_cb (self, actionobj, userdata=None):
-        print "sample tool destroy_cb"
+        print("sample tool destroy_cb")
         self.window.destroy()
-        print "sample tool destroy_cb after"
+        print("sample tool destroy_cb after")
 
     def delete_cb (self, actionobj, userdata=None):
-        print "sample tool delete_cb"
+        print("sample tool delete_cb")
         self.window.destroy()
-        print "sample tool delete_cb after"
+        print("sample tool delete_cb after")
 
 

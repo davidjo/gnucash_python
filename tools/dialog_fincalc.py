@@ -2,6 +2,10 @@
 
 import sys
 
+import gi
+
+gi.require_version('Gtk', '3.0')
+
 from gi.repository import GObject
 
 from gi.repository import Gtk
@@ -118,7 +122,7 @@ class FinCalcDialog(object):
         builder = GncBuilder()
         builder.add_from_file("dialog-fincalc.glade", "liststore1")
         builder.add_from_file("dialog-fincalc.glade", "liststore2")
-        builder.add_from_file("dialog-fincalc.glade", "Financial Calculator Dialog")
+        builder.add_from_file("dialog-fincalc.glade", "financial_calculator_dialog")
 
         # junkily we need to list all signals here
         # the gnucash code somehow figures all signals
@@ -133,7 +137,7 @@ class FinCalcDialog(object):
         #builder.connect_signals(self)
         builder.connect_signals(self.builder_handlers)
 
-        self.dialog = builder.get_object("Financial Calculator Dialog")
+        self.dialog = builder.get_object("financial_calculator_dialog")
 
         # this registers the dialog so the initial count check works
         #gnc_register_gui_component (DIALOG_FINCALC_CM_CLASS,
@@ -158,7 +162,7 @@ class FinCalcDialog(object):
         edit.connect("changed", self.update_calc_button_cb)
 
         button = builder.get_object("payment_periods_clear_button")
-        button.set_data("edit",edit)
+        button.edit = edit
 
 
         hbox = builder.get_object("interest_rate_hbox")
@@ -173,7 +177,7 @@ class FinCalcDialog(object):
         edit.connect("changed", self.update_calc_button_cb)
 
         button = builder.get_object("interest_rate_clear_button")
-        button.set_data("edit",edit)
+        button.edit = edit
 
 
         hbox = builder.get_object("present_value_hbox")
@@ -188,7 +192,7 @@ class FinCalcDialog(object):
         edit.connect("changed", self.update_calc_button_cb)
 
         button = builder.get_object("present_value_clear_button")
-        button.set_data("edit",edit)
+        button.edit = edit
 
 
         hbox = builder.get_object("periodic_payment_hbox")
@@ -203,7 +207,7 @@ class FinCalcDialog(object):
         edit.connect("changed", self.update_calc_button_cb)
 
         button = builder.get_object("periodic_payment_clear_button")
-        button.set_data("edit",edit)
+        button.edit = edit
 
 
         hbox = builder.get_object("future_value_hbox")
@@ -218,7 +222,7 @@ class FinCalcDialog(object):
         edit.connect("changed", self.update_calc_button_cb)
 
         button = builder.get_object("future_value_clear_button")
-        button.set_data("edit",edit)
+        button.edit = edit
 
         self.calc_button = builder.get_object("calc_button")
 
@@ -259,15 +263,15 @@ class FinCalcDialog(object):
 
 
     def destroy_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "destroy_cb",actionobj,userdata
+        print("destroy_cb",actionobj,userdata, file=sys.stderr)
         self.dialog.destroy()
 
     def delete_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "delete_cb",actionobj,userdata
+        print("delete_cb",actionobj,userdata, file=sys.stderr)
         self.dialog.destroy()
 
     def response_cb (self, actionobj, response=None):
-        print >> sys.stderr, "response_cb",actionobj,response
+        print("response_cb",actionobj,response, file=sys.stderr)
         if response == Gtk.ResponseType.OK or \
            response == Gtk.ResponseType.CLOSE:
             #gnc_save_window_size(GNC_PREFS_GROUP, self.dialog)
@@ -276,29 +280,29 @@ class FinCalcDialog(object):
         self.dialog.destroy()
 
     def amount_clear_clicked_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "amount_clear_clicked_cb",actionobj,userdata
-        edit = actionobj.get_data("edit")
+        print("amount_clear_clicked_cb",actionobj,userdata, file=sys.stderr)
+        edit = actionobj.edit
         if edit != None:
             edit.set_text("")
 
     def calc_clicked_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "calc_clicked_cb",actionobj,userdata
+        print("calc_clicked_cb",actionobj,userdata, file=sys.stderr)
 
-        for i in xrange(FinCalcDialog.FinCalcValues.NUM_FIN_CALC_VALUES):
+        for i in range(FinCalcDialog.FinCalcValues.NUM_FIN_CALC_VALUES):
             text = self.amounts[i].get_text()
             if text != None and text != "":
                 continue
-            print >> sys.stderr, "click check",i,text
+            print("click check",i,text, file=sys.stderr)
             self.calc_value(i)
 
 
     def compounding_radio_toggled (self, actionobj, userdata=None):
-        print >> sys.stderr, "compounding_radio_toggled",actionobj,userdata
+        print("compounding_radio_toggled",actionobj,userdata, file=sys.stderr)
 
     def update_calc_button_cb (self, actionobj, userdata=None):
-        print >> sys.stderr, "update_calc_button_cb",actionobj,userdata
+        print("update_calc_button_cb",actionobj,userdata, file=sys.stderr)
 
-        for i in xrange(FinCalcDialog.FinCalcValues.NUM_FIN_CALC_VALUES):
+        for i in range(FinCalcDialog.FinCalcValues.NUM_FIN_CALC_VALUES):
             text = self.amounts[i].get_text()
             if text == None or text == "":
                 self.calc_button.set_sensitive(True)
@@ -309,7 +313,7 @@ class FinCalcDialog(object):
 
     def can_calc_value (self, value):
 
-        for i in xrange(FinCalcDialog.FinCalcValues.NUM_FIN_CALC_VALUES):
+        for i in range(FinCalcDialog.FinCalcValues.NUM_FIN_CALC_VALUES):
             if i != value:
                 text = self.amounts[i].get_text()
                 if text == None or text == "":
@@ -349,7 +353,7 @@ class FinCalcDialog(object):
 
         if string != None:
             # should do gtk error dialog
-            print >> sys.stderr, value, error_item, string
+            print(value, error_item, string, file=sys.stderr)
             if error_item == 0:
                 entry = self.amounts[0]
             else:
@@ -366,23 +370,23 @@ class FinCalcDialog(object):
         if value == FinCalcDialog.FinCalcValues.PAYMENT_PERIODS:
             #self.financial_info.fi_info.npp = self.financial_info.num_payments()
             self.financial_info.num_payments()
-            print "num_payments",self.financial_info.fi_info.npp
+            print("num_payments",self.financial_info.fi_info.npp)
         elif value == FinCalcDialog.FinCalcValues.INTEREST_RATE:
             #self.financial_info.fi_info.ir = self.financial_info.interest()
             self.financial_info.interest()
-            print "interest",self.financial_info.fi_info.ir
+            print("interest",self.financial_info.fi_info.ir)
         elif value == FinCalcDialog.FinCalcValues.PRESENT_VALUE:
             #self.financial_info.fi_info.pv = self.financial_info.present_value()
             self.financial_info.present_value()
-            print "present_value",self.financial_info.fi_info.pv
+            print("present_value",self.financial_info.fi_info.pv)
         elif value == FinCalcDialog.FinCalcValues.PERIODIC_PAYMENT:
             #self.financial_info.fi_info.pmt = self.financial_info.payment()
             self.financial_info.payment()
-            print "payment",self.financial_info.fi_info.pmt
+            print("payment",self.financial_info.fi_info.pmt)
         elif value == FinCalcDialog.FinCalcValues.FUTURE_VALUE:
             #self.financial_info.fi_info.fv = self.financial_info.future_value()
             self.financial_info.future_value()
-            print "future_value",self.financial_info.fi_info.fv
+            print("future_value",self.financial_info.fi_info.fv)
         else:
             #PERR("Unknown financial variable")
             pass
@@ -418,7 +422,7 @@ class FinCalcDialog(object):
 
     def normalize_period (self, period):
 
-        for i in xrange(len(self.periods)-1,0,-1):
+        for i in range(len(self.periods)-1,0,-1):
             if period >= self.periods[i]:
                 return (i,self.periods[i])
 
