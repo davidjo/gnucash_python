@@ -2,19 +2,19 @@ import sys
 import os
 import pdb
 import traceback
-#print >> sys.stderr, "Imported python OK"
+#print("Imported python OK", file=sys.stderr)
 
 try:
-    import _sw_app_utils
+    import gnucash._sw_app_utils as _sw_app_utils
     from gnucash import *
-    from _sw_core_utils import gnc_prefs_is_extra_enabled
-except Exception, errexc:
-    print >> sys.stderr, "Failed to import!!"
-    print >> sys.stderr, str(errexc)
+    from gnucash._sw_core_utils import gnc_prefs_is_extra_enabled
+except Exception as errexc:
+    print("Failed to import!!", file=sys.stderr)
+    print(str(errexc), file=sys.stderr)
     pdb.set_trace()
 
 
-#print >> sys.stderr, "Imported python OK 1"
+#print("Imported python OK 1", file=sys.stderr)
 
 #pdb.set_trace()
 
@@ -34,9 +34,6 @@ except ImportError:
     pass
 
 
-# for the moment disable all the rest as pycons
-# also imports non-gobject-introspection gtk
-
 if False:
 
     from ctypes import *
@@ -52,7 +49,7 @@ if False:
     if libgnccorenm is None:
         raise RuntimeError("Can't find a libgnc-core-utils library to use.")
 
-    #print libgnccorenm
+    #print(libgnccorenm)
 
     libpth = os.path.dirname(libgnccorenm)
 
@@ -67,53 +64,49 @@ if False:
     # the reason it could not import pycons is because Id lost this!!
     sys.path.append(os.path.dirname(__file__))
 
-    #noisy = gnc_prefs_is_extra_enabled()
-    noisy = True
+
+    noisy = gnc_prefs_is_extra_enabled()
     if noisy:
-        print "woop", os.path.dirname(__file__)
+        print("woop", os.path.dirname(__file__))
     # Importing the console class causes SIGTTOU to be thrown if GnuCash is
     # started in the background.  This causes a hang if it is not handled, 
     # so ignore it for the duration
     import signal
     old_sigttou = signal.signal(signal.SIGTTOU, signal.SIG_IGN)
 
-    #import pycons.console as cons
+    import pycons.console as cons
 
     try:
+        from gi import require_version
+        require_version('Gtk', '3.0')
         from gi.repository import Gtk
-        print "Imported introspection"
+        print("Imported introspection")
     except ImportError:
-        print "Imported pre-introspection"
+        print("Imported pre-introspection")
         pdb.set_trace()
-        import pycons.console as cons
         import gtk
+
 
     # Restore the SIGTTOU handler
     signal.signal(signal.SIGTTOU, old_sigttou)
 
     if noisy:
-        print "Hello from python!"
-       #print "test", sys.modules.keys()
-       #print "test2", dir(_sw_app_utils)
-
-       # doing gnc_get_current_root_account here is a bad idea as no
-       # session opened yet and gnc_get_current_root_account will open
-       # a new session (is this new behaviour) - which now need to save
-       # when open the real file
-       # so comment the following and any statements using root
+        print("Hello from python!")
+        print("test", sys.modules.keys())
+        print("test2", dir(_sw_app_utils))
 
        #root = _sw_app_utils.gnc_get_current_root_account()
 
-       #print "test", dir(root), root.__class__
-       #print "test2", dir(gnucash_core_c)
+       #print("test", dir(root), root.__class__)
+        print("test3", dir(gnucash_core_c))
 
        #acct = Account(instance = root)
 
-       #print "test3", dir(acct)
-       #print acct.GetName()
-       #print acct.GetBalance()
-       #print acct.GetSplitList()
-       #print "test2", dir(gnucash.gnucash_core_c)
+       #print("test3", dir(acct))
+       #print(acct.GetName())
+       #print(acct.GetBalance())
+       #print(acct.GetSplitList())
+       #print("test2", dir(gnucash.gnucash_core_c))
 
     class Console (cons.Console):
         """ GTK python console """
@@ -122,7 +115,7 @@ if False:
                      filename=None, size=100):
             cons.Console.__init__(self, argv, shelltype, banner, filename, size)
             self.buffer.create_tag('center',
-                                   justification=gtk.JUSTIFY_CENTER,
+                                   justification=Gtk.Justification.CENTER,
                                    font='Mono 4')
             self.figures = []
             self.callbacks = []
@@ -135,7 +128,7 @@ if False:
 
         def key_press_event (self, widget, event):
             """ Handle key press event """
-            
+        
             if self.active_canvas:
                 self.active_canvas.emit ('key-press-event', event)
                 return True
@@ -146,7 +139,7 @@ if False:
             if self.active_canvas:
                 return True
             return False
-     
+ 
         def button_press_event (self, widget, event):
             """ Button press event """
             return self.refresh()
@@ -164,18 +157,14 @@ if False:
     if False:
         console = Console(argv = [], shelltype = 'python', banner = [['woop', 'title']], size = 100)
 
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_position(gtk.WIN_POS_CENTER)
+        window = Gtk.Window(Gtk.WindowType.TOPLEVEL)
+        window.set_position(Gtk.WindowPosition.CENTER)
         window.set_default_size(800,600)
         window.set_border_width(0)
-        # Hm. gtk.main_quit will kill gnucash without closing the file
+        # Hm. Gtk.main_quit will kill gnucash without closing the file
         # properly. That's kinda bad.
-        #window.connect('destroy-event', gtk.main_quit)
-        #window.connect('delete-event', gtk.main_quit)
-        # this will call gtk.main_quit eventually
-        window.connect('destroy-event', libgnomeutils.gnc_shutdown)
-        window.connect('delete-event', libgnomeutils.gnc_shutdown)
+        window.connect('destroy-event', Gtk.main_quit)
+        window.connect('delete-event', Gtk.main_quit)
         window.add (console)
         window.show_all()
         console.grab_focus()
-

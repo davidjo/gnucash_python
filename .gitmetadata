@@ -45,7 +45,7 @@
 {'st_mtime': '1484252914', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '8189'}  ;  gnome_utils_ctypes.py
 {'st_mtime': '1436886375', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '15750'}  ;  gnucash_ext.py
 {'st_mtime': '1412675052', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '1962'}  ;  gnucash_log.py
-{'st_mtime': '1480542752', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5690'}  ;  init.py
+{'st_mtime': '1530173223', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '5190'}  ;  init.py
 {'st_mtime': '1482061277', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '3954'}  ;  local_init.py
 {'st_mtime': '1480599149', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '7469'}  ;  old/gnc_menu_extension_direct.py
 {'st_mtime': '1480601852', 'st_mode': '33188', 'st_uid': '1000', 'st_gid': '1000', 'st_nlink': '1', 'st_size': '4021'}  ;  old/gnc_menu_extension_new.py
