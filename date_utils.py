@@ -2,13 +2,18 @@
 # this stores some date utilities
 # mainly for the definitions of relative dates
 
+# taken from date-utilities.scm
+
 
 import datetime
 import calendar
 
 import pdb
 
-import qof_ctypes
+# why was this here - doesnt seem to be used??
+# libqof is gone in python 3 - its all in libgncmod-engine
+# could import sw_engine - the swig wrap
+#import qof_ctypes
 
 import sw_core_utils
 
@@ -34,6 +39,10 @@ TwoWeekDelta = datetime.timedelta(days=14)
 
 # so these are weird - not sure how to represent these
 # and we cannot use this as datetime requires the year
+# we need to give it a date to add the right number of months to
+# these are WRONG - we need to use the dateutil module - but that needs installing!!
+# but these are the closest to the scheme which sets the month field
+# of a tm date structure to 1, 3 or 6 and the year field to 1 for YearDelta
 MonthDelta = datetime.datetime(year=1900,month=1,day=1)
 
 QuarterDelta = datetime.datetime(year=1900,month=3,day=1)
@@ -41,6 +50,7 @@ QuarterDelta = datetime.datetime(year=1900,month=3,day=1)
 HalfYearDelta = datetime.datetime(year=1900,month=6,day=1)
 
 YearDelta  = datetime.datetime(year=1,month=1,day=1)
+
 
 ThirtyDayDelta = datetime.timedelta(days=30)
 
@@ -50,15 +60,15 @@ NinetyDayDelta = datetime.timedelta(days=90)
 
 deltalist = [ \
               ('SecDelta', SecDelta),
-	      ('DayDelta', DayDelta),
-	      ('WeekDelta', WeekDelta),
-	      ('TwoWeekDelta', TwoWeekDelta),
-	      ('MonthDelta', MonthDelta),
-	      ('QuarterDelta', QuarterDelta),
-	      ('HalfYearDelta', HalfYearDelta),
-	      ('YearDelta', YearDelta),
-	      ('ThirtyDayDelta', ThirtyDayDelta),
-	      ('NinetyDayDelta', NinetyDayDelta),
+              ('DayDelta', DayDelta),
+              ('WeekDelta', WeekDelta),
+              ('TwoWeekDelta', TwoWeekDelta),
+              ('MonthDelta', MonthDelta),
+              ('QuarterDelta', QuarterDelta),
+              ('HalfYearDelta', HalfYearDelta),
+              ('YearDelta', YearDelta),
+              ('ThirtyDayDelta', ThirtyDayDelta),
+              ('NinetyDayDelta', NinetyDayDelta),
             ]
 
 
@@ -228,7 +238,7 @@ def get_one_month_ago ():
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(prvyr,prvmon)
     prvmdy = prvtim.day
-    if monrng[1] > prvtim.day:
+    if monrng[1] < prvtim.day:
         prvmdy = monrng[1]
     return prvtim.replace(day=prvmdy,month=prvmon,year=prvyr,tzinfo=None)
 
@@ -244,7 +254,7 @@ def get_three_months_ago ():
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(prvyr,prvmon)
     prvmdy = prvtim.day
-    if monrng[1] > prvtim.day:
+    if monrng[1] < prvtim.day:
         prvmdy = monrng[1]
     return prvtim.replace(day=prvmdy,month=prvmon,year=prvyr,tzinfo=None)
 
@@ -259,7 +269,7 @@ def get_six_months_ago ():
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(prvyr,prvmon)
     prvmdy = prvtim.day
-    if monrng[1] > prvtim.day:
+    if monrng[1] < prvtim.day:
         prvmdy = monrng[1]
     return prvtim.replace(day=prvmdy,month=prvmon,year=prvyr,tzinfo=None)
 
@@ -269,7 +279,7 @@ def get_one_year_ago ():
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(prvyr,prvtim.month)
     prvmdy = prvtim.day
-    if monrng[1] > prvtim.day:
+    if monrng[1] < prvtim.day:
         prvmdy = monrng[1]
     return prvtim.replace(day=prvmdy,year=prvyr,tzinfo=None)
 
@@ -277,14 +287,14 @@ def get_one_month_ahead ():
     newtim = datetime.datetime.now()
     if newtim.month == 12:
         newmon = 1
-	newyr = newtim.year+1
+        newyr = newtim.year+1
     else:
         newmon = newtim.month+1
         newyr = newtim.year
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(newyr,newmon)
     newmdy = newtim.day
-    if monrng[1] > newtim.day:
+    if monrng[1] < newtim.day:
         newmdy = monrng[1]
     return newtim.replace(day=newmdy,month=newmon,year=newyr,tzinfo=None)
 
@@ -292,14 +302,14 @@ def get_three_months_ahead ():
     newtim = datetime.datetime.now()
     if newtim.month > 9:
         newmon = newtim.month - 9
-	newyr = newtim.year+1
+        newyr = newtim.year+1
     else:
         newmon = newtim.month+3
         newyr = newtim.year
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(newyr,newmon)
     newmdy = newtim.day
-    if monrng[1] > newtim.day:
+    if monrng[1] < newtim.day:
         newmdy = monrng[1]
     return newtim.replace(day=newmdy,month=newmon,year=newyr,tzinfo=None)
 
@@ -307,14 +317,14 @@ def get_six_months_ahead ():
     newtim = datetime.datetime.now()
     if newtim.month > 6:
         newmon = newtim.month - 6
-	newyr = newtim.year+1
+        newyr = newtim.year+1
     else:
         newmon = newtim.month+6
         newyr = newtim.year
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(newyr,newmon)
     newmdy = newtim.day
-    if monrng[1] > newtim.day:
+    if monrng[1] < newtim.day:
         newmdy = monrng[1]
     return newtim.replace(day=newmdy,month=newmon,year=newyr,tzinfo=None)
 
@@ -324,7 +334,7 @@ def get_one_year_ahead ():
     # it looks as though the scheme gets the length of the previous month
     monrng = calendar.monthrange(newyr,newtim.month)
     newmdy = newtim.day
-    if monrng[1] > newtim.day:
+    if monrng[1] < newtim.day:
         newmdy = monrng[1]
     return newtim.replace(day=newmdy,year=newyr,tzinfo=None)
 
