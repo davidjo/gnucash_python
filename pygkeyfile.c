@@ -141,7 +141,7 @@ pyg_key_file_load_from_data_dirs(PyGKeyFile *self, PyObject *args, PyObject *kwa
         return NULL;
     
     if (ret)
-        return PyString_FromString(full_path);
+        return PyUnicode_FromString(full_path);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -160,7 +160,7 @@ pyg_key_file_to_data(PyGKeyFile *self)
         return NULL;
 
     if (ret)
-        return PyString_FromString(ret);
+        return PyUnicode_FromString(ret);
     
     Py_INCREF(Py_None);
     return Py_None;
@@ -174,7 +174,7 @@ pyg_key_file_get_start_group(PyGKeyFile *self)
     ret = g_key_file_get_start_group(self->key_file);
 
     if (ret)
-        return PyString_FromString(ret);
+        return PyUnicode_FromString(ret);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -197,7 +197,7 @@ pyg_key_file_get_groups(PyGKeyFile *self)
 
         py_ret = PyTuple_New(i);
         for (j = 0; j < i; j++)
-            PyTuple_SetItem(py_ret, j, PyString_FromString(ret[j]));
+            PyTuple_SetItem(py_ret, j, PyUnicode_FromString(ret[j]));
         return py_ret;
     }
     Py_INCREF(Py_None);
@@ -231,7 +231,7 @@ pyg_key_file_get_keys(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
 
         py_ret = PyTuple_New(i);
         for (j = 0; j < i; j++)
-            PyTuple_SetItem(py_ret, j, PyString_FromString(ret[j]));
+            PyTuple_SetItem(py_ret, j, PyUnicode_FromString(ret[j]));
         return py_ret;
     }
     Py_INCREF(Py_None);
@@ -302,7 +302,7 @@ pyg_key_file_get_value(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (ret)
-        return PyString_FromString(ret);
+        return PyUnicode_FromString(ret);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -327,7 +327,7 @@ pyg_key_file_get_string(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (ret)
-        return PyString_FromString(ret);
+        return PyUnicode_FromString(ret);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -353,7 +353,7 @@ pyg_key_file_get_locale_string(PyGKeyFile *self, PyObject *args, PyObject *kwarg
         return NULL;
     
     if (ret)
-        return PyString_FromString(ret);
+        return PyUnicode_FromString(ret);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -399,7 +399,7 @@ pyg_key_file_get_integer(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
     
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
     
     ret = g_key_file_get_integer(self->key_file, group, key, &error);
 
@@ -426,7 +426,7 @@ pyg_key_file_get_double(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
 
     ret = g_key_file_get_double(self->key_file, group, key, &error);
 
@@ -465,7 +465,7 @@ pyg_key_file_get_string_list(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
 
         py_ret = PyTuple_New(i);
         for (j = 0; j < i; j++)
-            PyTuple_SetItem(py_ret, j, PyString_FromString(ret[j]));
+            PyTuple_SetItem(py_ret, j, PyUnicode_FromString(ret[j]));
         
         return py_ret;
     }
@@ -493,8 +493,8 @@ pyg_key_file_get_locale_string_list(PyGKeyFile *self, PyObject *args, PyObject *
     if (py_locale == Py_None)
         locale = NULL;
         
-    if PyString_Check(py_locale)
-        locale = PyString_AsString(py_locale);
+    if PyUnicode_Check(py_locale)
+        locale = PyUnicode_AsUTF8(py_locale);
     
     ret = g_key_file_get_locale_string_list(self->key_file, group, key, locale, NULL, &error);
 
@@ -508,7 +508,7 @@ pyg_key_file_get_locale_string_list(PyGKeyFile *self, PyObject *args, PyObject *
 
         py_ret = PyTuple_New(i);
         for (j = 0; j < i; j++)
-            PyTuple_SetItem(py_ret, j, PyString_FromString(ret[j]));
+            PyTuple_SetItem(py_ret, j, PyUnicode_FromString(ret[j]));
         
         return py_ret;
     }
@@ -595,7 +595,7 @@ pyg_key_file_get_double_list(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
 
     ret = g_key_file_get_double_list(self->key_file, group, key, &length, &error);
 
@@ -626,10 +626,10 @@ pyg_key_file_get_comment(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
 
     if (py_key != Py_None)
-        key = PyString_AsString(py_key);
+        key = PyUnicode_AsUTF8(py_key);
 
     ret = g_key_file_get_comment(self->key_file, group, key, &error);
 
@@ -637,7 +637,7 @@ pyg_key_file_get_comment(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (ret)
-        return PyString_FromString(ret);
+        return PyUnicode_FromString(ret);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -754,7 +754,7 @@ pyg_key_file_set_double(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
     
     g_key_file_set_double(self->key_file, group, key, value);
 
@@ -781,7 +781,7 @@ pyg_key_file_set_string_list(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
     list = g_new(gchar *, n+1);
     for (i = 0; i < n; i++) {
         PyObject *item = PySequence_GetItem(strings, i);
-        list[i] = PyString_AsString(item);
+        list[i] = PyUnicode_AsUTF8(item);
     }
 
     g_key_file_set_string_list(self->key_file, group, key, (const gchar **) list, length);
@@ -810,7 +810,7 @@ pyg_key_file_set_locale_string_list(PyGKeyFile *self, PyObject *args, PyObject *
     list = g_new(gchar *, n+1);
     for (i = 0; i < n; i ++) {
         PyObject *item = PySequence_GetItem(strings, i);
-        list[i] = PyString_AsString(item);
+        list[i] = PyUnicode_AsUTF8(item);
     }
 
     g_key_file_set_locale_string_list(self->key_file, group, key, locale, (const gchar **) list, length);
@@ -836,10 +836,10 @@ pyg_key_file_set_boolean_list(PyGKeyFile *self, PyObject *args, PyObject *kwargs
         return NULL;
 
     if (py_key != Py_None)
-        key = PyString_AsString(py_key);
+        key = PyUnicode_AsUTF8(py_key);
 
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
 
     n = PySequence_Size(bool_list);
     list = g_new(gboolean, length);
@@ -902,10 +902,10 @@ pyg_key_file_set_double_list(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
     
     if (py_key != Py_None)
-        key = PyString_AsString(py_key);
+        key = PyUnicode_AsUTF8(py_key);
 
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
     
     n = PySequence_Size(doub_list);
     list = g_new(double, length);
@@ -936,10 +936,10 @@ pyg_key_file_set_comment(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
     
     if (py_key != Py_None)
-        key = PyString_AsString(py_key);
+        key = PyUnicode_AsUTF8(py_key);
 
     if (py_group != Py_None)
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
     
     g_key_file_set_comment(self->key_file, group, key, comment, &error);
 
@@ -1004,15 +1004,15 @@ pyg_key_file_remove_comment(PyGKeyFile *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     if (py_group != Py_None) {
-        if (!PyString_Check(py_group))
+        if (!PyUnicode_Check(py_group))
             return NULL;
-        group = PyString_AsString(py_group);
+        group = PyUnicode_AsUTF8(py_group);
     }
 
     if (py_key != Py_None) {
-        if (!PyString_Check(py_key))
+        if (!PyUnicode_Check(py_key))
             return NULL;
-        key = PyString_AsString(py_key);
+        key = PyUnicode_AsUTF8(py_key);
     }
 
     g_key_file_remove_comment(self->key_file, group, key, &error);
