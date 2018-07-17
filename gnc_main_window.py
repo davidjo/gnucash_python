@@ -458,7 +458,7 @@ else:
 
         # yes - we now can add menu items in python
         # we simply need the main window object wrapped either using
-        # a gncmainwindow module or ctypes and pygobject_new from gobject module
+        # a gncmainwindow module or ctypes and pygobject_new (mapped to to_object) from gobject module
         # (ctypes works now got right argument and return types)
         # currently using ctypes version
         # we apparently have to use the main window ui_merge object

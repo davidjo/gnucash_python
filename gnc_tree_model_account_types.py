@@ -41,7 +41,7 @@ from pygobjectcapi import PyGObjectCAPI
 
 # call like this:
 # Cgobject = PyGObjectCAPI()
-# Cgobject.pygobject_new(memory_address)
+# Cgobject.to_object(memory_address)
 
 # to get memory address from a gobject:
 #  address = hash(obj)
@@ -94,7 +94,7 @@ def new (selected):
     newtreemdl_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_model_account_types_new(selected)
 
     # call like this:
-    newtreemdl = Cgobject.pygobject_new(newtreemdl_ptr)
+    newtreemdl = Cgobject.to_object(newtreemdl_ptr)
 
     init_functions(newtreemdl)
 
@@ -143,7 +143,7 @@ def filter_using_mask (acc_types):
 
     f_model_ptr = gnome_utils_ctypes.libgnc_gnomeutils.gnc_tree_model_account_types_filter_using_mask(acc_types)
 
-    f_model = Cgobject.pygobject_new(f_model_ptr)
+    f_model = Cgobject.to_object(f_model_ptr)
 
     return f_model
 
