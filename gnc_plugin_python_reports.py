@@ -48,17 +48,16 @@ import report_objects
 
 
 #
-# these dont seem to exist any more (except in the dict of Gtk.UIManagerItemType
-GTK_UI_MANAGER_MENUBAR = 1
-GTK_UI_MANAGER_MENU = 2
-GTK_UI_MANAGER_TOOLBAR = 4
-GTK_UI_MANAGER_PLACEHOLDER = 8
-GTK_UI_MANAGER_POPUP = 16
-GTK_UI_MANAGER_MENUITEM = 32
-GTK_UI_MANAGER_TOOLITEM = 64
-GTK_UI_MANAGER_SEPARATOR = 128
-GTK_UI_MANAGER_ACCELERATOR = 256
-GTK_UI_MANAGER_POPUP_WITH_ACCELS = 512
+#Gtk.UIManagerItemType.MENUBAR = 1
+#Gtk.UIManagerItemType.MENU = 2
+#Gtk.UIManagerItemType.TOOLBAR = 4
+#Gtk.UIManagerItemType.PLACEHOLDER = 8
+#Gtk.UIManagerItemType.POPUP = 16
+#Gtk.UIManagerItemType.MENUITEM = 32
+#Gtk.UIManagerItemType.TOOLITEM = 64
+#Gtk.UIManagerItemType.SEPARATOR = 128
+#Gtk.UIManagerItemType.ACCELERATOR = 256
+#Gtk.UIManagerItemType.POPUP_WITH_ACCELS = 512
 
 
 # define a function equivalent to N_ for internationalization
