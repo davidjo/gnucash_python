@@ -137,8 +137,9 @@ class GncDateEdit(Gtk.Box):
 
         self.initial_time = -1
         self.create_children()
-        if isinstance(the_time, datetime.datetime): pdb.set_trace()
-        self.set_time(the_time)
+        if not isinstance(the_time, datetime.datetime): pdb.set_trace()
+        #self.set_time(the_time)
+        self.set_time_dt(the_time)
 
     @classmethod
     def new (cls, the_time, show_time, use_24_format):
