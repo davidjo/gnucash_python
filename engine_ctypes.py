@@ -144,8 +144,9 @@ def CommodityIsCurrency (a):
 def GetAccountSeparatorString ():
     # note that the return here should be a simple python string
     # auto magic conversion from c_char_p
+    # need to decode it for python 3
     sepstr = libgnc_engine.gnc_get_account_separator_string()
-    return sepstr
+    return sepstr.decode('utf-8')
 
 def ParentAccountTypesCompatibleWith (account_type):
     retval = libgnc_engine.xaccParentAccountTypesCompatibleWith(account_type)
