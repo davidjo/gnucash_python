@@ -1,5 +1,5 @@
 
-# ctypes implementation of GncMainWindow
+# various implementations of GncMainWindow
 
 
 import os
@@ -410,29 +410,22 @@ else:
 
         gnucash_log.dbglog_err("main_window ",main_window)
 
-        # we now need to add functions to the GncMainWindow object - mainly get_uimanager
-        # using PyGObject/GTypes just gets storage - does not associate the functions with an object
+
+        # these simply extend the functionality of the plain GncMainWindow
+        # with introspection we get all the introspected functions
 
         # note that python 3 MethodType takes only 2 arguments
         # - apparently you can also just do
-        #main_window.get_uimanager = get_uimanager.__get__(main_window)
+        #main_window.py_merge_actions = py_merge_actions.__get__(main_window)
 
-        #main_window.get_uimanager = types.MethodType(get_uimanager, main_window)
+        # we only need to do this once I think
+        if not hasattr(main_window,"py_merge_actions"):
 
-        #main_window.manual_merge_actions = types.MethodType(manual_merge_actions, main_window)
+            main_window.py_merge_actions = types.MethodType(py_merge_actions, main_window)
 
-        #main_window.merge_actions = types.MethodType(merge_actions, main_window)
+            main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window)
 
-        #main_window.unmerge_actions = types.MethodType(unmerge_actions, main_window)
-
-        #main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window)
-
-        #main_window.get_action_group = types.MethodType(get_action_group, main_window)
-
-
-        main_window.py_merge_actions = types.MethodType(py_merge_actions, main_window)
-
-        main_window.set_translation_domain = types.MethodType(set_translation_domain, main_window)
+            main_window.py_unmerge_actions = types.MethodType(py_unmerge_actions, main_window)
 
 
         # do we need to return it??
@@ -443,7 +436,7 @@ else:
 
         #pdb.set_trace()
 
-        # self is a GObject wrapped Gtk.Window runthrough main_window_extend
+        # self is a GObject wrapped Gtk.Window run through main_window_extend
 
         # this is a re-implementation of gnc_main_window_merge_actions - because
         # rather than calling the gnucash version its easier to call the gtk functions
@@ -460,7 +453,7 @@ else:
         # we simply need the main window object wrapped either using
         # a gncmainwindow module or ctypes and pygobject_new (mapped to to_object) from gobject module
         # (ctypes works now got right argument and return types)
-        # currently using ctypes version
+        # or the introspection wrapped gobject
         # we apparently have to use the main window ui_merge object
 
         main_ui_merge = self.get_uimanager()
@@ -529,3 +522,19 @@ else:
 
         GncMainWindow.gtk_action_group_set_translation_domain(group, domain_name)
 
+
+    def py_unmerge_actions (self, group_name, action_group, merge_id):
+
+        #pdb.set_trace()
+
+        # self is a GObject wrapped Gtk.Window run through main_window_extend
+
+        # this is a re-implementation of gnc_main_window_unmerge_actions - because
+        # now gnc_main_window_merge_actions stores the data needed for unmerge
+        # in a hash table which the C unmerge actions uses
+
+        main_ui_merge = self.get_uimanager()
+
+        main_ui_merge.remove_action_group(action_group)
+        main_ui_merge.remove_ui(merge_id)
+        main_ui_merge.ensure_update()

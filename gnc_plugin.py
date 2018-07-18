@@ -306,7 +306,12 @@ class GncPluginPython(BaseGncPlugin, metaclass=girepo.GncPluginMeta):
             pdb.set_trace()
 
             if self.actions_name != None:
-                window.unmerge_actions(self.actions_name, action_group, merge_id)
+                # changed for gnucash 3 - if not before
+                # we need our own python unmerge function
+                window.py_unmerge_actions(self.actions_name, action_group, merge_id)
+                print("unmerge not tested")
+                pdb.set_trace()
+                print("unmerge not tested")
 
         else:
 
