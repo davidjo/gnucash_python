@@ -45,7 +45,7 @@ class HelloWorld(ToolTemplate):
         #self.menu_path = N_("Tool Path")
         #self.stock_id = None
 
-    def run (self):
+    def run (self, parent):
 
         #pdb.set_trace()
 

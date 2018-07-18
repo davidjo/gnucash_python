@@ -61,6 +61,8 @@ import gnc_tree_model_account_types
 
 from dialog_commodity import DialogCommodity
 
+import swighelpers
+
 
 #import qof_ctypes
 
@@ -79,7 +81,7 @@ class EditAccountWindow(object):
     EDIT_ACCOUNT = 1
 
 
-    def __init__ (self, account):
+    def __init__ (self, parent, account):
 
         self.book = get_current_book()
 
@@ -103,14 +105,14 @@ class EditAccountWindow(object):
         account_ptr = self.account.instance.__int__()
         accountobj = Cgobject.to_object(account_ptr)
 
+        # note that get_property returns a gobject - so need to transform to swig/gnucash form
         check_inc = accountobj.find_property("ofx-associated-income-account")
         if check_inc != None:
-            income_accobj = accountobj.get_property("ofx-associated-income-account")
-            if income_accobj != None:
-                income_account_inst = swighelpers.int_to_swig(hash(income_accobj),"_p_Account")
-                income_account = gnucash.Account(instance=income_account_inst)
-                income_guid = income_account.GetGUID()
-                income_guid_str = income_guid.to_string()
+            income_guid_gobj = accountobj.get_property("ofx-associated-income-account")
+            if income_guid_gobj != None:
+                pdb.set_trace()
+                income_guid_str = income_guid_gobj.to_string()
+                income_guid = gnucash.GUID.string_to_guid(income_guid_str)
             else:
                 income_guid = None
                 income_guid_str = "None"
@@ -124,23 +126,22 @@ class EditAccountWindow(object):
 
         #income_guid = qof_ctypes.GetAssociatedAccountGUID(self.account,"ofx/associated-income-account")
 
-        #if income_guid != None:
-        #    self.income_account = gnucash.GUID.AccountLookup(income_guid, self.book)
-        #    if self.income_account != None:
-        #        print("income_acc", self.income_account.GetName(), file=sys.stderr)
-        #else:
-        #    self.income_account = None
+        if income_guid != None:
+            self.income_account = gnucash.GUID.AccountLookup(income_guid, self.book)
+            if self.income_account != None:
+                print("income_acc", self.income_account.GetName(), file=sys.stderr)
+        else:
+            self.income_account = None
 
         print("income_guid", income_guid, file=sys.stderr)
 
         check_fee = accountobj.find_property("ofx-associated-fee-account")
         if check_fee != None:
-            fee_accobj = accountobj.get_property("ofx-associated-fee-account")
-            if fee_accobj != None:
-                fee_account_inst = swighelpers.int_to_swig(hash(fee_accobj),"_p_Account")
-                fee_account = gnucash.Account(instance=fee_account_inst)
-                fee_guid = fee_account.GetGUID()
-                fee_guid_str = fee_guid.to_string()
+            fee_guid_gobj = accountobj.get_property("ofx-associated-fee-account")
+            if fee_guid_gobj != None:
+                pdb.set_trace()
+                fee_guid_str = fee_guid_gobj.to_string()
+                fee_guid = gnucash.GUID.string_to_guid(fee_guid_str)
             else:
                 fee_guid = None
                 fee_guid_str = "None"
@@ -154,12 +155,12 @@ class EditAccountWindow(object):
 
         #fee_guid = qof_ctypes.GetAssociatedAccountGUID(self.account,"ofx/associated-fee-account")
 
-        #if fee_guid != None:
-        #    self.fee_account = gnucash.GUID.AccountLookup(fee_guid, self.book)
-        #    if self.fee_account != None:
-        #        print("fee_acc", self.fee_account.GetName(), file=sys.stderr)
-        #else:
-        #    self.fee_account = None
+        if fee_guid != None:
+            self.fee_account = gnucash.GUID.AccountLookup(fee_guid, self.book)
+            if self.fee_account != None:
+                print("fee_acc", self.fee_account.GetName(), file=sys.stderr)
+        else:
+            self.fee_account = None
 
         #pdb.set_trace()
 
@@ -189,16 +190,20 @@ class EditAccountWindow(object):
         #builder.connect_signals(self)
         #builder.connect_signals(self.builder_handlers)
 
-        self.dialog = builder.get_object("Account Dialog")
+        self.dialog = builder.get_object("account_dialog")
 
         # this registers the dialog so the initial count check works
         #gnc_register_gui_component (DIALOG_FINCALC_CM_CLASS,
         #                            NULL, close_handler, fcd);
 
+        # set style and parent
+        #self.dialog.get_path().iter_set_object_name(0,"GncAccountDialog")
+        if parent != None:
+            self.dialog.set_transient_for(parent)
+
         # why is this not working - works for other objects??
         # as of gtk3 this is just a python property
         # well thats not working!!
-        pdb.set_trace()
         #self.dialog.set_data("dialog_info",self)
         self.dialog.dialog_info = self
 
@@ -216,8 +221,8 @@ class EditAccountWindow(object):
 
         self.notes_text_buffer = builder.get_object("notes_text").get_buffer()
 
-        self.fee_entry = builder.get_object("assoc_fee")
-        self.income_entry = builder.get_object("assoc_income")
+        self.fee_entry = builder.get_object("fee_entry")
+        self.income_entry = builder.get_object("income_entry")
 
         box = builder.get_object("commodity_hbox")
 
@@ -304,8 +309,8 @@ class EditAccountWindow(object):
 
     def response_cb (self, actionobj, response=None):
         print("response_cb",actionobj,response, file=sys.stderr)
-        if response == Gtk.RESPONSE_OK or \
-           response == Gtk.RESPONSE_CLOSE:
+        if response == Gtk.ResponseType.OK or \
+           response == Gtk.ResponseType.CLOSE:
             #gnc_save_window_size(GNC_PREFS_GROUP, self.dialog)
             pass
         #gnc_close_gui_component_by_data (DIALOG_FINCALC_CM_CLASS, fcd)
@@ -397,7 +402,7 @@ class EditAccountWindow(object):
 
     def parent_changed_cb (self, actionobj, userdata=None):
         print("parent_changed_cb",actionobj,userdata, file=sys.stderr)
-        parent_account = self.parent_tree.get_selected_account()
+        parent_account = self.parent_tree.do_get_selected_account()
         print("parent_changed_cb",parent_account, file=sys.stderr)
         if parent_account == None:
             return
@@ -512,6 +517,10 @@ class EditAccountWindow(object):
 
         #print(dir(self.account), file=sys.stderr)
 
+        #pdb.set_trace()
+
+        # this leads to error message Warning: g_value_get_int: assertion 'G_VALUE_HOLDS_INT (value)' failed
+        # - apparently due to bug in gobject introspection
         self.name_entry.set_text(self.account.GetName())
         self.description_entry.set_text(self.account.GetDescription())
         # the C code does not check for Not Set - how does it work??
@@ -538,7 +547,9 @@ class EditAccountWindow(object):
 class DialogEditAccount(object):
 
 
-    def __init__ (self):
+    def __init__ (self, parent=None):
+
+        self.parent = parent
 
         #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_position(gtk.WIN_POS_CENTER)
@@ -592,7 +603,7 @@ class DialogEditAccount(object):
         book = get_current_book()
         root = book.get_root_account()
         editacnt = root.LookupByName(account_name)
-        edit_account = EditAccountWindow(editacnt)
+        edit_account = EditAccountWindow(self.parent,editacnt)
         edit_account.account_to_ui()
         edit_account.dialog.show()
         self.window.destroy()
@@ -616,9 +627,9 @@ class DialogEditAccountTool(ToolTemplate):
 
         #self.amounts = {}
 
-    def run (self):
+    def run (self, parent):
 
-        dea = DialogEditAccount()
+        dea = DialogEditAccount(parent)
 
         #dea.init_fi()
 

@@ -96,7 +96,7 @@ class FinCalcDialog(object):
               ]
 
 
-    def __init__ (self):
+    def __init__ (self, parent):
 
         self.amounts = {}
 
@@ -142,6 +142,11 @@ class FinCalcDialog(object):
         # this registers the dialog so the initial count check works
         #gnc_register_gui_component (DIALOG_FINCALC_CM_CLASS,
         #                            NULL, close_handler, fcd);
+
+        # set style and parent
+        #self.dialog.get_path().iter_set_object_name(0,"GncFinCalcDialog")
+        if parent != None:
+            self.dialog.set_transient_for(parent)
 
         self.dialog.connect('destroy', self.destroy_cb)
 
@@ -510,9 +515,9 @@ class DialogFinCalcTool(ToolTemplate):
 
         self.amounts = {}
 
-    def run (self):
+    def run (self, parent):
 
-        fcd = FinCalcDialog()
+        fcd = FinCalcDialog(parent)
 
         fcd.init_fi()
 
