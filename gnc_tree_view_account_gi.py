@@ -230,6 +230,8 @@ def WrapTreeViewAccount (newaccview):
 
     newaccview.do_get_selected_accounts = types.MethodType(do_get_selected_accounts, newaccview)
 
+    newaccview.do_get_selected_account = types.MethodType(do_get_selected_account, newaccview)
+
 
 if True:
 
@@ -500,4 +502,31 @@ if True:
         #pdb.set_trace()
 
         return acc_lst
+
+
+    def do_get_selected_account (self):
+
+        #pdb.set_trace()
+        print("get_selected_account 1",str(self), file=sys.stderr)
+        gc.collect()
+
+        # annoying - using introspection here isnt going to work either
+        # - the gnucash C routine returns a list of py-gobject wrapped accounts
+        # which get destroyed when the py-gobject wrapper is destroyed
+        # NO - this is all because I had set the return as transfer full
+        # - transfer none works!!
+
+        # we cant use the do_set_selected_account SWIG wraps as we may
+        # select something else entirely
+
+        # this appears to be a plain python gobject wrapped account object
+        acc_gobj = self.get_selected_account()
+
+        # convert to SWIG wrapped object
+        account_ptr = hash(acc_gobj)
+        print("account_ptr 0x%x"%account_ptr, file=sys.stderr)
+        accinst = swighelpers.int_to_swig(account_ptr,"_p_Account");
+        account = gnucash.Account(instance=accinst)
+
+        return account
 
