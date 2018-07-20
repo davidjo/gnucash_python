@@ -298,7 +298,11 @@ class GncPluginPythonTools(GncPluginPython, metaclass=girepo.GncPluginSubClassMe
         gnucash_log.dbglog_err("tools_cb",actionobj,user_data)
         gnucash_log.dbglog_err("tools_cb",actionobj.get_name())
 
+        # at the moment we are passing the main window as GObject type
         window = user_data
+
+        # extend the functionality of the main window
+        window = gnc_main_window.main_window_extend(window)
 
         print("tools_cb",actionobj)
         print("tools_cb",actionobj.get_name())
@@ -313,7 +317,7 @@ class GncPluginPythonTools(GncPluginPython, metaclass=girepo.GncPluginSubClassMe
         try:
             tool_guid = actionobj.get_name()
             tool_obj = tool_objects.python_tools_by_guid[tool_guid]
-            tool_obj.run()
+            tool_obj.run(window)
             gnucash_log.dbglog("call back done")
         except Exception as errexc:
             traceback.print_exc()
